@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulado Interativo – CAD, EHH e Sepse</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #2563eb;
+      --good: #16a34a;
+      --bad: #dc2626;
+      --info: #e0f2fe;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:24px;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
+    header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+    h1{font-size:clamp(20px,3vw,28px);margin:0;color:var(--primary)}
+    .controls{display:flex;gap:10px;flex-wrap:wrap}
+    select,button{border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;background:#fff;color:var(--text);cursor:pointer}
+    button.primary{background:var(--primary);color:#fff;border-color:transparent}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+    .card{background:var(--card);border-radius:16px;box-shadow:0 6px 18px rgba(2,6,23,.06);padding:16px}
+    .q-title{font-size:16px;margin:0 0 10px 0}
+    .options{display:flex;flex-direction:column;gap:8px}
+    .options button{width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #e2e8f0;background:#f1f5f9}
+    .options button.correct{background:#dcfce7;border-color:#86efac}
+    .options button.wrong{background:#fee2e2;border-color:#fecaca}
+    .explanation{display:none;margin-top:10px;padding:10px 12px;background:var(--info);border-left:4px solid var(--primary);border-radius:10px}
+    .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;color:var(--muted);font-size:12px}
+    .footer-note{margin-top:20px;font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🩺 Simulado Interativo – CAD, EHH e Sepse</h1>
+    <div class="controls">
+      <label>
+        <span style="font-size:14px;color:var(--muted);display:block;margin-bottom:4px">Selecione o tema</span>
+        <select id="topicSelect">
+          <option value="cad">Cetoacidose diabética (CAD)</option>
+          <option value="ehh">Estado hiperosmolar hiperglicêmico (EHH)</option>
+          <option value="sepse">Sepse na emergência clínica</option>
+        </select>
+      </label>
+      <button class="primary" id="resetBtn">Reiniciar tema</button>
+      <button id="revealBtn">Revelar explicações</button>
+    </div>
+  </header>
+
+  <div id="quiz" class="grid"></div>
+
+  <p class="footer-note">Dica: responda todas e depois clique em “Revelar explicações”. Use “Reiniciar tema” para tentar novamente.</p>
+
+<script>
+// =====================
+// Banco de Questões
+// =====================
+const bank = {
+  cad: [
+    { q: "1. Qual é o conjunto de critérios diagnósticos da CAD?",
+      options: [
+        "a) Hipoglicemia, acidose metabólica e cetonemia",
+        "b) Hiperglicemia, acidose metabólica e cetonemia",
+        "c) Hiperglicemia, alcalose metabólica e cetonemia",
+        "d) Euforia, cetonemia e hipoglicemia",
+        "e) Hiperglicemia isolada"
+      ], answer: 1,
+      explanation: "O diagnóstico exige hiperglicemia + acidose metabólica + cetonemia. Essa é a tríade clássica da CAD."
+    },
+    { q: "2. Qual é o principal fator desencadeante da CAD?",
+      options: ["a) Hipertireoidismo","b) Infecção","c) Uso de metformina","d) Excesso de carboidratos na dieta","e) Insuficiência renal crônica"],
+      answer: 1,
+      explanation: "Infecção é o desencadeante mais comum, seguida por omissão de insulina."
+    },
+    { q: "3. Na fisiopatologia da CAD, a deficiência de insulina leva principalmente a:",
+      options: [
+        "a) Aumento da glicólise e redução da lipólise",
+        "b) Redução da gliconeogênese e aumento da cetogênese",
+        "c) Aumento da gliconeogênese, lipólise e produção de corpos cetônicos",
+        "d) Hipoglicemia e alcalose metabólica",
+        "e) Inibição da glicogenólise e aumento da glicólise"
+      ], answer: 2,
+      explanation: "Falta de insulina → ↑ gliconeogênese e glicogenólise + ↑ lipólise → cetogênese → acidose."
+    },
+    { q: "4. Qual das manifestações abaixo NÃO é típica da CAD?",
+      options: ["a) Respiração de Kussmaul","b) Poliúria e polidipsia","c) Dor abdominal","d) Alteração do sensório","e) Alcalose respiratória isolada"],
+      answer: 4,
+      explanation: "O quadro é acidose metabólica com hiperventilação compensatória (Kussmaul), não alcalose respiratória isolada."
+    },
+    { q: "5. Qual é a medida inicial prioritária na CAD?",
+      options: ["a) Administrar insulina em bolus endovenoso","b) Reposição volêmica com soro fisiológico 0,9%","c) Infusão imediata de bicarbonato","d) Administrar glicose EV","e) Intubação orotraqueal"],
+      answer: 1,
+      explanation: "A prioridade inicial é reposição volêmica com SF 0,9%. A insulina vem após a expansão."
+    },
+    { q: "6. Por que é fundamental avaliar o potássio antes de iniciar insulina na CAD?",
+      options: ["a) Porque o potássio aumenta com a insulina","b) Porque a insulina desloca K+ para dentro da célula, podendo causar hipocalemia grave","c) Porque a insulina não altera o K+","d) Porque o potássio não influencia o tratamento","e) Porque o K+ sempre está baixo na CAD"],
+      answer: 1,
+      explanation: "A insulina reduz o K+ sérico (entrada celular) → risco de arritmias se já estiver baixo."
+    },
+    { q: "7. Qual a principal diferença entre CAD e estado hiperglicêmico hiperosmolar (EHH)?",
+      options: ["a) Na CAD não há acidose","b) A CAD ocorre em DM2, e o EHH em DM1","c) O EHH apresenta hiperglicemia muito maior e osmolaridade elevada, mas sem cetose significativa","d) O EHH ocorre com glicemias mais baixas que a CAD","e) A CAD não causa alterações eletrolíticas"],
+      answer: 2,
+      explanation: "EHH → hiperglicemia > 600 mg/dL e hiperosmolaridade, sem cetose/acidose marcante."
+    },
+    { q: "8. Qual a complicação mais temida durante o tratamento da CAD, especialmente em crianças?",
+      options: ["a) Arritmia ventricular","b) Edema cerebral","c) Síndrome de lise tumoral","d) Hipoglicemia","e) Insuficiência renal aguda"],
+      answer: 1,
+      explanation: "Edema cerebral é a principal causa de mortalidade em jovens com CAD."
+    },
+    { q: "9. Durante o tratamento da CAD, quais parâmetros devem ser monitorados?",
+      options: ["a) Apenas glicemia","b) Apenas eletrólitos","c) Apenas diurese","d) Glicemia, eletrólitos, gasometria, diurese e estado neurológico","e) Apenas sinais neurológicos"],
+      answer: 3,
+      explanation: "Monitorização completa é essencial para segurança e eficácia do tratamento."
+    },
+    { q: "10. Quando se considera a CAD resolvida?",
+      options: ["a) Glicemia < 200 mg/dL","b) Cetonúria negativa","c) pH > 7,3, HCO3- > 18 mEq/L e cetonemia em regressão","d) Assintomático","e) Glicemia normal"],
+      answer: 2,
+      explanation: "Critérios de resolução priorizam a correção da acidose, não apenas da glicemia."
+    }
+  ],
+
+  ehh: [
+    { q: "1. Critérios laboratoriais típicos do EHH incluem:",
+      options: [
+        "a) Glicose > 250 mg/dL, pH < 7,3, cetonemia intensa",
+        "b) Glicose > 600 mg/dL, osmolaridade efetiva > 320 mOsm/kg, pH > 7,3 e cetose ausente/leve",
+        "c) Glicose < 180 mg/dL e pH < 7,2",
+        "d) Glicose > 600 mg/dL com acidose metabólica grave",
+        "e) Osmolaridade < 280 mOsm/kg"
+      ], answer: 1,
+      explanation: "EHH: hiperglicemia marcada, hiperosmolaridade, mínima cetose e pH geralmente > 7,3."
+    },
+    { q: "2. Fator precipitante mais comum do EHH:",
+      options: ["a) Hipotireoidismo","b) Infecção","c) Uso de metformina","d) Dieta hipoglicídica","e) Transfusão"],
+      answer: 1,
+      explanation: "Infecção e omissão de antidiabéticos/insulina são causas frequentes."
+    },
+    { q: "3. Primeira medida terapêutica no EHH:",
+      options: ["a) Insulina em bolus","b) Bicarbonato EV","c) Reposição vigorosa com cristaloide (SF 0,9% ou balanceado)","d) Diálise","e) Dextrose 10% EV"],
+      answer: 2,
+      explanation: "Reposição volêmica vem antes da insulina e reduz significativamente a glicemia e a osmolalidade."
+    },
+    { q: "4. Em relação à correção do sódio no EHH, assinale a correta:",
+      options: [
+        "a) A glicose não altera o sódio medido",
+        "b) Corrigir Na+ adicionando ~1,6 mEq/L para cada 100 mg/dL de glicose acima de 100",
+        "c) Subtrair 1,6 mEq/L para cada 100 mg/dL de glicose",
+        "d) Sempre infundir Na+ hipertônico",
+        "e) Não se corrige sódio em EHH"
+      ], answer: 1,
+      explanation: "Hiperglicemia dilui Na+: correção aproximada adicionando 1,6 mEq/L por 100 mg/dL de glicose acima de 100."
+    },
+    { q: "5. Objetivo seguro de redução da glicose no EHH por hora:",
+      options: ["a) 10–20 mg/dL","b) 50–70 mg/dL","c) 120–150 mg/dL","d) 200–250 mg/dL","e) Não há alvo"],
+      answer: 1,
+      explanation: "Queda muito rápida aumenta risco de edema cerebral; recomenda-se cerca de 50–70 mg/dL/h."
+    },
+    { q: "6. Em relação à insulina no EHH, é correto afirmar:",
+      options: [
+        "a) Deve ser iniciada antes de fluidos",
+        "b) Dose inicial em infusão baixa após fluidos; às vezes não é necessária se glicose cair apenas com volume",
+        "c) Usar sempre bolus alto",
+        "d) Preferir via subcutânea em todos",
+        "e) Contraindicar em idosos"
+      ], answer: 1,
+      explanation: "Após volume, usar insulina IV de baixa dose; alguns pacientes melhoram apenas com fluidos inicialmente."
+    },
+    { q: "7. Achado clínico típico do EHH, mais comum que na CAD:",
+      options: ["a) Dor abdominal intensa","b) Kussmaul","c) Déficit neurológico focal/confusão pronunciada","d) Halitose cetótica","e) Náusea incoercível"],
+      answer: 2,
+      explanation: "A hiperosmolaridade cursa com alterações neurológicas marcantes, especialmente em idosos."
+    },
+    { q: "8. Fórmula aproximada da osmolaridade plasmática efetiva:",
+      options: [
+        "a) 2 x Na + glicose/18",
+        "b) 2 x K + glicose/18 + ureia/2,8",
+        "c) 2 x Na + glicose/18 + ureia/2,8",
+        "d) Na + K + glicose/18",
+        "e) Na x glicose"
+      ], answer: 0,
+      explanation: "Osmolaridade efetiva exclui ureia: 2xNa + glicose/18 (em mOsm/kg)."
+    },
+    { q: "9. Complicação a considerar no EHH devido à hiperviscosidade:",
+      options: ["a) Pancreatite por hipocalcemia","b) Tromboembolismo venoso","c) Hipercalemia fatal invariável","d) Hepatite medicamentosa","e) Uremia"],
+      answer: 1,
+      explanation: "Devido à desidratação/hiperviscosidade, considerar profilaxia para TEV quando apropriado."
+    },
+    { q: "10. Sobre bicarbonato em EHH:",
+      options: [
+        "a) Indicado rotineiramente",
+        "b) Contraindicado em todos",
+        "c) Considerar apenas em acidose grave (pH < 6,9) associada, após reposição volêmica",
+        "d) Usar sempre se pH < 7,35",
+        "e) Indicar para acelerar correção da hiperosmolaridade"
+      ], answer: 2,
+      explanation: "Bicarbonato não é rotina; considerar em acidose profunda, situação incomum no EHH clássico."
+    }
+  ],
+
+  sepse: [
+    { q: "1. De acordo com o Sepsis-3, sepse é definida como:",
+      options: [
+        "a) SIRS devido a infecção",
+        "b) Infecção com febre e leucocitose",
+        "c) Disfunção orgânica ameaçadora à vida causada por resposta desregulada do hospedeiro à infecção",
+        "d) Bacteremia com hipotensão",
+        "e) Choque refratário a fluidos"
+      ], answer: 2,
+      explanation: "Sepsis-3: disfunção orgânica ameaçadora à vida por resposta desregulada a infecção (SOFA ≥ 2)."
+    },
+    { q: "2. Choque séptico é caracterizado por:",
+      options: [
+        "a) Necessidade de vasopressor para PAM ≥ 65 mmHg e lactato > 2 mmol/L apesar de volume adequado",
+        "b) Febre alta e taquicardia",
+        "c) Hipotensão leve com melhora espontânea",
+        "d) Leucopenia isolada",
+        "e) Taquipneia sem hipoxemia"
+      ], answer: 0,
+      explanation: "Definição do Sepsis-3 para choque séptico."
+    },
+    { q: "3. Ferramenta prática de triagem na emergência para suspeita de sepse:",
+      options: ["a) APACHE II","b) qSOFA (ECG alterado, FR ≥ 22, PAS ≤ 100)","c) CHA2DS2-VASc","d) CURB-65","e) Wells"],
+      answer: 1,
+      explanation: "qSOFA é simples e útil para triagem de risco fora da UTI."
+    },
+    { q: "4. Primeiras medidas na primeira hora (pacote inicial):",
+      options: [
+        "a) Antibiótico após 6 horas",
+        "b) Coletar culturas, medir lactato, iniciar antibiótico de amplo espectro, cristaloide 30 mL/kg, vasopressor se necessário",
+        "c) Aguardar exames de imagem antes de antibiótico",
+        "d) Usar apenas coloides",
+        "e) Administrar esteroide para todos"
+      ], answer: 1,
+      explanation: "Medidas iniciais na primeira hora segundo diretrizes atuais."
+    },
+    { q: "5. Cristaloide de escolha inicial na ressuscitação:",
+      options: ["a) Amido de hidroxietil","b) Solução balanceada ou SF 0,9%","c) Albumina para todos","d) Dextrose 5%","e) Bicarbonato 1/6 M"],
+      answer: 1,
+      explanation: "Cristaloides são primeira linha; evitar amidos por risco de lesão renal."
+    },
+    { q: "6. Primeiro vasopressor recomendado:",
+      options: ["a) Dopamina","b) Norepinefrina","c) Epinefrina","d) Fenilefrina","e) Vasopressina como monoterapia"],
+      answer: 1,
+      explanation: "Norepinefrina é o vasopressor de primeira linha para atingir PAM ≥ 65 mmHg."
+    },
+    { q: "7. Meta de diurese esperada durante ressuscitação:",
+      options: ["a) 0,1 mL/kg/h","b) 0,3 mL/kg/h","c) 0,5 mL/kg/h","d) 1,5 mL/kg/h","e) 3 mL/kg/h"],
+      answer: 2,
+      explanation: "Meta comumente usada: ≥ 0,5 mL/kg/h."
+    },
+    { q: "8. Sobre antibioticoterapia empírica na sepse, assinale a correta:",
+      options: [
+        "a) Atraso de antibiótico não impacta mortalidade",
+        "b) Deve ser iniciada o quanto antes, após coleta de culturas, com amplo espectro adequado à fonte",
+        "c) Sempre associação tripla",
+        "d) Iniciar apenas após cultura positiva",
+        "e) Suspender após 24h independente de evolução"
+      ], answer: 1,
+      explanation: "Iniciar rapidamente amplo espectro adequado ao foco, após culturas."
+    },
+    { q: "9. Em relação ao lactato sérico:",
+      options: [
+        "a) Não tem utilidade",
+        "b) Se elevado, não precisa reavaliar",
+        "c) Deve ser medido e reavaliado para guiar ressuscitação",
+        "d) Só se mede na UTI",
+        "e) Elevação indica sempre hipoxemia"
+      ], answer: 2,
+      explanation: "Lactato guia ressuscitação e deve ser reavaliado (clearance)."
+    },
+    { q: "10. Sobre controle de foco na sepse:",
+      options: [
+        "a) Pode ser postergado indefinidamente",
+        "b) Raramente é necessário",
+        "c) Deve ser considerado precocemente (ex.: drenagem, remoção de cateter infectado)",
+        "d) Apenas após estabilização completa",
+        "e) Jamais durante antibiótico"
+      ], answer: 2,
+      explanation: "Controle de foco precoce é parte crucial do manejo."
+    }
+  ]
+};
+
+// =====================
+// Renderização
+// =====================
+const quizEl = document.getElementById('quiz');
+const topicSelect = document.getElementById('topicSelect');
+const resetBtn = document.getElementById('resetBtn');
+const revealBtn = document.getElementById('revealBtn');
+
+function renderTopic(topic){
+  quizEl.innerHTML = '';
+  const questions = bank[topic];
+  questions.forEach((item, idx)=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const title = document.createElement('h2');
+    title.className = 'q-title';
+    title.textContent = item.q;
+
+    const opts = document.createElement('div');
+    opts.className = 'options';
+
+    const explanation = document.createElement('div');
+    explanation.className = 'explanation';
+    explanation.textContent = '💡 ' + item.explanation;
+
+    item.options.forEach((opt, i)=>{
+      const btn = document.createElement('button');
+      btn.textContent = opt;
+      btn.addEventListener('click', ()=>{
+        // desabilitar os outros
+        const buttons = opts.querySelectorAll('button');
+        buttons.forEach(b=>b.disabled = true);
+        if(i === item.answer){
+          btn.classList.add('correct');
+        }else{
+          btn.classList.add('wrong');
+          // destacar a correta
+          buttons[item.answer].classList.add('correct');
+        }
+        explanation.style.display = 'block';
+      });
+      opts.appendChild(btn);
+    });
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `<span>Questão ${idx+1} de ${questions.length}</span><span>•</span><span>Tema: ${labelFromTopic(topic)}</span>`;
+
+    card.appendChild(title);
+    card.appendChild(opts);
+    card.appendChild(explanation);
+    card.appendChild(meta);
+    quizEl.appendChild(card);
+  });
+}
+
+function labelFromTopic(t){
+  return t==='cad'? 'Cetoacidose diabética' : t==='ehh'? 'Estado hiperosmolar hiperglicêmico' : 'Sepse na emergência';
+}
+
+function resetTopic(){
+  const current = topicSelect.value;
+  renderTopic(current);
+}
+
+function revealAll(){
+  document.querySelectorAll('.card').forEach(card=>{
+    const opts = card.querySelector('.options');
+    const buttons = opts.querySelectorAll('button');
+    buttons.forEach((b, idx)=>{
+      b.disabled = true;
+      const qIndex = Array.from(quizEl.children).indexOf(card);
+      const topic = topicSelect.value;
+      const correct = bank[topic][qIndex].answer;
+      if(idx === correct) b.classList.add('correct');
+    });
+    const exp = card.querySelector('.explanation');
+    exp.style.display = 'block';
+  });
+}
+
+// Listeners
+resetBtn.addEventListener('click', resetTopic);
+revealBtn.addEventListener('click', revealAll);
+topicSelect.addEventListener('change', ()=> renderTopic(topicSelect.value));
+
+// Inicializa
+renderTopic(topicSelect.value);
+</script>
+</body>
+</html>
