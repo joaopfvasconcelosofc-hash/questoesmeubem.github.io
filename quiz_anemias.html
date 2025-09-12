@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz: Anemias — 60 perguntas</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; margin:20px; background:#f7f7fb; color:#111 }
+  h1 { text-align:center }
+  section { background:#fff; border-radius:8px; padding:16px; margin:18px 0; box-shadow:0 2px 8px rgba(0,0,0,0.06) }
+  .question { margin:12px 0; padding:12px; border-radius:6px; background:#fcfcff; }
+  .opts { list-style:none; padding:0; margin:8px 0 0 0 }
+  .opts li { margin:6px 0; }
+  button.opt { width:100%; text-align:left; padding:10px; border:1px solid #ddd; border-radius:6px; background:white; cursor:pointer; font-size:1em }
+  button.opt:disabled { opacity:0.7; cursor:default }
+  .result { margin-top:8px; padding:10px; border-radius:6px; display:none; }
+  .correct { border-left:6px solid #2e7d32; background:#e8f5e9 }
+  .incorrect { border-left:6px solid #c62828; background:#ffebee }
+  .explain { margin-top:6px; font-size:0.95em; color:#222 }
+  small.cite { display:block; margin-top:8px; color:#666 }
+  nav { position:sticky; top:0; background:#fff; padding:8px; box-shadow:0 1px 4px rgba(0,0,0,0.05); border-radius:6px }
+  .toc { display:flex; gap:8px; flex-wrap:wrap; justify-content:center }
+  .toc button { padding:8px 12px; border-radius:6px; border:1px solid #ddd; background:white; cursor:pointer }
+</style>
+</head>
+<body>
+<h1>Quiz: Anemias — 60 perguntas (15 por tema)</h1>
+<nav>
+  <div class="toc">
+    <button data-target="intro">Introdução</button>
+    <button data-target="hemoliticas">Anemias Hemolíticas</button>
+    <button data-target="falciforme">Anemia Falciforme</button>
+    <button data-target="talassemias">Talassemias</button>
+    <button id="top">Topo</button>
+  </div>
+</nav>
+
+<section id="intro">
+  <h2>Introdução às Anemias — 15 perguntas</h2>
+  <small class="cite">Base: "Introdução às Anemias".</small>
+</section>
+
+<section id="hemoliticas">
+  <h2>Anemias Hemolíticas — 15 perguntas</h2>
+  <small class="cite">Base: "Anemias Hemolíticas".</small>
+</section>
+
+<section id="falciforme">
+  <h2>Anemia Falciforme — 15 perguntas</h2>
+  <small class="cite">Base: "Anemia Falciforme".</small>
+</section>
+
+<section id="talassemias">
+  <h2>Talassemias — 15 perguntas</h2>
+  <small class="cite">Base: "Talassemias".</small>
+</section>
+
+<script>
+// Data structure with questions, options, correct index and explanation (Portuguese).
+const data = {
+  intro: [
+    // 5 original questions (kept)
+{"q":"Qual parâmetro é mais diretamente útil para distinguir uma anemia hipoproliferativa de uma hemolítica (hiperproliferativa)?","opts":["VCM (volume corpuscular médio)","Contagem de reticulócitos","Ferritina sérica","TGO/TGP"],"a":1,"exp":"Contagem de reticulócitos: elevada na hemólise (resposta medular aumentada) e baixa nas anemias hipoproliferativas."},
+{"q":"Um paciente com hemoglobina 8 g/dL e contagem de reticulócitos de 12% provavelmente apresenta:","opts":["Anemia por deficiência de ferro","Anemia hemolítica com resposta medular aumentada","Anemia aplástica","Anemia por doença crônica"],"a":1,"exp":"Reticulócitos 12% indicam resposta medular aumentada — compatível com anemia hemolítica regenerativa."},
+{"q":"Em relação à classificação morfológica das anemias, qual par é correto?","opts":["Microcítica — VCM aumentado","Macrocítica — VCM aumentado","Normocítica — sempre hemolítica","Hipocrômica — sempre por carência de B12"],"a":1,"exp":"Macrocítica = VCM aumentado. Microcítica = VCM diminuído; normocítica = VCM normal."},
+{"q":"Qual das alternativas descreve corretamente a eritropoiese pós-natal normal?","opts":["O fígado é a principal fonte de eritropoiese após o nascimento","A medula óssea dos ossos longos mantém toda a eritropoiese na vida adulta","A medula óssea (pelve, esterno, vértebras) é a principal fonte de eritropoiese no adulto","Eritropoiese não depende de eritropoietina"],"a":2,"exp":"No adulto, a medula óssea (pélvis, esterno, vértebras, costelas) é a principal fonte de eritropoiese; eritropoietina regula o processo."},
+{"q":"Um hematócrito de 22% com IRC (índice de reticulócitos corrigido) <2% sugere:","opts":["Anemia hemolítica regenerativa","Anemia por perda aguda de sangue","Anemia hipoproliferativa (defeito de produção)","Estado normal"],"a":2,"exp":"IRC<2% com hematócrito baixo indica hipoproliferativa (defeito de produção), não resposta medular."},
+    // 10 novas questions for intro
+{"q":"Qual é a definição laboratorial de anemia em adultos (hemoglobina)?","opts":["Hb <14 g/dL em ambos os sexos","Hb <13 g/dL para homens e <12 g/dL para mulheres","Hb <10 g/dL independentemente do sexo","Hb <11 g/dL para homens e <10 g/dL para mulheres"],"a":1,"exp":"Critério comum: Hb <13 g/dL em homens e <12 g/dL em mulheres."},
+{"q":"Qual exame é mais indicado para avaliar deficiência de ferro como causa de anemia?","opts":["Bilirrubina direta","Ferritina sérica","Transaminases","Eletroforese de hemoglobina"],"a":1,"exp":"Ferritina sérica é um bom marcador das reservas de ferro (baixo na deficiência de ferro)."},
+{"q":"Qual índice sugere anemia por doença crônica em comparação com anemia por deficiência de ferro?","opts":["Ferritina baixa","Transferrina elevada","Ferritina normal/alta com saturação de transferrina baixa","VCM aumentado"],"a":2,"exp":"Anemia de doença crônica geralmente tem ferritina normal/alta (inflamação) com saturação de transferrina baixa."},
+{"q":"Qual parâmetro do hemograma ajuda a identificar se há anisocitose?","opts":["VCM","RDW (Red cell distribution width)","Leucócitos totais","Plaquetas"],"a":1,"exp":"RDW aumentada indica anisocitose (variação no tamanho das hemácias)."},
+{"q":"Em anemia microcítica, qual diagnóstico diferencial é prioritário em uma jovem fértil?","opts":["Anemia por doença renal crônica","Deficiência de ferro por perda menstrual","Talassemia maior","Anemia aplástica"],"a":1,"exp":"Em mulheres jovens, perda menstrual e deficiência de ferro são causas frequentes de anemia microcítica."},
+{"q":"Qual é a conduta inicial razoável diante de anemia de causa indeterminada no ambulatório?","opts":["Transfusão imediata","Solicitar história detalhada, exame físico e exames básicos (ferro, reticulócitos, função renal)","Iniciar quelantes de ferro","Prescrever eritropoetina sem investigação"],"a":1,"exp":"Investigar com história, exame físico e exames laboratoriais básicos antes de terapias definidas."},
+{"q":"Qual achado sugere hemorragia crônica como causa de anemia?","opts":["Reticulócitos muito altos","Sinais de perda de ferro (ferritina baixa) e história de sangramento","Eletroforese de Hb alterada","Esplenomegalia intensa"],"a":1,"exp":"Hemorragia crônica leva à depleção de ferro: ferritina baixa e sinais ou história de sangramento."},
+{"q":"O que é útil para calcular o índice de produção medular de eritrócitos?","opts":["VCM × Hb","Contagem de reticulócitos corrigida (ou índice reticulocitário)","Bilirrubina indireta","Tempo de protrombina"],"a":1,"exp":"Índice reticulocitário ou reticulócitos corrigidos avaliam produção medular relativa à anemia."},
+{"q":"Em anemias megaloblásticas, qual alteração é esperada no hemograma?","opts":["VCM reduzido","VCM aumentado, hipersegmentação de neutrófilos","Aumento isolado de plaquetas","RDW normal"],"a":1,"exp":"Megaloblásticas mostram VCM aumentado e hipersegmentação de neutrófilos."},
+{"q":"Qual exame adicional é indicado quando há suspeita de anemia hemolítica pela presença de icterícia e aumento da bilirrubina indireta?","opts":["Teste de Coombs (direto)","Mapeamento genético de alfa-talassemia","Dosagem de ferritina","TC de abdome"],"a":0,"exp":"Teste de Coombs direto auxilia a diferenciar causas imunes de hemólise."}
+  ],
+
+  hemoliticas: [
+    // 5 original kept
+{"q":"Qual achado laboratorial é mais típico de hemólise intravascular aguda?","opts":["Aumento importante de haptoglobina plasmática","Hemoglobinúria e queda de haptoglobina","Ferritina muito baixa","Coombs direto positivo sempre"],"a":1,"exp":"Hemólise intravascular libera Hb livre — haptoglobina diminui; pode haver hemoglobinúria."},
+{"q":"A deficiência de G6PD tipicamente causa hemólise quando o paciente é exposto a:","opts":["Antibióticos oxidantes ou infecções","Repouso absoluto","Ingestão de ferro","Transfusão simples"],"a":0,"exp":"G6PD leva a sensibilidade ao estresse oxidativo: drogas oxidantes, infecções, favas."},
+{"q":"Na esferocitose hereditária, qual sinal esperado no sangue periférico e qual teste laboratorial confirma a perda da deformabilidade?","opts":["Eliptócitos; teste de Coombs","Esferócitos; teste de fragilidade osmótica","Corpos de Heinz; eletroforese de Hb","Anéis de Cabot; reticulócitos baixos"],"a":1,"exp":"Esferócitos e teste de fragilidade osmótica alterada são clássicos na esferocitose."},
+{"q":"Um paciente com anemia hemolítica autoimune por anticorpos \"quentes\" (IgG) provavelmente terá:","opts":["Coombs direto negativo","Esplenomegalia e hemólise extravascular predominante","Predominantemente hemólise intravascular por complemento","Tratamento inicial com quelantes de ferro"],"a":1,"exp":"IgG causa destruição extravascular na medula/esplênica com esplenomegalia; Coombs direto costuma ser positivo."},
+{"q":"Em deficiência de G6PD, qual achado morfológico é típico durante um episódio hemolítico?","opts":["Corpos de Howell-Jolly","Corpos de Heinz (inclusões) e fragmentação","Aumento da hemoglobina fetal","Presença de megacariócitos no sangue periférico"],"a":1,"exp":"Corpos de Heinz (inclusões de hemoglobina oxidadas) são característicos."},
+    // 10 new for hemolíticas
+{"q":"Qual exame é mais sensível para detectar hemólise crônica de grau moderado?","opts":["Dosagem de ferritina","Haptoglobina baixa e bilirrubina indireta elevada","Eletroforese de hemoglobina","Tempo de sangramento"],"a":1,"exp":"Haptoglobina reduzida e bilirrubina indireta elevada são sinais de hemólise crônica."},
+{"q":"O que indica um Coombs direto positivo?","opts":["Presença de anticorpos ou complemento ligados às hemácias","Deficiência de ferro","Infecção por Mycoplasma","Hemorragia recente"],"a":0,"exp":"Coombs direto positivo significa anticorpos (IgG) ou complemento ligados à superfície das hemácias."},
+{"q":"Qual é a fisiopatologia da hemólise por prostéticos valvulares (mechanical)?","opts":["Atividade autoimune","Fragmentação mecânica das hemácias (hemólise microangiopática)","Defeito enzimático","Acúmulo de ferro"],"a":1,"exp":"Valvas próteses ou estenoses podem causar hemólise por fragmentação mecânica (esquizocitose)."},
+{"q":"Em hemólise extravascular predominante, espera-se:","opts":["Hemoglobinúria maciça","Icterícia e esplenomegalia","Aumento de haptoglobina","Hemoglobinúria transitória"],"a":1,"exp":"Hemólise extravascular → destruição pelo sistema retículoendotelial → icterícia e esplenomegalia; haptoglobina geralmente normal ou levemente reduzida."},
+{"q":"Qual substância se eleva quando há aumento do turnover eritrocitário e pode levar a cálculo pigmentário?","opts":["Ferro sérico","Bilirrubina indireta","Transferrina","Albumina"],"a":1,"exp":"Bilirrubina indireta aumenta na hemólise e pode levar a cálculos biliares pigmentares."},
+{"q":"Que achado indica hemólise intravascular severa no exame de urina?","opts":["Proteinúria seletiva","Hemoglobinúria e possível mioglobinúria","Presença de cilindros hialinos","Glicosúria"],"a":1,"exp":"Hemoglobinúria (urina escura) pode ocorrer em hemólise intravascular massiva."},
+{"q":"Qual é a utilidade da pesquisa de corpos de Heinz no esfregaço?","opts":["Detectar autoanticorpos","Identificar hemoglobinas oxidadas (como em G6PD)","Avaliar ferro sérico","Contar reticulócitos"],"a":1,"exp":"Corpos de Heinz indicam precipitação de hemoglobina oxidada — vistos em G6PD e intoxicações oxidativas."},
+{"q":"Na púrpura trombocitopênica trombótica (PTT) há hemólise microangiopática; qual achado de sangue periférico é típico?","opts":["Esferócitos abundantes","Esquizócitos (fragmentados)","Corpos de Howell-Jolly","Anéis de Cabot"],"a":1,"exp":"Esquizócitos (fragmented RBCs) são típicos de hemólise microangiopática."},
+{"q":"Qual intervenção é prioritária em hemólise autoimune grave com queda rápida da Hb?","opts":["Quelantes de ferro","Corticosteroides e considerar imunossupressão/ transfusão quando necessário","Apenas observação","Suplementação de ferro oral"],"a":1,"exp":"Corticosteroides são tratamento inicial em anemia hemolítica autoimune; transfusão pode ser indicada conforme quadro."},
+{"q":"Qual é o papel da esplenectomia em algumas anemias hemolíticas hereditárias?","opts":["Cura definitiva de todas as hemoglobinopatias","Reduzir hemólise extravascular em doenças como esferocitose hereditária","Aumentar o risco de anemia aplástica","Indicar sempre em G6PD"],"a":1,"exp":"Esplenectomia reduz destruição extravascular (esplenica) em esferocitose, mas tem riscos (infecções)."},
+{"q":"Qual marcador é útil para monitorar hemólise crônica e carga do ferro liberado?","opts":["TGO","Ferritina sérica e saturação de transferrina (além de haptoglobina)","TSH","Creatinina"],"a":1,"exp":"Ferritina e saturação de transferrina ajudam a monitorar carga férrica a longo prazo; haptoglobina indica hemólise ativa."}
+  ],
+
+  falciforme: [
+    // 5 originals kept
+{"q":"A mutação que causa HbS é caracterizada por qual substituição de aminoácido?","opts":["Lisina → Ácido glutâmico","Ácido glutâmico → Valina","Valina → Ácido glutâmico","Alanina → Serina"],"a":1,"exp":"Mutação na β-globina: ácido glutâmico substituído por valina — forma HbS."},
+{"q":"Qual mecanismo celular é fundamental para a patogenia das crises dolorosas vaso-oclusivas?","opts":["Aumento da deformabilidade das hemácias","Polimerização da hemoglobina desoxigenada e perda de deformabilidade","Diminuição da adesão celular ao endotélio","Aumento exclusivo de HbA"],"a":1,"exp":"Desoxi-HbS polimeriza → hemácias rigidificadas → vaso-oclusão e isquemia."},
+{"q":"Qual intervenção farmacológica aumenta HbF e reduz crises em pacientes com anemia falciforme?","opts":["Hidroxiureia","Desferroxamina","Propranolol","Vitamina B12"],"a":0,"exp":"Hidroxiureia aumenta HbF e reduz crises vaso-oclusivas."},
+{"q":"Em heterozigotos (traço falciforme AS), qual manifestação renal é típica?","opts":["Hematúria e diminuição da capacidade de concentrar a urina","Proteinúria massiva desde o nascimento","Nefropatia por depósito de ferro","Ausência total de problemas renais"],"a":0,"exp":"Traço falciforme pode causar hematúria e hipostenúria (diminuição da capacidade de concentrar urina)."},
+{"q":"No manejo agudo de uma crise vaso-oclusiva com dor intensa, qual conduta NÃO é apropriada como medida inicial?","opts":["Hidratação oral ou IV","Analgesia escalonada conforme intensidade","Forçar transfusões intercambiáveis para manter Hb > 12 g/dL rotineiramente","Investigar fator desencadeante (infecção) e tratar"],"a":2,"exp":"Transfusões para Hb >12 g/dL não são conduta inicial rotineira; priorizam-se hidratação, analgesia e tratamento de desencadeantes."},
+    // 10 new for falciforme
+{"q":"Qual exame de triagem neonatal identifica maioria dos casos de anemia falciforme?","opts":["Hemograma simples","Eletroforese de hemoglobina (ou teste de triagem neonatal)","Dosagem de ferritina","Prova de fragilidade osmótica"],"a":1,"exp":"Triagem neonatal com eletroforese ou métodos específicos detectam variantes como HbS."},
+{"q":"Qual complicação óssea é comum em portadores de anemia falciforme crônica?","opts":["Osteomalácia por deficiência de vitamina D","Infartos ósseos e necrose avascular (ex.: cabeça femoral)","Metástases ósseas","Hiperostose alveolar"],"a":1,"exp":"Infartos repetidos podem levar a necrose avascular, especialmente da cabeça femoral."},
+{"q":"Por que pacientes com anemia falciforme têm maior risco de acidente vascular cerebral (AVC) em crianças?","opts":["Devido à hiperlipidemia","Por estenose/oclusão de artérias cerebrais por processos vaso-oclusivos","Por trombocitopenia","Por tumores cerebrais associados"],"a":1,"exp":"Vaso-oclusões e arteriopatia aumentam risco de AVC; vigilância com ultrassom transcraniano (TCD) é usada para triagem."},
+{"q":"Qual é a indicação de transfusão crônica profilática em portadores de anemia falciforme pediátricos?","opts":["Prevenção de AVC em crianças com TCD alterado","Somente dor episódica","Para todos os traços falciformes","Nunca é indicada"],"a":0,"exp":"Transfusões crônicas podem ser usadas para prevenir AVC em crianças com TCD de alto risco."},
+{"q":"Qual vacina é especialmente importante em crianças com anemia falciforme funcionalmente asplênicas?","opts":["Influenza apenas","Pneumocócica (conjugada e polissacarídica) e meningocócica","Só BCG","Vacina de varicela apenas"],"a":1,"exp":"Devido à asplenia funcional, vacinas contra pneumococos e outros encapsulados são essenciais."},
+{"q":"Qual alteração eletrolítica/comprometimento pode ocorrer no rim por hemoglobinúria crônica?","opts":["Hipocalemia crônica","Nefropatia por hemossiderose/lesão tubular e insuficiência renal progressiva","Glicosúria isolada","Hiperuricemia exclusiva"],"a":1,"exp":"Hemoglobinúria e depósitos de ferro podem levar a lesão renal e disfunção tubular progressiva."},
+{"q":"Qual é o efeito da penicilina profilática em lactentes com anemia falciforme?","opts":["Reduz apenas dor","Reduz infecções por Streptococcus pneumoniae e mortalidade infantil","Previne AVC","Cura a doença"],"a":1,"exp":"Penicilina profilática reduz risco de septicemia pneumocócica em lactentes asplênicos/funcionalmente asplênicos."},
+{"q":"Em exames laboratoriais, o que costuma estar elevado na crise hemolítica falciforme?","opts":["Ferritina muito baixa","Bilirrubina indireta e LDH","Transferrina","TGO isoladamente"],"a":1,"exp":"Hemólise aumenta bilirrubina indireta e LDH; reticulocitose também é esperada."},
+{"q":"Qual terapia curativa existe hoje para alguns pacientes com anemia falciforme?","opts":["Antibióticos de longo prazo","Terapia genética/ transplante de medula hematopoiética","Uso crônico de ferro","Somente analgésicos"],"a":1,"exp":"Transplante de medula (ou terapias genéticas recentes) pode ser curativo em casos selecionados."},
+{"q":"O que é a síndrome mão-pé (dactilite) na anemia falciforme?","opts":["Infecção por fungos","Crise vaso-oclusiva em mãos e pés causando dor e tumefação, comum em lactentes","Hipertensão arterial","Dermatite alérgica"],"a":1,"exp":"Dactilite é vaso-oclusão nas mãos/pés, causando dor e inchaço, comum em lactentes com doença falciforme."}
+  ],
+
+  talassemias: [
+    // 5 originals kept
+{"q":"Nas β-talassemias, quais achados são esperados na eletroforese de hemoglobina no caso de talassemia maior?","opts":["Predomínio de HbA com pouca HbF","Ausência ou grande redução de HbA e aumento de HbF e HbA2","Aumento isolado de HbH","Eletroforese normal"],"a":1,"exp":"Talassemia major: redução de HbA com aumento compensatório de HbF e HbA2."},
+{"q":"Qual complicação é a principal causa de morbimortalidade tardia em pacientes submetidos a transfusões crônicas por talassemia maior?","opts":["Infecções oportunistas imediatas","Sobrecarga de ferro com lesão cardíaca e endócrina","Trombocitopenia irreversível","Esplenomegalia regressiva"],"a":1,"exp":"Sobrecarga férrica causa lesões cardíacas e endócrinas se não manejada com quelantes."},
+{"q":"Na α-talassemia, quantos genes α deletados resultam em hidropisia fetal (Hb Bart's) e morte intraútero?","opts":["1 gene deletado","2 genes deletados","3 genes deletados","4 genes deletados"],"a":3,"exp":"Deleção de 4 genes (--/--) leva a Hb Bart's e hidropisia fetal."},
+{"q":"Qual é uma indicação frequente de esplenectomia em talassemia?","opts":["Plaquetopenia moderada sem sintomas","Consumo transfusional elevado que excede limite aceitável para manter Hb alvo","Presença de Hb Bart's em adulto","Anemia microcítica leve sem esplenomegalia"],"a":1,"exp":"Esplenectomia pode reduzir necessidade transfusional em talassemia com esplenomegalia sintomática/alto consumo transfusional."},
+{"q":"Qual conduta é fundamental para prevenir complicações por sobrecarga de ferro em talassêmicos multi-transfundidos?","opts":["Transfusões sem monitorização","Uso de quelantes de ferro e monitorização de ferritina/órgãos","Evitar transfusões em qualquer circunstância","Somente suplementar ferro oral"],"a":1,"exp":"Quelantes de ferro (ex.: deferasirox) e monitorização são essenciais para prevenir complicações."},
+    // 10 new for talassemias
+{"q":"Qual achado do hemograma é clássico nas talassemias beta minor (traço)?","opts":["Anemia normocítica sem alterações","Microcitose acentuada com hemoglobina apenas levemente reduzida","Macroglobulinemia","Trombocitose marcada"],"a":1,"exp":"Traço β costuma ter microcitose significativa com anemia leve — importante diferencial com deficiência de ferro."},
+{"q":"Como diferenciar talassemia trait de deficiência de ferro pela bioquímica?","opts":["Ambas têm ferritina baixa","Traço talassêmico costuma ter ferritina normal e RDW normal; deficiência de ferro tem ferritina baixa e RDW aumentada","Apenas pelo VCM","Pela presença de corpos de Heinz"],"a":1,"exp":"Ferritina e RDW ajudam: deficiência de ferro → ferritina baixa e RDW alto; talassemia trait → ferritina normal, RDW normal."},
+{"q":"Qual método confirma diagnóstico de talassemia e tipicamente mostra aumento de HbA2 em traço beta?","opts":["Eletroforese de hemoglobina (ou HPLC)","Teste de Coombs","Dosagem de ferritina","Exame de urina"],"a":0,"exp":"Eletroforese de Hb/HPLC identifica proporções aumentadas de HbA2 e HbF conforme o defeito."},
+{"q":"Qual é a consequência óssea clássica em talassemia major não tratada?","opts":["Osteoporose com fraturas patológicas","Expansão da medula óssea levando a alterações faciais (fácies de talassemia)","Osteoartrite precoce","Hiperostose cortical"],"a":1,"exp":"Expansão medular causa alterações faciais características, com deformidades ósseas."},
+{"q":"Qual é a indicação de início de transfusões regulares em talassemia major?","opts":["Sempre desde a infância imediatamente","Para manter Hb em nível seguro e permitir crescimento normal — usualmente transfusões regulares desde cedo","Nunca transfundir","Somente transfundir em adultos"],"a":1,"exp":"Talassemia major frequentemente requer transfusões regulares desde a infância para manter crescimento normal e prevenir complicações."},
+{"q":"Qual teste genético pode ser solicitado em casos complexos de talassemia?","opts":["Sequenciamento dos genes HBB e HBA para identificar mutações delecionais e pontuais","Testes autoimunes","Dosagem de vitamina B12","Testes renais"],"a":0,"exp":"Sequenciamento/genotipagem de HBB/HBA confirma o tipo de mutação e orienta aconselhamento genético."},
+{"q":"O que é HbH e em que contexto aparece?","opts":["Hemoglobina fetal aumentada em talassemia beta","Hemoglobina formada por tetrameros de β em alfa-talassemia com 3 genes deletados","É a mesma que HbA","Um marcador de inflamação"],"a":1,"exp":"HbH (β4) aparece em alfa-talassemia com perda de 3 genes (hemoglobina H disease)."},
+{"q":"Qual é o papel da transfusão manual vs transfusão eritrocitária crônica na talassemia?","opts":["Transfusões episódicas nunca são usadas","Transfusões regulares mantêm Hb alvo e previnem atividade hemolítica/expansão medular; transfusões episódicas para crises","Somente transfusão autóloga","Quelantes substituem transfusão"],"a":1,"exp":"Transfusões regulares são terapia de base na talassemia major; episódicas são usadas em situações específicas."},
+{"q":"Quais órgãos são frequentemente afetados pela sobrecarga férrica na talassemia?","opts":["Rins e pulmões preferencialmente","Coração, fígado e glândulas endócrinas (ex.: pâncreas, hipófise)","Apenas pele","Apenas sistema nervoso central"],"a":1,"exp":"Sobrecarga de ferro afeta coração (cardiomiopatia), fígado (fibrose) e órgãos endócrinos (diabetes, hipogonadismo)."},
+{"q":"Qual agente quelante oral é comumente usado no manejo crônico da sobrecarga férrica?","opts":["Desferroxamina SC/IV (via bomba)","Deferasirox oral","Hidroxiureia","Penicilina"],"a":1,"exp":"Deferasirox é um quelante oral amplamente usado; desferoxamina também é eficaz (via SC/IV)."}  
+  ]
+
+}; // end data
+
+// Utility: render questions into sections
+function render() {
+  for (const sectionId of Object.keys(data)) {
+    const sec = document.getElementById(sectionId);
+    const arr = data[sectionId];
+    for (let i=0;i<arr.length;i++) {
+      const idx = i+1;
+      const qid = sectionId + '-' + idx;
+      const block = document.createElement('div');
+      block.className = 'question';
+      block.id = 'q-' + qid;
+      let html = `<strong>${idx}) ${arr[i].q}</strong>`;
+      html += '<ul class="opts">';
+      for (let j=0;j<arr[i].opts.length;j++) {
+        html += `<li><button class="opt" data-q="${qid}" data-choice="${j}" type="button">${String.fromCharCode(65+j)}) ${arr[i].opts[j]}</button></li>`;
+      }
+      html += '</ul>';
+      html += `<div id="res-${qid}" class="result"><div id="res-${qid}-msg"></div><div class="explain" id="res-${qid}-exp"></div></div>`;
+      block.innerHTML = html;
+      sec.appendChild(block);
+    }
+  }
+}
+
+// Event delegation for buttons — compatible with mobile (touch/click)
+document.addEventListener('DOMContentLoaded', function() {
+  render();
+
+  // navigation buttons
+  document.querySelectorAll('.toc button').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const t = b.getAttribute('data-target');
+      if (t) document.getElementById(t).scrollIntoView({behavior:'smooth', block:'start'});
+      else window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+  document.getElementById('top').addEventListener('click', ()=>window.scrollTo({top:0, behavior:'smooth'}));
+
+  // use event delegation: one listener for the document to catch all .opt button clicks/touches
+  document.body.addEventListener('click', function(e){
+    const btn = e.target.closest('button.opt');
+    if (!btn) return;
+    handleAnswerButton(btn);
+  });
+
+  // also listen for touchend to improve responsiveness on some mobile browsers
+  document.body.addEventListener('touchend', function(e){
+    const btn = e.target.closest('button.opt');
+    if (!btn) return;
+    // prevent double firing (touchend then click) — mark with a timestamp
+    const last = btn.getAttribute('data-last-touch') || 0;
+    const now = Date.now();
+    if (now - last < 500) return;
+    btn.setAttribute('data-last-touch', now);
+    handleAnswerButton(btn);
+  });
+});
+
+function handleAnswerButton(btn) {
+  const qid = btn.getAttribute('data-q');
+  const choice = parseInt(btn.getAttribute('data-choice'));
+  const parts = qid.split('-');
+  const section = parts[0];
+  const index = parseInt(parts[1],10)-1;
+  const meta = data[section][index];
+  const resDiv = document.getElementById('res-' + qid);
+  const msg = document.getElementById('res-' + qid + '-msg');
+  const exp = document.getElementById('res-' + qid + '-exp');
+
+  if (!meta || !resDiv) return;
+  // prevent answering twice for same question
+  if (resDiv.style.display === 'block') return;
+
+  const correct = meta.a;
+  if (choice === correct) {
+    msg.textContent = 'Correta ✓';
+    exp.textContent = meta.exp;
+    resDiv.className = 'result correct';
+    resDiv.style.display = 'block';
+  } else {
+    msg.textContent = 'Errada ✕';
+    exp.textContent = meta.exp + ' (Reveja este conceito.)';
+    resDiv.className = 'result incorrect';
+    resDiv.style.display = 'block';
+  }
+
+  // disable all buttons for this question
+  const container = document.getElementById('q-' + qid);
+  if (container) {
+    container.querySelectorAll('button.opt').forEach(b=> b.disabled = true);
+  }
+}
+
+</script>
+</body>
+</html>
