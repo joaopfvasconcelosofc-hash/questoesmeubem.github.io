@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quiz: Antibioticoterapia · Culturas · Meningites</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#7dd3fc;--accent-2:#fbcfe8;--good:#16a34a;--bad:#dc2626}
+    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, 'Helvetica Neue', Arial; background:linear-gradient(180deg,#061025 0%, #071232 100%); color:#e6eef8; margin:0; padding:24px}
+    header{display:flex;gap:16px;align-items:center}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:0;color:#bcdff6}
+    main{display:grid;grid-template-columns:1fr;gap:18px;margin-top:18px}
+    .section{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.03);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .section h2{margin:0 0 8px 0;color:var(--accent)}
+    .question{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:10px;margin:10px 0;border:1px solid rgba(125,211,252,0.08)}
+    .q-text{font-weight:600}
+    .choices{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .choice{background:#081222;border-radius:8px;padding:10px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:transform .08s ease, box-shadow .12s;display:flex;align-items:center;gap:10px}
+    .choice:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(2,6,23,0.6)}
+    .explain{margin-top:8px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);display:none}
+    .explain.good{border-left:4px solid var(--good);color:#c9f7dd}
+    .explain.bad{border-left:4px solid var(--bad);color:#ffd7d7}
+    .tag{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:#a7d6f9}
+    footer{margin-top:18px;color:#9fbce9;font-size:13px}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .small{font-size:13px;color:#b8d8f8}
+    .kbd{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;font-weight:700}
+    @media(min-width:980px){main{grid-template-columns:repeat(3,1fr)}}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Quiz Interativo — Antibioticoterapia, Culturas e Meningites</h1>
+      <p class="lead">30 questões (10 por assunto). Clique numa alternativa para receber a explicação imediata — ideal para revisão ativa.</p>
+    </div>
+    <div style="margin-left:auto;text-align:right">
+      <div class="tag">Nível: 6º período • Foco: conteúdo dos PDFs</div>
+      <div class="small">Design dinâmico para TDAH — cores, feedback imediato</div>
+    </div>
+  </header>
+
+  <main id="quiz"></main>
+
+  <footer>
+    <div class="row">
+      <div class="small">Gerado com base nos PDFs fornecidos. As explicações resumem por que a alternativa está correta ou incorreta.</div>
+    </div>
+  </footer>
+
+  <script>
+    function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]]}return array}
+
+    const data = [
+      {
+        title: 'Antibioticoterapia',
+        tag: 'mecanismos, classes e gravidez',
+        questions: [
+          {q: 'Qual mecanismo define antibióticos bactericidas?',
+            options:[
+              {t:'Inibir a síntese proteica sem matar a bactéria', c:false, e:'Isso descreve bacteriostáticos; não causa morte imediata.'},
+              {t:'Provocar alterações incompatíveis com a sobrevivência bacteriana', c:true, e:'Correto — bactericidas destroem ou danificam estruturas essenciais, levando à morte.'},
+              {t:'Bloquear a entrada de nutrientes na célula humana', c:false, e:'Não é mecanismo bactericida direto; fala de nutrição humana.'},
+              {t:'Atuar apenas na membrana externa de fungos', c:false, e:'Específico para fungos/antifúngicos, não definição geral de bactericida.'}
+            ]
+          },
+
+          {q:'Qual afirmação é verdadeira sobre aminoglicosídeos?',
+            options:[
+              {t:'São amplamente seguros na gravidez', c:false, e:'Aminoglicosídeos têm toxicidade (nefro/ototoxicidade) e são evitados na gravidez quando possível.'},
+              {t:'Têm boa atividade contra bacilos Gram-negativos e risco nefrotóxico', c:true, e:'Correto — gentamicina, amicacina são potentes contra Gram-negativos e potencialmente nefrotóxicos.'},
+              {t:'Atuam inibindo a síntese da parede celular', c:false, e:'Ação proteica, não parede celular.'},
+              {t:'São indicados como tratamento de primeira linha para coinfecções por anaeróbios', c:false, e:'Aminoglicosídeos têm pouca ação contra anaeróbios.'}
+            ]
+          },
+
+          {q:'Qual antibiótico está associado a colite pseudomembranosa por Clostridioides difficile?',
+            options:[
+              {t:'Clindamicina', c:true, e:'Correto — clindamicina suprime flora anaeróbia e é clássica causa de colite por C. difficile.'},
+              {t:'Penicilina benzilpenicilina', c:false, e:'Penicilinas podem alterar flora, mas clinda é mais associada.'},
+              {t:'Metronidazol', c:false, e:'Metronidazol é usado para tratar C. difficile (via oral), não causa tipicamente a colite clássica.'},
+              {t:'Vancomicina IV', c:false, e:'Vancomicina oral trata colite por C. difficile; via IV não alcança bem o intestino.'}
+            ]
+          },
+
+          {q:'Qual classe age principalmente sobre o DNA bacteriano?',
+            options:[
+              {t:'Quinolonas', c:true, e:'Correto — fluoroquinolonas inibem DNA girase/topoisomerase, afetando DNA bacteriano.'},
+              {t:'Macrolídeos', c:false, e:'Macrolídeos atuam na síntese proteica (50S).'},
+              {t:'Glicopeptídeos', c:false, e:'Glicopeptídeos (vancomicina) agem na parede celular.'},
+              {t:'Sulfonamidas', c:false, e:'Sulfonamidas interferem no metabolismo do folato, não diretamente no DNA.'}
+            ]
+          },
+
+          {q:'Sobre metronidazol (nitroimidazólico), assinale a alternativa correta:',
+            options:[
+              {t:'É eficaz contra anaeróbios e pode causar reação com álcool (tipo dissulfiram)', c:true, e:'Correto — metronidazol trata anaeróbios e causa reação tipo dissulfiram se álcool ingerido.'},
+              {t:'É teratogênico e absolutamente contraindicado em qualquer trimestre', c:false, e:'Contraindicado no 1º trimestre, mas pode ser usado se necessário nos demais trimestres.'},
+              {t:'Atua inibindo a síntese proteica 30S', c:false, e:'Não — essa é ação de aminoglicosídeos/tetraciclinas.'},
+              {t:'Tem ampla ação contra Enterococcus spp.', c:false, e:'Enterococcus não é alvo principal de metronidazol.'}
+            ]
+          },
+
+          {q:'Linezolida (oxazolidinona) é especialmente útil porque:',
+            options:[
+              {t:'É eficaz contra estafilococos oxacilina-resistentes e enterococos resistentes à vancomicina', c:true, e:'Correto — linezolida tem boa atividade contra MRSA e VRE.'},
+              {t:'É o fármaco de escolha para Pseudomonas aeruginosa', c:false, e:'Linezolida não é ativa contra Pseudomonas (Gram-negativo).' },
+              {t:'Atua rompendo a membrana externa dos bacilos Gram-negativos', c:false, e:'Não corresponde ao mecanismo da linezolida.'},
+              {t:'É um aminoglicosídeo com alto risco de nefrotoxicidade', c:false, e:'Linezolida não é aminoglicosídeo.'}
+            ]
+          },
+
+          {q:'Qual combinação tem efeito sinérgico no bloqueio do ácido fólico bacteriano?',
+            options:[
+              {t:'Sulfametoxazol + Trimetoprim', c:true, e:'Correto — bloqueiam etapas diferentes da via do folato, efeito sinérgico.'},
+              {t:'Amoxicilina + Clavulanato', c:false, e:'Essa combinação inibe beta-lactamase, não a via do folato.'},
+              {t:'Ciprofloxacino + Metronidazol', c:false, e:'Combinação usada às vezes clinicamente, mas não sinérgica na via do folato.'},
+              {t:'Vancomicina + Teicoplanina', c:false, e:'Ambos são glicopeptídeos; não bloqueiam folato.'}
+            ]
+          },
+
+          {q:'Qual antibiótico é classificado como última linha para Gram-negativos multirresistentes (ex: Acinetobacter), agindo na membrana?',
+            options:[
+              {t:'Polimixinas', c:true, e:'Correto — polimixinas (colistina) são usadas como último recurso para Gram-negativos resistentes, atuam na membrana.'},
+              {t:'Eritromicina', c:false, e:'Macrolídeo, não indicado como última linha para Gram-negativos multirresistentes.'},
+              {t:'Linezolida', c:false, e:'Linezolida é para Gram-positivos. '},
+              {t:'Tetraciclina', c:false, e:'Tetraciclinas têm uso variado, mas não são a última linha para estes casos.'}
+            ]
+          },
+
+          {q:'Sobre o uso de antibióticos na gravidez, qual opção deve ser evitada?',
+            options:[
+              {t:'Tetraciclinas', c:true, e:'Correto — tetraciclinas alteram desenvolvimento ósseo e dentição fetal; evitar na gravidez.'},
+              {t:'Penicilinas', c:false, e:'Penicilinas são geralmente seguras na gravidez.'},
+              {t:'Cefalosporinas', c:false, e:'Cefalosporinas geralmente consideradas seguras.'},
+              {t:'Clindamicina', c:false, e:'Clindamicina é considerada segura quando indicada.'}
+            ]
+          },
+
+          {q:'Qual afirmativa sobre vancomicina é verdadeira?',
+            options:[
+              {t:'É eficaz principalmente contra bactérias Gram-positivas, incluindo MRSA', c:true, e:'Correto — vancomicina é glicopeptídeo ativo contra Gram-positivos resistentes.'},
+              {t:'Tem excelente atividade contra Pseudomonas', c:false, e:'Pseudomonas é Gram-negativo, pouco sensível à vancomicina.'},
+              {t:'É uma quinolona, atuando no DNA', c:false, e:'Vancomicina não é quinolona; atua na parede celular.'},
+              {t:'É a droga de escolha para infecções por Mycobacterium tuberculosis', c:false, e:'Tuberculose requer esquemas específicos; vancomicina não é útil.'}
+            ]
+          }
+        ]
+      },
+
+      // CULTURAS
+      {
+        title: 'Culturas',
+        tag: 'coleta, transporte, processamento e interpretação',
+        questions: [
+          {q:'Qual é o primeiro passo fundamental para um diagnóstico microbiológico preciso?',
+            options:[
+              {t:'Preparar o antibiograma antes da coleta', c:false, e:'Antibiograma depende do isolamento e identificação; não é primeiro passo.'},
+              {t:'Requisição completa com origem da amostra e suspeita clínica', c:true, e:'Correto — uma requisição detalhada orienta o laboratório e melhora a chance de diagnóstico acurado.'},
+              {t:'Iniciar antibiótico empírico sem coleta', c:false, e:'Iniciar antibiótico antes da coleta prejudica a cultura.'},
+              {t:'Congelar a amostra imediatamente', c:false, e:'Nem todas as amostras devem ser congeladas; transporte rápido e apropriado é crucial.'}
+            ]
+          },
+
+          {q:'Para hemoculturas, qual fator aumenta a sensibilidade do exame?',
+            options:[
+              {t:'Aumentar o volume de sangue coletado por punção', c:true, e:'Correto — volume é crítico: quanto mais sangue adequado, maior chance de positividade.'},
+              {t:'Refrigerar os frascos antes do envio', c:false, e:'Frascos de hemocultura não devem ser refrigerados; manter à temperatura ambiente.'},
+              {t:'Coletar apenas uma amostra por episódio', c:false, e:'Recomenda-se ao menos 2 coletas para aumentar rendimento.'},
+              {t:'Usar swab da pele para diagnósticos de bacteremia', c:false, e:'Swabs não são adequados para diagnóstico de bacteremia.'}
+            ]
+          },
+
+          {q:'Qual é o critério de Kass tradicional para urocultura?',
+            options:[
+              {t:'≥10^2 UFC/mL', c:false, e:'Esse valor é usado em alguns contextos sintomáticos, mas não é o critério clássico de Kass.'},
+              {t:'≥10^5 UFC/mL', c:true, e:'Correto — Kass define infecção urinária quando ≥10^5 UFC/mL em amostra adequada.'},
+              {t:'≥10^7 UFC/mL', c:false, e:'Valor excessivo; não padrão.'},
+              {t:'Qualquer crescimento indica infecção', c:false, e:'Nem sempre — pode haver contaminação ou colonização.'}
+            ]
+          },
+
+          {q:'Sobre transporte de amostras, qual frase é verdadeira?',
+            options:[
+              {t:'Enviar amostras ao laboratório o mais rápido possível para evitar crescimento de microbiota normal', c:true, e:'Correto — transporte rápido preserva integridade e evita overgrowth de contaminantes.'},
+              {t:'Armazenar LCR em gel separador antes do envio', c:false, e:'LCR deve ser em frasco estéril sem gel separador.'},
+              {t:'Tempo de transporte não influencia resultados de urocultura', c:false, e:'Tempo influencia: urina deve chegar em até 30 minutos ou ser refrigerada.'},
+              {t:'Refrigerar frascos de hemocultura é recomendado', c:false, e:'Nunca refrigerar frascos de hemocultura.'}
+            ]
+          },
+
+          {q:'Qual técnica identifica bactérias rapidamente por perfil proteico (mass spec)?',
+            options:[
+              {t:'MALDI-TOF', c:true, e:'Correto — MALDI-TOF identifica microrganismos rapidamente com espectro proteico.'},
+              {t:'Kirby-Bauer', c:false, e:'Kirby-Bauer é método de difusão para sensibilidade, não identificação por espectro.'},
+              {t:'Gram', c:false, e:'Coloração Gram dá morfologia/tintoração, não perfil proteico.'},
+              {t:'CIM', c:false, e:'CIM (MIC) mede concentração inibitória mínima, não identificação por massa.'}
+            ]
+          },
+
+          {q:'Qual é uma causa comum de rejeição de amostras no laboratório?',
+            options:[
+              {t:'Requisição incompleta ou ilegível', c:true, e:'Correto — documentação incompleta é motivo clássico para rejeição.'},
+              {t:'Amostra colhida no frasco estéril correto', c:false, e:'Isso é correto; não causa rejeição.'},
+              {t:'Amostra enviada dentro do prazo de conservação', c:false, e:'Envio dentro do prazo é adequado.'},
+              {t:'Amostra identificada corretamente', c:false, e:'Boa identificação evita rejeição.'}
+            ]
+          },
+
+          {q:'No teste de difusão em disco (Kirby-Bauer), o que mede o halo de inibição?',
+            options:[
+              {t:'A CIM diretamente (valor numérico de concentração)', c:false, e:'O halo não dá diretamente a CIM, mas correlaciona-se inversamente com ela.'},
+              {t:'O diâmetro da zona onde o antibiótico inibiu o crescimento', c:true, e:'Correto — o halo medido em mm indica sensibilidade/resistência conforme tabelas.'},
+              {t:'A presença de esporos bacterianos', c:false, e:'Não; halo relaciona-se à suscetibilidade ao antibiótico.'},
+              {t:'A concentração plasmática do antibiótico no paciente', c:false, e:'Kirby-Bauer é in vitro e não mede concentração plasmática.'}
+            ]
+          },
+
+          {q:'Sobre amostras de escarro para tuberculose, qual recomendação é correta?',
+            options:[
+              {t:'Coletar três amostras matinais em dias consecutivos para aumentar sensibilidade', c:true, e:'Correto — escarro matinal tem maior carga bacilar; três amostras aumentam chance de detecção.'},
+              {t:'Uma única amostra aleatória é suficiente em todos os casos', c:false, e:'Não — sensibilidade aumenta com múltiplas amostras matinais.'},
+              {t:'Refrigerar o escarro por 48 horas antes do envio', c:false, e:'Não indicado; transportar rapidamente.'},
+              {t:'Coletar somente swab oral para diagnóstico de TB', c:false, e:'Swabs orais não são adequados para diagnóstico de tuberculose pulmonar.'}
+            ]
+          },
+
+          {q:'Em relação à interpretação de hemoculturas, qual micro-organismo tem alto valor preditivo positivo para bacteremia verdadeira mesmo em uma amostra?',
+            options:[
+              {t:'Staphylococcus aureus', c:true, e:'Correto — S. aureus em hemocultura tem alto valor preditivo de bacteremia verdadeira.'},
+              {t:'Staphylococcus coagulase-negativo', c:false, e:'Coagulase-negativos frequentemente representam contaminantes, especialmente em apenas uma amostra.'},
+              {t:'Corynebacterium spp.', c:false, e:'Corynebacterium costuma ser contaminante de pele.'},
+              {t:'Bacillus subtilis', c:false, e:'Geralmente contaminante ambiental.'}
+            ]
+          }
+        ]
+      },
+
+      // MENINGITES
+      {
+        title:'Meningites',
+        tag:'etiologia, LCR, quadro clínico e meningococo',
+        questions:[
+          {q:'Quais são os principais agentes bacterianos em meningite aguda em adultos (>10 anos)?',
+            options:[
+              {t:'Neisseria meningitidis e Streptococcus pneumoniae', c:true, e:'Correto — meningococo e pneumococo são os principais em adolescentes e adultos.'},
+              {t:'Listeria monocytogenes e Streptococcus agalactiae', c:false, e:'Mais frequentes em idosos ou neonatos/imunodeprimidos.'},
+              {t:'Plasmodium spp. e Ascaris lumbricoides', c:false, e:'Parasitas não são causas comuns de meningite aguda bacteriana.'},
+              {t:'Cryptococcus neoformans e Histoplasma', c:false, e:'Principais em meningites fúngicas, não nas agudas bacterianas típicas.'}
+            ]
+          },
+
+          {q:'No líquor de meningite bacteriana é esperado:',
+            options:[
+              {t:'Predomínio de neutrófilos, glicose baixa e proteínas aumentadas', c:true, e:'Correto — padrão clássico de meningite bacteriana.'},
+              {t:'Predomínio de linfócitos e glicose normal', c:false, e:'Isso descreve habitualmente meningite viral.'},
+              {t:'Ausência de células e glicose muito alta', c:false, e:'Não compatível com meningite.'},
+              {t:'Predomínio de eosinófilos com proteínas normais', c:false, e:'Eosinofilia no LCR é rara e sugere parasitas ou reações.'}
+            ]
+          },
+
+          {q:'Qual via NÃO é típica de contaminação/invasão para meningite?',
+            options:[
+              {t:'Hematogênica', c:false, e:'Hematogênica é uma via típica (disseminação pela corrente sanguínea).'},
+              {t:'Contiguidade a partir de foco otorrinolaringológico', c:false, e:'Contiguidade é via comum (otite, sinusite).'},
+              {t:'Acesso direto (trauma / cirurgia)', c:false, e:'Acesso direto é via conhecida.'},
+              {t:'Transmissão por ingestão crônica de alimentos', c:true, e:'Ingestão crônica não é via típica para invasão meníngea direta.'}
+            ]
+          },
+
+          {q:'A síndrome de Waterhouse-Friderichsen está associada principalmente a qual organismo?',
+            options:[
+              {t:'Neisseria meningitidis', c:true, e:'Correto — a síndrome, com CIVD e insuficiência adrenal, é classicamente ligada à meningococcemia.'},
+              {t:'Cryptococcus neoformans', c:false, e:'Resposta imune e quadro clínico são diferentes; Criptococo associa-se mais a imunossuprimidos.'},
+              {t:'Enterovírus', c:false, e:'Enterovírus causam meningite viral, raramente síndrome de Waterhouse.'},
+              {t:'Mycobacterium tuberculosis', c:false, e:'TB causa meningite crônica/subaguda, não tipicamente Waterhouse.'}
+            ]
+          },
+
+          {q:'Qual exame é considerado padrão-ouro para diagnóstico etiológico da doença meningocócica?',
+            options:[
+              {t:'Cultura do LCR, sangue ou raspado de petéquias', c:true, e:'Correto — cultura é padrão-ouro para identificar N. meningitidis.'},
+              {t:'Somente tomografia computadorizada sem punção lombar', c:false, e:'TC ajuda a avaliar HIC mas não diagnostica etiologia microbiológica.'},
+              {t:'Teste rápido de urina', c:false, e:'Inadequado para diagnóstico de meningite.'},
+              {t:'Eletroencefalograma', c:false, e:'EEG não identifica agente infeccioso.'}
+            ]
+          },
+
+          {q:'Quimioprofilaxia de contatos próximos de meningite meningocócica pode incluir:',
+            options:[
+              {t:'Rifampicina por 2 dias ou dose única de ciprofloxacino', c:true, e:'Correto — rifampicina (2 dias) e ciprofloxacino (dose única) são opções de quimioprofilaxia.'},
+              {t:'Terapia com vancomicina oral por 5 dias', c:false, e:'Vancomicina oral não é usada para profilaxia de meningococo.'},
+              {t:'Nenhuma medida, pois contatos nunca correm risco', c:false, e:'Contatos próximos têm risco aumentado nas primeiras 48h, por isso há indicação de profilaxia.'},
+              {t:'Isolamento por 30 dias sem medicação', c:false, e:'Isolamento prolongado não substitui a quimioprofilaxia quando indicada.'}
+            ]
+          },
+
+          {q:'Qual sinal clínico é classificado como síndrome do compromisso meníngeo?',
+            options:[
+              {t:'Rigidez de nuca', c:true, e:'Correto — rigidez de nuca é sinal clássico de irritação meníngea.'},
+              {t:'Hipertermia persistente sem sintomas neurológicos', c:false, e:'Febre isolada não é suficiente para caracterizar síndrome meníngea.'},
+              {t:'Dor lombar sem sinais meníngeos', c:false, e:'Dor lombar isolada não constitui síndrome meníngea típica.'},
+              {t:'Púrpura localizada em membro sem perturbação neurológica', c:false, e:'Púrpura pode acompanhar meningococcemia, mas não define síndrome meníngea.'}
+            ]
+          },
+
+          {q:'No LCR de meningite viral por enterovírus, o achado mais típico é:',
+            options:[
+              {t:'Predomínio de linfócitos com glicose normal', c:true, e:'Correto — meningite viral tende a apresentar linfocitose e glicose normal.'},
+              {t:'Neutrofilia intensa com glicose muito baixa', c:false, e:'Isso é típico de meningite bacteriana.'},
+              {t:'Ausência de células e proteínas baixas', c:false, e:'Não compatível com meningite viral sintomática.'},
+              {t:'Presença de fungos visíveis no Gram', c:false, e:'Fungos teriam outro padrão e geralmente acometem imunossuprimidos.'}
+            ]
+          },
+
+          {q:'Qual exame deve ser realizado antes de iniciar antibioticoterapia quando possível, para orientar terapia em meningite?',
+            options:[
+              {t:'Punção lombar com coleta de LCR e também hemoculturas antes da primeira dose', c:true, e:'Correto — coleta de LCR e sangue antes da primeira dose são importantes para cultura e diagnóstico.'},
+              {t:'Iniciar antibiótico e colher LCR 48h depois', c:false, e:'Iniciar antibiótico antes prejudica cultura; colher antes quando possível.'},
+              {t:'Realizar apenas tomografia e esperar resultados', c:false, e:'TC não substitui microbiologia; punção deve ser feita quando segura.'},
+              {t:'Somente exame sorológico da mãe', c:false, e:'Não é a abordagem correta para um paciente com suspeita de meningite aguda.'}
+            ]
+          }
+        ]
+      }
+    ];
+
+    const main = document.getElementById('quiz');
+    data.forEach(section=>{
+      const sec=document.createElement('section');sec.className='section';
+      const h=document.createElement('h2');h.textContent=section.title;sec.appendChild(h);
+      const tag=document.createElement('div');tag.className='small';tag.textContent=section.tag;sec.appendChild(tag);
+      const qs=section.questions.slice(0,10);
+      qs.forEach((qq,qi)=>{
+        const qwrap=document.createElement('div');qwrap.className='question';
+        const qtxt=document.createElement('div');qtxt.className='q-text';qtxt.textContent=`${qi+1}. ${qq.q}`;qwrap.appendChild(qtxt);
+        const choices=document.createElement('div');choices.className='choices';
+        const opts=shuffle(qq.options.map(o=>Object.assign({},o)));
+        opts.forEach((opt,oi)=>{
+          const btn=document.createElement('div');btn.className='choice';btn.tabIndex=0;btn.setAttribute('role','button');
+          btn.innerHTML=`<strong>${String.fromCharCode(65+oi)}.</strong> <span>${opt.t}</span>`;
+          const expl=document.createElement('div');expl.className='explain';qwrap.appendChild(expl);
+          btn.onclick=()=>{
+            expl.style.display='block';
+            expl.className='explain '+(opt.c?'good':'bad');
+            expl.innerHTML=`<strong>${opt.c?'Correto ✔️':'Incorreto ✖️'}</strong><div style="margin-top:6px">${opt.e}</div>`;
+          };
+          choices.appendChild(btn);
+        });
+        qwrap.appendChild(choices);
+        sec.appendChild(qwrap);
+      });
+      main.appendChild(sec);
+    });
+  </script>
+</body>
+</html>
