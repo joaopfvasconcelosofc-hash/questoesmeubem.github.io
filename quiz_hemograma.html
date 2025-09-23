@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Hemograma (Interativo)</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Hemograma 🩸📊</h1>
+    <p class="lead">20 questões baseadas exclusivamente no PDF "Hemograma".</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+  {
+    q:"1) Qual é o exame laboratorial mais solicitado na prática clínica?",
+    choices:[
+      {text:"Hemograma completo",correct:true,explain:"Correto — é o exame mais pedido, fundamental para avaliação geral."},
+      {text:"Gasometria arterial",correct:false,explain:"Errado — importante, mas não é o mais solicitado."},
+      {text:"Exame de urina tipo I",correct:false,explain:"Errado — também solicitado, mas não supera o hemograma."},
+      {text:"ECG",correct:false,explain:"Errado — não é exame laboratorial."}
+    ]
+  },
+  {
+    q:"2) O hemograma avalia principalmente:",
+    choices:[
+      {text:"Série vermelha, série branca e plaquetas",correct:true,explain:"Correto — são os três grandes eixos do hemograma."},
+      {text:"Função hepática",correct:false,explain:"Errado — é avaliada por provas de função hepática."},
+      {text:"Perfil lipídico",correct:false,explain:"Errado — não faz parte do hemograma."},
+      {text:"Função tireoidiana",correct:false,explain:"Errado — TSH/T4 não estão incluídos."}
+    ]
+  },
+  {
+    q:"3) A principal função da série vermelha é:",
+    choices:[
+      {text:"Transporte de oxigênio e CO₂",correct:true,explain:"Correto — a hemoglobina transporta gases respiratórios."},
+      {text:"Produção de anticorpos",correct:false,explain:"Errado — função dos linfócitos B."},
+      {text:"Ativação da coagulação",correct:false,explain:"Errado — plaquetas são responsáveis."},
+      {text:"Defesa contra parasitas",correct:false,explain:"Errado — eosinófilos atuam nisso."}
+    ]
+  },
+  {
+    q:"4) A hemoglobina (Hb) baixa sugere:",
+    choices:[
+      {text:"Anemia",correct:true,explain:"Correto — valores baixos de Hb são o principal marcador de anemia."},
+      {text:"Policitemia",correct:false,explain:"Errado — policitemia é Hb alta."},
+      {text:"Infecção bacteriana",correct:false,explain:"Errado — não está diretamente ligada."},
+      {text:"Alergia",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"5) O hematócrito (Ht) representa:",
+    choices:[
+      {text:"Percentual do volume sanguíneo ocupado por hemácias",correct:true,explain:"Correto — Ht é a relação entre massa de hemácias e volume total de sangue."},
+      {text:"Quantidade de leucócitos circulantes",correct:false,explain:"Errado — isso é a contagem de leucócitos."},
+      {text:"Quantidade de hemoglobina livre",correct:false,explain:"Errado."},
+      {text:"Volume plasmático",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"6) O VCM (volume corpuscular médio) avalia:",
+    choices:[
+      {text:"Tamanho médio das hemácias",correct:true,explain:"Correto — define se a anemia é microcítica, normocítica ou macrocítica."},
+      {text:"Quantidade de hemoglobina",correct:false,explain:"Errado — isso é a CHCM."},
+      {text:"Número absoluto de eritrócitos",correct:false,explain:"Errado — é a contagem de hemácias."},
+      {text:"Velocidade de hemossedimentação",correct:false,explain:"Errado — não faz parte do hemograma."}
+    ]
+  },
+  {
+    q:"7) A CHCM indica:",
+    choices:[
+      {text:"Concentração de hemoglobina nas hemácias",correct:true,explain:"Correto — ajuda a definir hipocromia ou normocromia."},
+      {text:"Volume médio da hemácia",correct:false,explain:"Errado — isso é o VCM."},
+      {text:"Quantidade total de hemoglobina no sangue",correct:false,explain:"Errado."},
+      {text:"Proporção de leucócitos segmentados",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"8) A leucocitose é definida como:",
+    choices:[
+      {text:"Leucócitos acima de 10.000/mm³",correct:true,explain:"Correto — valor de referência habitual."},
+      {text:"Leucócitos abaixo de 4.000/mm³",correct:false,explain:"Errado — isso é leucopenia."},
+      {text:"Plaquetas acima de 450.000/mm³",correct:false,explain:"Errado — isso é trombocitose."},
+      {text:"Hemoglobina acima do normal",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"9) A neutrofilia geralmente indica:",
+    choices:[
+      {text:"Infecção bacteriana aguda",correct:true,explain:"Correto — é o achado mais clássico."},
+      {text:"Infecção viral",correct:false,explain:"Errado — em geral cursa com linfocitose."},
+      {text:"Alergia",correct:false,explain:"Errado — associada a eosinofilia."},
+      {text:"Anemia ferropriva",correct:false,explain:"Errado — não causa neutrofilia."}
+    ]
+  },
+  {
+    q:"10) A linfocitose é frequentemente observada em:",
+    choices:[
+      {text:"Infecções virais",correct:true,explain:"Correto — mononucleose, rubéola, hepatite, entre outras."},
+      {text:"Infecções bacterianas",correct:false,explain:"Errado — geralmente neutrofilia."},
+      {text:"Hemorragias agudas",correct:false,explain:"Errado."},
+      {text:"Reações alérgicas",correct:false,explain:"Errado — eosinofilia é típica."}
+    ]
+  },
+  {
+    q:"11) A eosinofilia pode indicar:",
+    choices:[
+      {text:"Parasitose e alergia",correct:true,explain:"Correto — são as principais causas clínicas."},
+      {text:"Infecção bacteriana aguda",correct:false,explain:"Errado."},
+      {text:"Leucemia linfocítica crônica",correct:false,explain:"Errado."},
+      {text:"Doença renal crônica",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"12) A monocitose pode ser encontrada em:",
+    choices:[
+      {text:"Tuberculose e infecções crônicas",correct:true,explain:"Correto — TB, sífilis e endocardite são exemplos."},
+      {text:"Resfriado comum",correct:false,explain:"Errado — linfocitose é mais típica."},
+      {text:"Asma alérgica",correct:false,explain:"Errado — eosinofilia é característica."},
+      {text:"Anemia hemolítica aguda",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"13) A trombocitopenia representa:",
+    choices:[
+      {text:"Plaquetas abaixo de 150.000/mm³",correct:true,explain:"Correto — valores de referência habituais."},
+      {text:"Plaquetas acima de 450.000/mm³",correct:false,explain:"Errado — isso é trombocitose."},
+      {text:"Hemoglobina baixa",correct:false,explain:"Errado."},
+      {text:"VCM baixo",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"14) A trombocitose é definida como:",
+    choices:[
+      {text:"Plaquetas acima de 450.000/mm³",correct:true,explain:"Correto — pode ser reacional ou primária (mieloproliferativa)."},
+      {text:"Plaquetas abaixo de 150.000/mm³",correct:false,explain:"Errado — isso é trombocitopenia."},
+      {text:"Leucócitos acima de 10.000/mm³",correct:false,explain:"Errado."},
+      {text:"Hemoglobina alta",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"15) A reticulocitose indica:",
+    choices:[
+      {text:"Aumento da produção medular de hemácias",correct:true,explain:"Correto — ocorre após hemorragia ou hemólise."},
+      {text:"Falência medular",correct:false,explain:"Errado — isso cursa com reticulócitos baixos."},
+      {text:"Aumento de plaquetas",correct:false,explain:"Errado."},
+      {text:"Aumento de leucócitos",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"16) Qual exame é necessário para confirmar alterações encontradas no hemograma?",
+    choices:[
+      {text:"Exame de sangue periférico (esfregaço)",correct:true,explain:"Correto — permite ver morfologia celular."},
+      {text:"Urocultura",correct:false,explain:"Errado."},
+      {text:"Teste ergométrico",correct:false,explain:"Errado."},
+      {text:"Ecodoppler",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"17) Qual a principal utilidade clínica do hemograma?",
+    choices:[
+      {text:"Auxílio no diagnóstico e acompanhamento de doenças",correct:true,explain:"Correto — usado no rastreio e monitoramento clínico."},
+      {text:"Avaliar função cardíaca",correct:false,explain:"Errado."},
+      {text:"Medir hormônios tireoidianos",correct:false,explain:"Errado."},
+      {text:"Analisar eletrólitos séricos",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"18) A anemia microcítica com hipocromia é sugerida por:",
+    choices:[
+      {text:"VCM e CHCM baixos",correct:true,explain:"Correto — quadro típico de anemia ferropriva."},
+      {text:"VCM alto e CHCM alto",correct:false,explain:"Errado."},
+      {text:"VCM normal e reticulócitos baixos",correct:false,explain:"Errado — isso é anemia normocítica hipoproliferativa."},
+      {text:"Leucocitose",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"19) O hemograma pode auxiliar na investigação de:",
+    choices:[
+      {text:"Infecções, anemias e distúrbios plaquetários",correct:true,explain:"Correto — abrange os três componentes principais."},
+      {text:"Função renal",correct:false,explain:"Errado — avaliada pela creatinina."},
+      {text:"Função hepática",correct:false,explain:"Errado — avaliada por enzimas hepáticas."},
+      {text:"Colesterol e triglicerídeos",correct:false,explain:"Errado — perfil lipídico não faz parte."}
+    ]
+  },
+  {
+    q:"20) Em caso de dúvida diagnóstica após hemograma, deve-se:",
+    choices:[
+      {text:"Correlacionar com quadro clínico e solicitar exames complementares",correct:true,explain:"Correto — interpretação nunca deve ser isolada."},
+      {text:"Confiar apenas no valor do hemograma",correct:false,explain:"Errado — precisa sempre de contexto clínico."},
+      {text:"Repetir exames desnecessariamente",correct:false,explain:"Errado."},
+      {text:"Iniciar tratamento empírico imediato sem avaliação clínica",correct:false,explain:"Errado."}
+    ]
+  }
+];
+
+// função para embaralhar alternativas
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Anemia Ferropriva (Interativo)</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#1f8feb; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; grid-template-columns: 1fr; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(31,139,235,0.12);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); color:#cfe9ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  .controls{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+  @media(min-width:900px){ .container{grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Anemia Ferropriva 🩸</h1>
+    <p class="lead">20+ questões cobrindo metabolismo do ferro, diagnóstico, manifestações e tratamento — explicações aparecem ao escolher qualquer alternativa.</p>
+  </div>
+  <div style="margin-left:auto; text-align:right;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 22</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card" style="max-width:980px; margin:18px auto;">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Escolha uma alternativa para ver a explicação; você pode trocar a resposta a qualquer momento — a explicação atualizará automaticamente.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ========= Dados das questões (baseado no PDF: Anemia Ferropriva) =========
+   Cada item: {q, choices:[{text, correct:boolean, explain}], tags:[]}
+   Explicações curtas e objetivas (estudante 6º período).
+*/
+const questions = [
+  {
+    q: "1) Qual é a forma de ferro presente principalmente na hemoglobina e que corresponde a ~2/3 do ferro corporal?",
+    choices: [
+      {text:"Ferro heme (Fe2+) integrado à hemoglobina", correct:true, explain:"Correto — a maior parte do ferro funcional está na hemoglobina dentro dos eritrócitos."},
+      {text:"Ferro ligado à transferrina no plasma", correct:false, explain:"Errado — ferro ligado à transferrina é a fração circulante, pequena comparada ao ferro na hemoglobina."},
+      {text:"Ferro armazenado como hemossiderina", correct:false, explain:"Errado — hemossiderina é depósito, representa pequena fração dos estoques."},
+      {text:"Ferro livre no citosol", correct:false, explain:"Errado — ferro livre é tóxico e não existe em quantidades significativas no organismo."}
+    ]
+  },
+  {
+    q: "2) Qual proteína sérica correlaciona-se com o estoque corporal total de ferro e é medida para avaliar depósitos?",
+    choices: [
+      {text:"Ferritina", correct:true, explain:"Correto — ferritina sérica se correlaciona com estoque de ferro e é usada na avaliação dos depósitos."},
+      {text:"Transferrina", correct:false, explain:"Errado — transferrina é transportadora; sua concentração aumenta quando os estoques estão baixos, não é medida direta de depósito."},
+      {text:"Hepcidina", correct:false, explain:"Errado — hepcidina regula absorção, mas não é usada rotineiramente como exame de estoque."},
+      {text:"Hemossiderina", correct:false, explain:"Errado — hemossiderina é um depósito celular; não é uma medida sérica rotineira."}
+    ]
+  },
+  {
+    q: "3) Qual achado laboratorial é considerado específico (muito reduzido) para deficiência de ferro?",
+    choices:[
+      {text:"Ferritina sérica muito baixa", correct:true, explain:"Correto — ferritina muito baixa é específica para deficiência de ferro."},
+      {text:"Ferro sérico baixo", correct:false, explain:"Errado — ferro sérico pode cair com inflamação e varia com jejum/horário."},
+      {text:"TIBC baixo", correct:false, explain:"Errado — TIBC geralmente aumenta na deficiência de ferro."},
+      {text:"Saturação de transferrina elevada", correct:false, explain:"Errado — na deficiência a saturação costuma estar reduzida."}
+    ]
+  },
+  {
+    q: "4) A hipótese: qual é o padrão-ouro descrito no PDF para demonstrar depósito de ferro na medula?",
+    choices:[
+      {text:"Coloração de Perls (azul de Prússia) da medula", correct:true, explain:"Correto — a coloração de Perls para ferro na medula é referida como padrão-ouro para estoques."},
+      {text:"Dosagem de ferro sérico", correct:false, explain:"Errado — ferro sérico não reflete diretamente os depósitos."},
+      {text:"Radiografia óssea", correct:false, explain:"Errado — não avalia depósitos de ferro."},
+      {text:"Hemograma completo", correct:false, explain:"Errado — hemograma não mostra diretamente depósitos de ferro."}
+    ]
+  },
+  {
+    q: "5) Sobre absorção intestinal do ferro: qual forma do ferro alimentar é melhor absorvida?",
+    choices:[
+      {text:"Ferro heme (de origem animal, Fe2+)", correct:true, explain:"Correto — ferro heme (Fe2+) é melhor absorvido; forma heme de origem animal tem maior biodisponibilidade."},
+      {text:"Ferro não-heme (Fe3+) vegetal", correct:false, explain:"Errado — ferro não-heme é menos absorvido e mais influenciado por inibidores/promotores da dieta."},
+      {text:"Ferro ligado à ferritina dietética", correct:false, explain:"Errado — ferritina dietética não é a principal via de absorção; o ferro heme domina absorção eficiente."},
+      {text:"Ferro livre na forma iônica (Fe0)", correct:false, explain:"Errado — Fe0 não é forma fisiológica/dietária relevante."}
+    ]
+  },
+  {
+    q: "6) Qual peptídeo hepático regula a absorção intestinal do ferro?",
+    choices:[
+      {text:"Hepcidina", correct:true, explain:"Correto — hepcidina, produzida pelo fígado, regula a taxa de absorção do ferro."},
+      {text:"Eritropoietina", correct:false, explain:"Errado — eritropoietina estimula eritropoese; não regula diretamente a absorção intestinal."},
+      {text:"Transferrina", correct:false, explain:"Errado — transferrina é transportadora, não reguladora da absorção."},
+      {text:"Ferritina", correct:false, explain:"Errado — ferritina armazena ferro, não regula absorção."}
+    ]
+  },
+  {
+    q: "7) Na deficiência de ferro, como costuma se comportar a transferrina e o TIBC?",
+    choices:[
+      {text:"Transferrina aumenta e TIBC aumenta", correct:true, explain:"Correto — produção de transferrina aumenta quando estoques baixos; TIBC (medida indireta) também se eleva."},
+      {text:"Transferrina diminui e TIBC diminui", correct:false, explain:"Errado — isso ocorre em inflamação, não em deficiência pura de ferro."},
+      {text:"Transferrina aumenta e TIBC diminui", correct:false, explain:"Errado — ambos tendem a aumentar juntos na deficiência de ferro."},
+      {text:"Sem alteração na transferrina; TIBC aumenta", correct:false, explain:"Errado — transferrina geralmente aumenta com a TIBC."}
+    ]
+  },
+  {
+    q: "8) O índice de saturação da transferrina (IST) é calculado basicamente por qual razão?",
+    choices:[
+      {text:"Ferro sérico / TIBC (ou transferrina) × constante", correct:true, explain:"Correto — IST = (ferro sérico / TIBC) ou razão similar; valores típicos ~20–45%."},
+      {text:"Ferritina / ferro sérico", correct:false, explain:"Errado — essa não é a fórmula do IST."},
+      {text:"Transferrina / ferritina", correct:false, explain:"Errado — também incorreto."},
+      {text:"TIBC / ferro sérico", correct:false, explain:"Errado — é o inverso da razão usada no IST."}
+    ]
+  },
+  {
+    q: "9) Qual percentual aproximado do ferro dietético é absorvido normalmente?",
+    choices:[
+      {text:"Cerca de 10%", correct:true, explain:"Correto — aproximadamente 10% do ferro na dieta é absorvido em condições normais."},
+      {text:"Cerca de 50%", correct:false, explain:"Errado — 50% é muito alto para absorção dietética normal."},
+      {text:"Quase 0%", correct:false, explain:"Errado — não é zero; há absorção regulada."},
+      {text:"100%", correct:false, explain:"Errado — absorção total não ocorre; é muito menor."}
+    ]
+  },
+  {
+    q: "10) Qual é a perda média diária de ferro pelo organismo em adultos (vias não-menstruais)?",
+    choices:[
+      {text:"~1 mg/dia por descamação e secreções", correct:true, explain:"Correto — não há excreção fisiológica eficiente; perdas diárias ~1 mg por descamação celular e outras vias."},
+      {text:"~10 mg/dia por urina", correct:false, explain:"Errado — perdas urinárias não chegam a isso em valores normais."},
+      {text:"~50 mg/dia por suor", correct:false, explain:"Errado — suor não causa perda tão alta de ferro."},
+      {text:"Nenhuma perda diária", correct:false, explain:"Errado — há perdas diárias pequenas, ~1 mg."}
+    ]
+  },
+  {
+    q: "11) Em mulheres em idade reprodutiva, a menstruação normal leva a perda aproximada de quanto ferro por mês?",
+    choices:[
+      {text:"15–30 mg de ferro por mês", correct:true, explain:"Correto — menstruação de 30–60 mL de sangue/mês corresponde a ~15–30 mg de ferro."},
+      {text:"1–2 mg por mês", correct:false, explain:"Errado — valor muito baixo; menstruação causa perda significativamente maior."},
+      {text:"100–150 mg por mês", correct:false, explain:"Errado — valor muito alto para perda menstrual normal."},
+      {text:"Não há perda de ferro com menstruação", correct:false, explain:"Errado — há perda significativa de ferro com menstruação."}
+    ]
+  },
+  {
+    q: "12) Quais são manifestações clínicas clássicas de anemia ferropriva?",
+    choices:[
+      {text:"Palidez, fadiga, intolerância ao exercício e pica (por exemplo, ingestão de gelo)", correct:true, explain:"Correto — essas são manifestações típicas descritas no PDF."},
+      {text:"Icterícia franca e dor lombar", correct:false, explain:"Errado — icterícia e dor lombar não são sinais clássicos de deficiência de ferro."},
+      {text:"Hiperpigmentação cutânea e hipertensão", correct:false, explain:"Errado — não característico da anemia ferropriva."},
+      {text:"Excesso de peso e edema periférico", correct:false, explain:"Errado — não são manifestações típicas de deficiência de ferro."}
+    ]
+  },
+  {
+    q: "13) Qual sinal ungueal é associado à deficiência de ferro?",
+    choices:[
+      {text:"Coiloníquia (unhas em forma de colher)", correct:true, explain:"Correto — coiloníquia é típica da deficiência de ferro."},
+      {text:"Onicólise por trauma", correct:false, explain:"Errado — onicólise traumática não é sinal específico de deficiência de ferro."},
+      {text:"Hiperqueratose subungueal", correct:false, explain:"Errado — não é o achado clássico citado."},
+      {text:"Melanoniquia", correct:false, explain:"Errado — pigmentação ungueal não é típica de anemia ferropriva."}
+    ]
+  },
+  {
+    q: "14) A síndrome de Plummer-Vinson está associada à deficiência de ferro e pode apresentar qual sinal?",
+    choices:[
+      {text:"Disfagia por membranas esofágicas", correct:true, explain:"Correto — Plummer-Vinson pode causar disfagia por membranas/esofagite e atrofia das papilas linguais."},
+      {text:"Hepatoesplenomegalia maciça", correct:false, explain:"Errado — não é característica da Plummer-Vinson."},
+      {text:"Fotofobia intensa", correct:false, explain:"Errado — não relacionado."},
+      {text:"Ascite", correct:false, explain:"Errado — não é típico nessa síndrome."}
+    ]
+  },
+  {
+    q: "15) Em relação ao tratamento oral da deficiência de ferro, qual é a dose ideal diária de ferro elementar para adultos, segundo o PDF?",
+    choices:[
+      {text:"180–200 mg de ferro elementar por dia (dividido em 3–4 tomadas)", correct:true, explain:"Correto — o PDF recomenda 180–200 mg de ferro elementar/dia para adultos, em doses divididas."},
+      {text:"10 mg de ferro elementar ao dia", correct:false, explain:"Errado — muito abaixo da dose terapêutica recomendada."},
+      {text:"1 g por dia de ferro elementar", correct:false, explain:"Errado — dose excessiva e tóxica."},
+      {text:"50 mg por semana", correct:false, explain:"Errado — frequência/dose inadequadas para tratamento agudo."}
+    ]
+  },
+  {
+    q: "16) Qual é o sinal laboratorial mais precoce de resposta à reposição de ferro?",
+    choices:[
+      {text:"Aumento da contagem de reticulócitos (pico entre 5–10 dias)", correct:true, explain:"Correto — aumento dos reticulócitos é o primeiro sinal de resposta, pico entre 5º e 10º dia."},
+      {text:"Queda imediata da ferritina em 24h", correct:false, explain:"Errado — ferritina não cai assim; ela varia com tempo e inflamação."},
+      {text:"Aumento súbito da Hb em 24h", correct:false, explain:"Errado — Hb demora mais tempo; aumento médio ~1 g/dL/semana."},
+      {text:"Normalização imediata do TIBC", correct:false, explain:"Errado — alterações no TIBC ocorrem mais lentamente."}
+    ]
+  },
+  {
+    q: "17) Aumento médio esperado da hemoglobina após início da reposição de ferro por semana:",
+    choices:[
+      {text:"~1 g/dL por semana", correct:true, explain:"Correto — aumento médio de ≈1 g/dL de Hb por semana é descrito no PDF."},
+      {text:"~5 g/dL por semana", correct:false, explain:"Errado — aumento tão rápido não é realista nem seguro."},
+      {text:"Sem alteração por várias semanas", correct:false, explain:"Errado — normalmente já há resposta na contagem de reticulócitos e progressão da Hb."},
+      {text:"Queda da Hb inicialmente", correct:false, explain:"Errado — a tendência é de aumento, não de queda, após reposição adequada."}
+    ]
+  },
+  {
+    q: "18) Quais situações indicam considerar reposição parenteral de ferro?",
+    choices:[
+      {text:"Quando via oral é ineficaz, intolerável ou há necessidade de reposição rápida", correct:true, explain:"Correto — indicações incluem intolerância a VO, má absorção, ou necessidade clínica de reposição mais rápida/eficaz."},
+      {text:"Sempre na anemia leve sem investigação", correct:false, explain:"Errado — tratamento oral é preferível inicialmente em casos sem contra-indicação."},
+      {text:"Somente quando ferritina >1000 ng/mL", correct:false, explain:"Errado — ferritina tão alta exclui deficiência; não é indicação de parenteral."},
+      {text:"Em ausência absoluta de sintomas", correct:false, explain:"Errado — ausência de sintomas não é por si indicação para via parenteral."}
+    ]
+  },
+  {
+    q: "19) Quais efeitos adversos são comuns com suplementos orais de ferro?",
+    choices:[
+      {text:"Alteração da cor das fezes, náuseas, dor epigástrica, constipação/diarreia", correct:true, explain:"Correto — esses efeitos gastrointestinais e alteração da cor das fezes são típicos."},
+      {text:"Sede excessiva e perda de audição", correct:false, explain:"Errado — não são efeitos típicos da suplementação oral de ferro."},
+      {text:"Cicatrização acelerada de feridas", correct:false, explain:"Errado — não é descrito como efeito adverso comum."},
+      {text:"Hipotireoidismo", correct:false, explain:"Errado — suplementação de ferro não causa hipotireoidismo diretamente."}
+    ]
+  },
+  {
+    q: "20) Hemossiderina corresponde a:",
+    choices:[
+      {text:"Agregado de ferro/derivados dentro de macrófagos (depósito)", correct:true, explain:"Correto — hemossiderina é depósito de ferro em macrófagos (medula, fígado, baço) e representa pequena fração dos estoques."},
+      {text:"Forma de ferro circulante ligada à transferrina", correct:false, explain:"Errado — isso descreve ferro ligado à transferrina, não hemossiderina."},
+      {text:"Proteína que transporta duas moléculas de ferro", correct:false, explain:"Errado — isso descreve transferrina."},
+      {text:"Um hormônio que regula absorção de ferro", correct:false, explain:"Errado — isso descreve hepcidina, não hemossiderina."}
+    ]
+  },
+  {
+    q: "21) Em presença de infecção aguda, como comporta-se a ferritina sérica?",
+    choices:[
+      {text:"Pode elevar-se (é proteína de fase aguda), mascarando deficiência", correct:true, explain:"Correto — ferritina é proteína de fase aguda; níveis normais/elevados não excluem deficiência em inflamação."},
+      {text:"Sempre diminui rapidamente", correct:false, explain:"Errado — tende a aumentar na inflamação, não diminuir."},
+      {text:"Permanece inalterada e sempre reflete estoques", correct:false, explain:"Errado — inflamação altera ferritina sérica."},
+      {text:"É substituída pelo TIBC como marcador", correct:false, explain:"Errado — TIBC é outro parâmetro; ferritina continua sendo avaliada, mas com cautela em inflamação."}
+    ]
+  },
+  {
+    q: "22) Quais mecanismos contribuem para a deficiência de ferro (etiologia multifatorial)?",
+    choices:[
+      {text:"Baixa ingestão, má absorção, perdas crônicas (sangramento), aumento de demanda (gestação)", correct:true, explain:"Correto — deficiência de ferro é multifatorial: ingesta insuficiente, perdas e demanda aumentada."},
+      {text:"Excesso de ingestão de vitamina C", correct:false, explain:"Errado — vitamina C na verdade aumenta absorção de ferro."},
+      {text:"Exclusivamente genética sem relação com dieta", correct:false, explain:"Errado — embora existam causas genéticas para doenças do ferro, a deficiência é geralmente por desequilíbrio dieta/absorção/perdas."},
+      {text:"Somente por consumo excessivo de ferro", correct:false, explain:"Errado — consumo excessivo causaria sobrecarga, não deficiência."}
+    ]
+  }
+];
+
+/* ===== utilities ===== */
+function shuffle(array){
+  for(let i = array.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [array[i],array[j]]=[array[j],array[i]];
+  }
+  return array;
+}
+
+/* ===== render quiz ===== */
+const quizEl = document.getElementById('quiz');
+let state = { answered:0, correct:0 };
+function render(){
+  quizEl.innerHTML = '';
+  questions.forEach((item, idx) => {
+    // clone choices and shuffle to vary order
+    const choices = shuffle(item.choices.map((c,i)=>({...c, id: `q${idx}_c${i}`})));
+    const wrap = document.createElement('section');
+    wrap.className = 'card';
+    wrap.dataset.qindex = idx;
+    wrap.innerHTML = `
+      <div class="qhead">
+        <div class="qnum">Questão ${idx+1}</div>
+        <div class="meta">${item.tags ? item.tags.join(',') : ''}</div>
+      </div>
+      <div class="question">${item.q}</div>
+      <div class="options" id="opts-${idx}"></div>
+      <div class="explain" id="exp-${idx}" role="status" aria-live="polite"></div>
+    `;
+    const optsEl = wrap.querySelector(`#opts-${idx}`);
+    choices.forEach((c, i)=>{
+      const lab = document.createElement('label');
+      lab.className = 'option';
+      lab.innerHTML = `<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${escapeHtml(c.explain)}"> <div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      // add listener
+      lab.querySelector('input').addEventListener('change', (e)=>{
+        handleAnswer(idx, e.target);
+      });
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+/* escape for data attribute */
+function escapeHtml(s){
+  return s.replace(/"/g,'&quot;').replace(/'/g,"&#39;");
+}
+
+/* handle selection */
+function handleAnswer(qIndex, inputEl){
+  const expEl = document.getElementById(`exp-${qIndex}`);
+  const correct = (inputEl.dataset.correct === 'true');
+  const explain = inputEl.dataset.explain || '';
+  expEl.style.display = 'block';
+  expEl.innerHTML = (correct ? '✅ <strong>Correto.</strong> ' : '❌ <strong>Incorreto.</strong> ') + htmlUnescape(explain);
+  expEl.classList.toggle('ok', correct);
+  expEl.classList.toggle('err', !correct);
+  // update progress: we count a question as 'answered' if any radio in that group checked
+  updateProgress();
+}
+
+/* unescape HTML entities */
+function htmlUnescape(s){
+  return s.replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+}
+
+/* update answered/correct counts */
+function updateProgress(){
+  let answered = 0, correct = 0;
+  questions.forEach((_, idx)=>{
+    const radios = document.getElementsByName(`q${idx}`);
+    let any=false, corr=false;
+    for(const r of radios){
+      if(r.checked){ any=true; if(r.dataset.correct==='true') corr=true; break;}
+    }
+    if(any) answered++;
+    if(corr) correct++;
+  });
+  state.answered = answered; state.correct = correct;
+  updateStatus();
+}
+
+/* update UI status */
+function updateStatus(){
+  document.getElementById('answeredCount').textContent = `Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent = `Corretas: ${state.correct}`;
+}
+
+/* show all explanations (reveal based on current selection) */
+document.getElementById('showAll').addEventListener('click', ()=>{
+  questions.forEach((_, idx)=>{
+    const radios = document.getElementsByName(`q${idx}`);
+    const expEl = document.getElementById(`exp-${idx}`);
+    let any=false;
+    for(const r of radios){
+      if(r.checked){ any=true; const correct = r.dataset.correct==='true'; expEl.style.display='block'; expEl.innerHTML = (correct ? '✅ <strong>Correto.</strong> ' : '❌ <strong>Incorreto.</strong> ') + htmlUnescape(r.dataset.explain); expEl.classList.toggle('ok', correct); expEl.classList.toggle('err', !correct); break;}
+    }
+    if(!any){
+      expEl.style.display='block';
+      expEl.innerHTML = `<em class="meta">Nenhuma alternativa selecionada — escolha uma para ver a explicação.</em>`;
+      expEl.classList.remove('ok','err');
+    }
+  });
+  updateProgress();
+});
+
+/* reset */
+document.getElementById('reset').addEventListener('click', ()=>{
+  // clear radios and hides explanations
+  questions.forEach((_, idx)=>{
+    const radios = document.getElementsByName(`q${idx}`);
+    for(const r of radios) r.checked = false;
+    const expEl = document.getElementById(`exp-${idx}`);
+    expEl.style.display = 'none';
+    expEl.innerHTML = '';
+    expEl.classList.remove('ok','err');
+  });
+  state.answered = 0; state.correct = 0;
+  updateStatus();
+});
+
+/* initialize */
+render();
+
+/* Accessibility: allow changing answer at any time (radios already allow this).
+   Also, ensure explanation updates on change (handled).
+*/
+</script>
+</body>
+</html>
