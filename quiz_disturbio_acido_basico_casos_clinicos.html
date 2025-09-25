@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Distúrbio Ácido-Básico (Interativo)</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Distúrbio Ácido-Básico ⚖️🫁🩺</h1>
+    <p class="lead">20 questões baseadas exclusivamente no PDF "Distúrbio Ácido-Básico".</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+  {
+    q:"1) Homem, 65 anos, tabagista, portador de DPOC. Chega ao pronto-socorro com sonolência, dispneia progressiva e uso de musculatura acessória. Exame: FR 10 irpm, SatO₂ 85% em ar ambiente. Gasometria: pH 7,28; pCO₂ 70 mmHg; HCO₃⁻ 33 mEq/L. Qual o distúrbio ácido-básico predominante?",
+    choices:[
+      {text:"Acidose respiratória crônica descompensada",correct:true,explain:"Correto — pCO₂ elevado cronicamente (com HCO₃⁻ aumentado por compensação), mas pH baixo indica descompensação."},
+      {text:"Acidose respiratória aguda",correct:false,explain:"Errado — haveria HCO₃⁻ normal, sem tempo de compensação."},
+      {text:"Alcalose metabólica",correct:false,explain:"Errado — HCO₃⁻ elevado não é primário, e pH está ácido."},
+      {text:"Acidose metabólica",correct:false,explain:"Errado — não há queda de HCO₃⁻."}
+    ]
+  },
+  {
+    q:"2) Mulher, 30 anos, em crise de ansiedade, chega ao PS com tontura, formigamento perioral e palpitações. Exame: FR 36 irpm, SatO₂ 98%. Gasometria: pH 7,55; pCO₂ 25 mmHg; HCO₃⁻ 23 mEq/L. Qual a interpretação?",
+    choices:[
+      {text:"Alcalose respiratória aguda",correct:true,explain:"Correto — hiperventilação reduziu pCO₂ rapidamente, sem tempo de queda significativa do HCO₃⁻."},
+      {text:"Alcalose metabólica",correct:false,explain:"Errado — o HCO₃⁻ não está aumentado."},
+      {text:"Acidose respiratória",correct:false,explain:"Errado — o pCO₂ está baixo."},
+      {text:"Acidose metabólica",correct:false,explain:"Errado — pH está alcalino."}
+    ]
+  },
+  {
+    q:"3) Homem, 45 anos, diabético tipo 1, chega com dor abdominal, náuseas e respiração de Kussmaul. Gasometria: pH 7,15; HCO₃⁻ 10 mEq/L; pCO₂ 24 mmHg. Glicemia: 420 mg/dL. Qual o distúrbio ácido-básico?",
+    choices:[
+      {text:"Acidose metabólica com compensação respiratória",correct:true,explain:"Correto — queda do HCO₃⁻ e acidemia caracterizam acidose metabólica; hiperventilação reduz pCO₂ como compensação (Kussmaul)."},
+      {text:"Acidose respiratória",correct:false,explain:"Errado — pCO₂ está baixo, não alto."},
+      {text:"Alcalose metabólica",correct:false,explain:"Errado — HCO₃⁻ não está elevado."},
+      {text:"Alcalose respiratória",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"4) Mulher, 50 anos, em vômitos persistentes há 3 dias. Queixa-se de fraqueza e câimbras. Gasometria: pH 7,52; HCO₃⁻ 34 mEq/L; pCO₂ 47 mmHg. Qual o diagnóstico?",
+    choices:[
+      {text:"Alcalose metabólica com compensação respiratória",correct:true,explain:"Correto — vômitos causam perda de H+ gástrico, elevando HCO₃⁻; há retenção compensatória de CO₂."},
+      {text:"Acidose metabólica",correct:false,explain:"Errado — HCO₃⁻ está elevado."},
+      {text:"Alcalose respiratória",correct:false,explain:"Errado — o distúrbio primário é metabólico."},
+      {text:"Acidose respiratória",correct:false,explain:"Errado — pH está alcalino."}
+    ]
+  },
+  {
+    q:"5) Homem, 28 anos, apresenta diarreia aquosa intensa há 2 dias. Exame: desidratado, PA 90x60 mmHg. Gasometria: pH 7,30; HCO₃⁻ 16 mEq/L; pCO₂ 32 mmHg. Qual o distúrbio provável?",
+    choices:[
+      {text:"Acidose metabólica hiperclorêmica",correct:true,explain:"Correto — diarreia causa perda de bicarbonato, levando a acidose metabólica com ânion gap normal."},
+      {text:"Acidose metabólica com AG aumentado",correct:false,explain:"Errado — não há retenção de ácidos não mensurados."},
+      {text:"Alcalose metabólica",correct:false,explain:"Errado — HCO₃⁻ está baixo, não alto."},
+      {text:"Acidose respiratória",correct:false,explain:"Errado — pCO₂ não está aumentado."}
+    ]
+  },
+  {
+    q:"6) Homem, 72 anos, com insuficiência renal crônica, chega com confusão mental. Gasometria: pH 7,22; HCO₃⁻ 14 mEq/L; pCO₂ 30 mmHg. Qual a interpretação?",
+    choices:[
+      {text:"Acidose metabólica com ânion gap aumentado",correct:true,explain:"Correto — retenção de ácidos urêmicos leva à acidose metabólica de AG elevado; hiperventilação compensa."},
+      {text:"Acidose metabólica hiperclorêmica",correct:false,explain:"Errado — não é perda de bicarbonato, mas retenção de ácidos."},
+      {text:"Acidose respiratória",correct:false,explain:"Errado."},
+      {text:"Alcalose metabólica",correct:false,explain:"Errado."}
+    ]
+  },
+  {
+    q:"7) Jovem, 20 anos, ingeriu grande quantidade de salicilatos. Chega com náuseas, zumbido e taquipneia. Gasometria: pH 7,42; HCO₃⁻ 18 mEq/L; pCO₂ 28 mmHg. Qual a melhor interpretação?",
+    choices:[
+      {text:"Distúrbio misto: acidose metabólica + alcalose respiratória",correct:true,explain:"Correto — salicilatos causam ambos os distúrbios; pH pode se manter normal pela soma das alterações."},
+      {text:"Apenas acidose metabólica",correct:false,explain:"Errado — não explicaria o pCO₂ tão baixo."},
+      {text:"Apenas alcalose respiratória",correct:false,explain:"Errado — HCO₃⁻ está reduzido."},
+      {text:"Normalidade",correct:false,explain:"Errado — há desequilíbrio mascarado."}
+    ]
+  },
+  {
+    q:"8) Homem, 60 anos, encontrado em parada cardiorrespiratória. Após reanimação, gasometria: pH 7,05; pCO₂ 78 mmHg; HCO₃⁻ 26 mEq/L. Qual o distúrbio?",
+    choices:[
+      {text:"Acidose respiratória aguda grave",correct:true,explain:"Correto — hipoventilação aguda elevou pCO₂; sem tempo para compensação renal."},
+      {text:"Acidose metabólica",correct:false,explain:"Errado — HCO₃⁻ está normal."},
+      {text:"Alcalose respiratória",correct:false,explain:"Errado — pCO₂ está elevado."},
+      {text:"Alcalose metabólica",correct:false,explain:"Errado — pH está ácido."}
+    ]
+  },
+  {
+    q:"9) Mulher, 55 anos, pós-operatório de abdome, com uso de sonda nasogástrica contínua. Queixa de fraqueza e parestesias. Gasometria: pH 7,48; HCO₃⁻ 30; pCO₂ 45. Qual o diagnóstico?",
+    choices:[
+      {text:"Alcalose metabólica compensada",correct:true,explain:"Correto — perda contínua de H+ gástrico aumenta HCO₃⁻; pCO₂ ligeiramente elevado sugere compensação."},
+      {text:"Alcalose respiratória",correct:false,explain:"Errado — pCO₂ não está reduzido."},
+      {text:"Acidose metabólica",correct:false,explain:"Errado — bicarbonato está aumentado."},
+      {text:"Acidose respiratória",correct:false,explain:"Errado — pH está alcalino."}
+    ]
+  },
+  {
+    q:"10) Homem, 40 anos, etilista crônico, encontrado confuso após jejum prolongado. Gasometria: pH 7,25; HCO₃⁻ 12; pCO₂ 28. Qual a interpretação?",
+    choices:[
+      {text:"Acidose metabólica com ânion gap aumentado (cetoacidose alcoólica)",correct:true,explain:"Correto — corpos cetônicos acumulados reduzem HCO₃⁻; pCO₂ baixo sugere compensação respiratória."},
+      {text:"Acidose metabólica hiperclorêmica",correct:false,explain:"Errado — nesse caso o AG está elevado."},
+      {text:"Acidose respiratória",correct:false,explain:"Errado — o pCO₂ não está elevado."},
+      {text:"Alcalose respiratória",correct:false,explain:"Errado — pH não está alcalino."}
+    ]
+  }
+];
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

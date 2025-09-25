@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Distúrbios Hidroeletrolíticos 2 (Interativo)</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Distúrbios Hidroeletrolíticos 2⚡💧🩺</h1>
+    <p class="lead">36 questões baseadas exclusivamente no PDF "Distúrbios HE 2" — 20 gerais e 16 casos clínicos.</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+  // ===================== QUESTÕES GERAIS (20) =====================
+  {
+    q: "Qual é o principal cátion do espaço intracelular?",
+    choices: [
+      { text: "Sódio", correct: false, explain: "O sódio é o principal cátion extracelular." },
+      { text: "Potássio", correct: true, explain: "O potássio é o principal cátion intracelular, representando cerca de 98% do total dentro das células." },
+      { text: "Cálcio", correct: false, explain: "O cálcio é importante, mas não é o cátion predominante." },
+      { text: "Magnésio", correct: false, explain: "O magnésio atua no LIC, mas não é o principal cátion." }
+    ]
+  },
+  {
+    q: "Qual é a concentração normal de potássio no espaço intracelular?",
+    choices: [
+      { text: "4–4,5 mEq/L", correct: false, explain: "Esse é o valor extracelular." },
+      { text: "10–12 mEq/L", correct: false, explain: "Esse valor não corresponde à realidade fisiológica." },
+      { text: "140 mEq/L", correct: true, explain: "A concentração intracelular é de cerca de 140 mEq/L." },
+      { text: "70 mEq/L", correct: false, explain: "Valor incorreto." }
+    ]
+  },
+  {
+    q: "Qual mecanismo celular mantém a assimetria de potássio e sódio entre os compartimentos LIC e LEC?",
+    choices: [
+      { text: "Difusão passiva", correct: false, explain: "A difusão não garante o gradiente." },
+      { text: "Bomba Na⁺-K⁺-ATPase", correct: true, explain: "Mantém o K⁺ intracelular e o Na⁺ extracelular, com gasto de ATP." },
+      { text: "Canais de potássio", correct: false, explain: "Auxiliam, mas não são o mecanismo principal." },
+      { text: "Transportadores de glicose", correct: false, explain: "Não têm relação direta com o gradiente iônico." }
+    ]
+  },
+  {
+    q: "Quais tecidos sofrem diretamente os efeitos das alterações do potássio sérico?",
+    choices: [
+      { text: "Cérebro apenas", correct: false, explain: "O cérebro é afetado indiretamente, mas não é o principal alvo." },
+      { text: "Músculo cardíaco, esquelético, liso e respiratório", correct: true, explain: "O potássio afeta a excitabilidade elétrica da musculatura em geral." },
+      { text: "Somente músculo cardíaco", correct: false, explain: "Não apenas o coração, mas também outros músculos." },
+      { text: "Somente músculo esquelético", correct: false, explain: "A musculatura esquelética é afetada, mas não exclusivamente." }
+    ]
+  },
+  {
+    q: "Qual hormônio estimula a entrada de potássio no LIC após as refeições?",
+    choices: [
+      { text: "Aldosterona", correct: false, explain: "Regula excreção renal, não a captação celular imediata." },
+      { text: "Insulina", correct: true, explain: "A insulina ativa a Na⁺-K⁺-ATPase, promovendo captação de K⁺." },
+      { text: "Glucagon", correct: false, explain: "Não tem efeito significativo sobre potássio." },
+      { text: "Adrenalina", correct: false, explain: "Pode estimular via β2, mas não é o principal fator pós-prandial." }
+    ]
+  },
+  {
+    q: "Qual é a principal via de excreção do potássio?",
+    choices: [
+      { text: "Fezes", correct: false, explain: "Eliminam apenas 5–10% do potássio ingerido." },
+      { text: "Urina", correct: true, explain: "O rim é o principal órgão responsável pela regulação do potássio." },
+      { text: "Suor", correct: false, explain: "Mesmo em sudorese intensa, não é relevante." },
+      { text: "Pele", correct: false, explain: "Não há excreção significativa por essa via." }
+    ]
+  },
+  {
+    q: "Hipocalemia é definida quando o potássio sérico está abaixo de:",
+    choices: [
+      { text: "5,5 mEq/L", correct: false, explain: "Esse é o critério para hipercalemia." },
+      { text: "3,5 mEq/L", correct: true, explain: "Hipocalemia = K⁺ sérico < 3,5 mEq/L." },
+      { text: "4,5 mEq/L", correct: false, explain: "É o limite inferior da normalidade, mas não critério diagnóstico." },
+      { text: "2,5 mEq/L", correct: false, explain: "Esse é critério para hipocalemia grave." }
+    ]
+  },
+  {
+    q: "Qual alteração ácido-base está geralmente associada à hipocalemia?",
+    choices: [
+      { text: "Alcalose metabólica", correct: true, explain: "Devido ao deslocamento de H⁺ para o LIC." },
+      { text: "Acidose metabólica", correct: false, explain: "Ocorre mais na hipercalemia." },
+      { text: "Alcalose respiratória", correct: false, explain: "Não é característica da hipocalemia." },
+      { text: "Acidose respiratória", correct: false, explain: "Não é característica da hipocalemia." }
+    ]
+  },
+  {
+    q: "Na hipocalemia, potássio urinário baixo sugere:",
+    choices: [
+      { text: "Perda renal", correct: false, explain: "Na perda renal o potássio urinário fica elevado." },
+      { text: "Perda extrarrenal", correct: true, explain: "Como em diarreia, o rim retém potássio." },
+      { text: "Pseudo-hipocalemia", correct: false, explain: "Esse termo se aplica à hipercalemia, não à hipocalemia." },
+      { text: "Erro laboratorial", correct: false, explain: "Pode ocorrer, mas não é a principal interpretação clínica." }
+    ]
+  },
+  {
+    q: "Qual complicação pode ocorrer em hipocalemia grave?",
+    choices: [
+      { text: "Rabdomiólise", correct: true, explain: "A hipocalemia grave desregula o volume celular e pode causar rabdomiólise." },
+      { text: "Hiperglicemia", correct: false, explain: "Não é a complicação principal." },
+      { text: "Hipertireoidismo", correct: false, explain: "Não tem relação direta." },
+      { text: "Hipotermia", correct: false, explain: "Não é uma complicação típica." }
+    ]
+  },
+  {
+    q: "Quem tolera melhor hipocalemias graves?",
+    choices: [
+      { text: "Cardiopatas", correct: false, explain: "Apresentam maior risco de arritmias." },
+      { text: "Idosos", correct: false, explain: "Têm risco aumentado de complicações." },
+      { text: "Jovens sem cardiopatia estrutural", correct: true, explain: "Toleram melhor hipocalemia grave." },
+      { text: "Hipertensos", correct: false, explain: "Não apresentam proteção contra complicações." }
+    ]
+  },
+  {
+    q: "Hipercalemia é definida quando o potássio sérico está acima de:",
+    choices: [
+      { text: "5,5 mEq/L", correct: true, explain: "Hipercalemia = K⁺ sérico > 5,5 mEq/L." },
+      { text: "4,5 mEq/L", correct: false, explain: "É o limite superior da normalidade." },
+      { text: "3,5 mEq/L", correct: false, explain: "É critério para hipocalemia." },
+      { text: "7,0 mEq/L", correct: false, explain: "Esse valor define hipercalemia grave, mas não o diagnóstico inicial." }
+    ]
+  },
+  {
+    q: "Hipercalemia grave + alteração eletrocardiográfica caracteriza:",
+    choices: [
+      { text: "Emergência clínica", correct: false, explain: "Não é a melhor definição." },
+      { text: "Emergência eletrolítica", correct: true, explain: "É a principal emergência eletrolítica." },
+      { text: "Emergência cirúrgica", correct: false, explain: "Não tem relação cirúrgica." },
+      { text: "Situação estável", correct: false, explain: "Representa alto risco, não estabilidade." }
+    ]
+  },
+  {
+    q: "Qual é o principal mecanismo capaz de causar hipercalemia crônica?",
+    choices: [
+      { text: "Aumento da ingesta de potássio", correct: false, explain: "Sozinho, raramente causa hipercalemia persistente." },
+      { text: "Redução da excreção renal de potássio", correct: true, explain: "É o único mecanismo que pode causar hipercalemia crônica." },
+      { text: "Desvio do LIC para o LEC", correct: false, explain: "Causa hipercalemia aguda, não crônica." },
+      { text: "Hemólise", correct: false, explain: "Pode causar pseudo-hipercalemia, mas não crônica." }
+    ]
+  },
+  {
+    q: "Hipercalemia leve geralmente é:",
+    choices: [
+      { text: "Sintomática com arritmias graves", correct: false, explain: "Arritmias graves são mais comuns em casos graves." },
+      { text: "Assintomática", correct: true, explain: "Na maioria das vezes, a hipercalemia leve é assintomática." },
+      { text: "Associada a rabdomiólise", correct: false, explain: "Rabdomiólise é mais comum em hipocalemia grave." },
+      { text: "Incompatível com a vida", correct: false, explain: "Não é fatal quando leve." }
+    ]
+  },
+  {
+    q: "Hipercalemia grave pode causar:",
+    choices: [
+      { text: "Hipotireoidismo", correct: false, explain: "Não há relação direta." },
+      { text: "Fraqueza muscular e arritmias", correct: true, explain: "São as manifestações clínicas clássicas da hipercalemia grave." },
+      { text: "Rabdomiólise", correct: false, explain: "É mais associada à hipocalemia grave." },
+      { text: "Hipotermia", correct: false, explain: "Não está associada." }
+    ]
+  },
+  {
+    q: "Qual medida estabiliza a membrana miocárdica na hipercalemia grave?",
+    choices: [
+      { text: "Gluconato de cálcio", correct: true, explain: "Estabiliza a membrana, revertendo alterações do ECG." },
+      { text: "Bicarbonato de sódio", correct: false, explain: "Serve para deslocar K⁺ para o LIC, não para estabilizar membrana." },
+      { text: "Insulina + glicose", correct: false, explain: "Também desviam K⁺ para o LIC, mas não estabilizam membrana." },
+      { text: "Hemodiálise", correct: false, explain: "Remove potássio, mas não atua diretamente na membrana." }
+    ]
+  },
+  {
+    q: "O gluconato de cálcio não deve ser administrado junto com:",
+    choices: [
+      { text: "Insulina", correct: false, explain: "Não há interação negativa direta." },
+      { text: "Bicarbonato de sódio", correct: true, explain: "Pode precipitar como carbonato de cálcio." },
+      { text: "Furosemida", correct: false, explain: "Não há interação incompatível." },
+      { text: "Beta-2-agonista", correct: false, explain: "Pode ser usado concomitantemente." }
+    ]
+  },
+  {
+    q: "Qual terapia remove efetivamente potássio do organismo em hipercalemia refratária?",
+    choices: [
+      { text: "Hemodiálise", correct: true, explain: "É o método mais eficaz para remoção de potássio." },
+      { text: "Insulina + glicose", correct: false, explain: "Apenas desloca o potássio temporariamente." },
+      { text: "Gluconato de cálcio", correct: false, explain: "Não reduz potássio sérico, só protege o coração." },
+      { text: "Beta-2-agonista", correct: false, explain: "Desloca potássio, mas não remove do organismo." }
+    ]
+  },
+  {
+    q: "Quais drogas podem reduzir a excreção de potássio e causar hipercalemia?",
+    choices: [
+      { text: "Inibidores do SRAA", correct: true, explain: "Como IECA, BRA e espironolactona." },
+      { text: "Diuréticos de alça", correct: false, explain: "Promovem perda de potássio." },
+      { text: "Tiazídicos", correct: false, explain: "Promovem hipocalemia." },
+      { text: "Antibióticos betalactâmicos", correct: false, explain: "Não interferem no potássio sérico." }
+    ]
+  },
+  {
+    q: "Qual medida pode aumentar a excreção fecal de potássio em hipercalemia?",
+    choices: [
+      { text: "Resinas de troca", correct: true, explain: "Promovem eliminação intestinal de potássio." },
+      { text: "Gluconato de cálcio", correct: false, explain: "Estabiliza membrana, não excreta potássio." },
+      { text: "Insulina + glicose", correct: false, explain: "Desloca potássio para o LIC." },
+      { text: "Beta-2-agonistas", correct: false, explain: "Também deslocam K⁺, mas não aumentam excreção fecal." }
+    ]
+  },
+
+  // ===================== CASOS CLÍNICOS (10) =====================
+  {
+  q: "Homem de 62 anos, portador de insuficiência cardíaca, faz uso de furosemida 40 mg/dia há 6 meses. Procura o pronto-socorro com queixa de fraqueza progressiva, câimbras e palpitações. Ao exame: PA 110/70 mmHg, FC 96 bpm, ritmo regular, sem sopros. Exames: Na⁺ = 140 mEq/L, K⁺ = 2,8 mEq/L, HCO₃⁻ = 32 mEq/L. ECG mostra ondas U evidentes. Qual a alteração ácido-base mais provável neste caso?",
+  choices: [
+    { text: "Acidose metabólica", correct: false, explain: "Não é o distúrbio típico da hipocalemia induzida por diuréticos." },
+    { text: "Alcalose metabólica", correct: true, explain: "A hipocalemia causada por diuréticos geralmente vem acompanhada de alcalose metabólica." },
+    { text: "Acidose respiratória", correct: false, explain: "Não há retenção de CO₂." },
+    { text: "Alcalose respiratória", correct: false, explain: "Não corresponde ao quadro." }
+  ]
+},
+{
+  q: "Homem de 30 anos, previamente hígido, apresenta quadro súbito de fraqueza em membros inferiores após episódio de vômitos intensos por gastroenterite. Evolui com paralisia ascendente até membros superiores em poucas horas. Exame: PA 120/80 mmHg, FC 88 bpm, força grau 2 em MMSS e MMII. Gasometria: pH 7,50, HCO₃⁻ 30 mEq/L, K⁺ = 2,4 mEq/L. Qual complicação grave pode ocorrer se não tratado?",
+  choices: [
+    { text: "Tetraplegia e insuficiência respiratória", correct: true, explain: "A hipocalemia grave pode progredir para paralisia muscular generalizada, inclusive do diafragma." },
+    { text: "Hipotireoidismo", correct: false, explain: "Não tem relação com o quadro." },
+    { text: "Hipotensão ortostática apenas", correct: false, explain: "A gravidade vai além de hipotensão leve." },
+    { text: "Hiperglicemia isolada", correct: false, explain: "Não é a complicação esperada." }
+  ]
+},
+{
+  q: "Mulher de 60 anos, hipertensa, em uso de enalapril 20 mg/dia, apresenta fadiga e fraqueza muscular. Ao exame: PA 140/85 mmHg, FC 78 bpm, sem alterações relevantes. Exames: Na⁺ = 138 mEq/L, K⁺ = 6,2 mEq/L, creatinina = 1,6 mg/dL. ECG normal. Qual a causa mais provável da alteração eletrolítica?",
+  choices: [
+    { text: "Ingesta excessiva de frutas cítricas", correct: false, explain: "Sozinha raramente causa hipercalemia grave." },
+    { text: "Uso de inibidor do SRAA", correct: true, explain: "Os IECA reduzem a excreção renal de potássio." },
+    { text: "Sudorese intensa", correct: false, explain: "A perda pelo suor é irrelevante para o potássio." },
+    { text: "Diarreia", correct: false, explain: "Diarreia causa hipocalemia, não hipercalemia." }
+  ]
+},
+{
+  q: "Homem de 28 anos, sem comorbidades, dá entrada no PS por palpitações súbitas. ECG: ondas T apiculadas difusas. Exames: K⁺ = 7,2 mEq/L, creatinina = 1,0 mg/dL, glicemia = 95 mg/dL. Qual deve ser a primeira medida terapêutica imediata?",
+  choices: [
+    { text: "Insulina + glicose EV", correct: false, explain: "Reduz o K⁺ sérico, mas não protege o coração imediatamente." },
+    { text: "Gluconato de cálcio EV", correct: true, explain: "É a medida mais urgente, estabilizando a membrana miocárdica." },
+    { text: "Furosemida EV", correct: false, explain: "É útil depois, não como primeira medida." },
+    { text: "Resina de troca", correct: false, explain: "Tem ação mais lenta e não é prioridade." }
+  ]
+},
+{
+  q: "Paciente de 70 anos, portador de DRC estágio 5 em programa conservador, apresenta confusão mental e fraqueza muscular. Exames: Na⁺ = 140 mEq/L, K⁺ = 6,9 mEq/L, creatinina = 7,0 mg/dL. Após medidas iniciais com insulina, bicarbonato e nebulização com beta-2-agonista, potássio mantém-se elevado. Qual o tratamento definitivo neste caso?",
+  choices: [
+    { text: "Beta-2-agonista inalatório", correct: false, explain: "Tem efeito temporário, mas não definitivo." },
+    { text: "Hemodiálise", correct: true, explain: "É o tratamento definitivo em hipercalemia refratária com DRC." },
+    { text: "Bicarbonato de sódio EV", correct: false, explain: "Ajuda a deslocar K⁺, mas não resolve a retenção crônica." },
+    { text: "Insulina + glicose", correct: false, explain: "Reduz transitoriamente, mas não remove potássio." }
+  ]
+},
+{
+  q: "Homem de 25 anos sofre politrauma em acidente automobilístico, com múltiplas fraturas e grande área de esmagamento em membros inferiores. Evolui com oligúria nas primeiras horas. Exames: Na⁺ = 137 mEq/L, K⁺ = 7,0 mEq/L, creatinina = 1,8 mg/dL. Qual o mecanismo fisiopatológico predominante da hipercalemia neste paciente?",
+  choices: [
+    { text: "Redução da TFG por DRC prévia", correct: false, explain: "A creatinina sugere função basal relativamente preservada." },
+    { text: "Liberação de potássio por lise celular", correct: true, explain: "O trauma extenso causa liberação maciça de K⁺ intracelular." },
+    { text: "Excreção urinária aumentada", correct: false, explain: "Na oligúria não há aumento de excreção." },
+    { text: "Pseudo-hipercalemia", correct: false, explain: "Aqui trata-se de hipercalemia verdadeira." }
+  ]
+},
+{
+  q: "Mulher de 35 anos, previamente saudável, apresenta vômitos persistentes há 5 dias. Refere fraqueza, câimbras e tontura. Exame: PA 90/60 mmHg, FC 110 bpm. Exames: Na⁺ = 136 mEq/L, K⁺ = 3,0 mEq/L, HCO₃⁻ = 34 mEq/L. Qual achado urinário é mais esperado neste caso?",
+  choices: [
+    { text: "Potássio urinário baixo", correct: true, explain: "Na perda extrarrenal por vômitos, o rim retém potássio." },
+    { text: "Potássio urinário alto", correct: false, explain: "Sugeriria perda renal." },
+    { text: "Sódio urinário elevado", correct: false, explain: "Não é específico neste contexto." },
+    { text: "pH urinário elevado", correct: false, explain: "Não é marcador direto da perda de K⁺." }
+  ]
+},
+{
+  q: "Homem de 50 anos, com DRC estágio 4 em uso de espironolactona, chega para consulta ambulatorial assintomático. Exames: Na⁺ = 138 mEq/L, K⁺ = 6,5 mEq/L, creatinina = 3,5 mg/dL. ECG sem alterações. Qual deve ser a primeira conduta?",
+  choices: [
+    { text: "Suspender espironolactona", correct: true, explain: "É a medida inicial ao identificar hipercalemia induzida por droga." },
+    { text: "Hemodiálise imediata", correct: false, explain: "Indicada apenas em casos refratários ou graves." },
+    { text: "Bicarbonato de sódio EV", correct: false, explain: "Pode ser usado, mas não é a conduta inicial." },
+    { text: "Aumentar dose de espironolactona", correct: false, explain: "Pioraria a hipercalemia." }
+  ]
+},
+{
+  q: "Homem de 40 anos, diabético, apresenta mal-estar e palpitações. Exames: glicemia = 420 mg/dL, Na⁺ = 138 mEq/L, K⁺ = 6,8 mEq/L. ECG: ondas T apiculadas. Qual estratégia ajuda a deslocar o potássio para o LIC neste cenário?",
+  choices: [
+    { text: "Insulina + glicose EV", correct: true, explain: "A insulina estimula a Na⁺-K⁺-ATPase, levando glicose e potássio para dentro das células." },
+    { text: "Gluconato de cálcio", correct: false, explain: "Estabiliza a membrana cardíaca, mas não reduz K⁺ sérico." },
+    { text: "Resina de troca", correct: false, explain: "Aumenta excreção fecal, mas não desloca o K⁺." },
+    { text: "Hemodiálise", correct: false, explain: "Remove potássio, mas não é a primeira medida neste paciente." }
+  ]
+},
+{
+  q: "Homem de 22 anos, previamente hígido, apresenta diarreia aquosa intensa há 7 dias. Queixa fadiga e tontura ao se levantar. Exames: Na⁺ = 135 mEq/L, K⁺ = 2,8 mEq/L, creatinina = 1,0 mg/dL. Qual é a principal via de perda de potássio nesse caso?",
+  choices: [
+    { text: "Renal", correct: false, explain: "A função renal está preservada e o rim tende a reter potássio." },
+    { text: "Fecal", correct: true, explain: "A diarreia leva a perda extrarrenal de potássio." },
+    { text: "Sudorese", correct: false, explain: "Não é relevante para o potássio." },
+    { text: "Sangramento", correct: false, explain: "Não há perda significativa de potássio pelo sangue." }
+  ]
+},
+{
+  q: "Homem de 68 anos, portador de insuficiência renal crônica estágio 4, dá entrada no pronto-socorro por dispneia e fraqueza. Está em uso de losartana e enalapril. Ao exame: PA 150/95 mmHg, FC 90 bpm. Exames: Na⁺ = 139 mEq/L, K⁺ = 6,7 mEq/L, creatinina = 4,5 mg/dL. ECG: alargamento do QRS. Qual deve ser a conduta imediata?",
+  choices: [
+    { text: "Administrar gluconato de cálcio EV", correct: true, explain: "É a medida mais urgente para estabilizar a membrana miocárdica e prevenir arritmias." },
+    { text: "Suspender os IECA e observar", correct: false, explain: "Suspender IECA é correto, mas não resolve a emergência atual." },
+    { text: "Prescrever resina de troca oral", correct: false, explain: "Ação lenta, não indicada como primeira medida." },
+    { text: "Realizar hemodiálise imediatamente", correct: false, explain: "Pode ser necessária, mas a estabilização da membrana é prioritária." }
+  ]
+},
+{
+  q: "Mulher de 24 anos, previamente hígida, chega ao pronto-socorro após episódio de síncope durante atividade física. Refere palpitações e câimbras frequentes. Ao exame: PA 100/70 mmHg, FC 120 bpm. Exames: Na⁺ = 140 mEq/L, K⁺ = 2,6 mEq/L. ECG: taquicardia ventricular não sustentada. Qual a principal complicação associada à alteração eletrolítica desta paciente?",
+  choices: [
+    { text: "Hipotensão ortostática persistente", correct: false, explain: "Pode ocorrer, mas não é a complicação mais grave." },
+    { text: "Arritmias ventriculares potencialmente fatais", correct: true, explain: "Hipocalemia grave aumenta risco de arritmias ventriculares graves." },
+    { text: "Convulsões generalizadas", correct: false, explain: "Não são típicas da hipocalemia." },
+    { text: "Rabdomiólise assintomática", correct: false, explain: "Rabdomiólise pode ocorrer, mas a complicação imediata é arrítmica." }
+  ]
+},
+{
+  q: "Homem de 55 anos, com história de DPOC em uso crônico de beta-2-agonistas inalatório, apresenta tremores e palpitações após ajuste de dose. Exames: Na⁺ = 139 mEq/L, K⁺ = 3,1 mEq/L, pH = 7,48. Qual o mecanismo mais provável para a alteração do potássio?",
+  choices: [
+    { text: "Redução da excreção renal de potássio", correct: false, explain: "Não há evidência de perda renal aumentada." },
+    { text: "Aumento da captação celular mediada por beta-2-agonistas", correct: true, explain: "Os beta-2-agonistas estimulam a Na⁺-K⁺-ATPase, promovendo entrada de K⁺ no LIC." },
+    { text: "Pseudo-hipocalemia", correct: false, explain: "Não se trata de artefato laboratorial." },
+    { text: "Perda gastrointestinal", correct: false, explain: "Não há história de diarreia ou vômitos." }
+  ]
+},
+{
+  q: "Homem de 48 anos, etilista crônico, é admitido com confusão mental e fraqueza. Exames: Na⁺ = 136 mEq/L, K⁺ = 2,7 mEq/L, Mg²⁺ = 1,0 mg/dL (baixo). ECG mostra ondas U e prolongamento do QT. Apesar da reposição de potássio oral, níveis séricos permanecem baixos. Qual a conduta necessária para corrigir a hipocalemia?",
+  choices: [
+    { text: "Iniciar reposição de magnésio associada", correct: true, explain: "Sem corrigir a hipomagnesemia, a hipocalemia não responde adequadamente." },
+    { text: "Suspender dieta rica em potássio", correct: false, explain: "O problema não é o excesso alimentar." },
+    { text: "Trocar para reposição venosa exclusiva de potássio", correct: false, explain: "Não resolverá sem corrigir magnésio." },
+    { text: "Iniciar hemodiálise de urgência", correct: false, explain: "Não é indicada neste cenário." }
+  ]
+},
+{
+  q: "Mulher de 72 anos, com insuficiência cardíaca e diabetes, em uso de espironolactona e IECA, é admitida por mal-estar. Exames: Na⁺ = 138 mEq/L, K⁺ = 7,2 mEq/L, creatinina = 2,8 mg/dL. ECG: ondas T apiculadas, perda de onda P e alargamento de QRS. Apesar do uso de gluconato de cálcio, insulina + glicose e nebulização com salbutamol, potássio permanece elevado. Qual o próximo passo?",
+  choices: [
+    { text: "Manter observação clínica", correct: false, explain: "Não é seguro diante da gravidade." },
+    { text: "Hemodiálise de urgência", correct: true, explain: "Indicação clara em hipercalemia grave refratária às medidas iniciais." },
+    { text: "Administrar dose extra de gluconato de cálcio", correct: false, explain: "Já foi administrado, não resolve a hiperpotassemia." },
+    { text: "Iniciar diurético tiazídico", correct: false, explain: "Não é eficaz neste contexto de DRC avançada." }
+  ]
+}
+
+];
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
