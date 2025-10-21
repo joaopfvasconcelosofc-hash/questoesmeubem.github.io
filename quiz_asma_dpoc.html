@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Asma e DPOC na Emergência (2025)</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Asma e DPOC na Emergência (2025)</h1>
+    <p class="lead">30 questões baseadas exclusivamente no PDF "Asma e DPOC na Emergência (2025)" — 20 gerais e 10 casos clínicos.</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+/* =================== 20 QUESTÕES GERAIS =================== */
+{
+  q: "1) Quais sinais clínicos, segundo a aula, indicam obstrução grave em crise asmática?",
+  choices: [
+    { text: "Taquipneia >30 ipm, taquicardia >120 bpm e uso de musculatura acessória.", correct: true,
+      explain: "Correto — esses são sinais clássicos de obstrução grave descritos na aula; indicam alto trabalho respiratório. Alternativas que afirmam que a ausência de sibilância exclui gravidade estão erradas (''silent chest'' pode ocorrer)." },
+    { text: "A ausência de sibilância e pressão arterial normal excluem gravidade.", correct: false,
+      explain: "Incorreto — ausência de sibilância não exclui gravidade; PA normal não protege da insuficiência respiratória iminente." },
+    { text: "Somente a presença de febre define gravidade.", correct: false,
+      explain: "Incorreto — febre não é critério de gravidade da asma; indica possível infecção associada, mas não define obstrução grave." },
+    { text: "Dor torácica intensa é o principal sinal de obstrução grave.", correct: false,
+      explain: "Incorreto — dor torácica não é critério primário de gravidade; os sinais respiratórios e a capacidade de falar são mais importantes." }
+]
+},
+{
+  q: "2) Para avaliar objetivamente a gravidade quando o paciente pode colaborar, qual exame a aula indica como preferível?",
+  choices: [
+    { text: "Peak flow (fluxo expiratório de pico).", correct: true,
+      explain: "Correto — o documento recomenda PF como melhor método objetivo quando o paciente coopera. Radiografia e gasometria têm indicações específicas, mas não substituem o PF nesse contexto." },
+    { text: "Radiografia de tórax de rotina.", correct: false,
+      explain: "Incorreto — Rx não é indicada de rotina; indicada apenas se houver febre, dor torácica ou hipoxemia significativa." },
+    { text: "ECG de repouso para todos os pacientes.", correct: false,
+      explain: "Incorreto — ECG pode ser útil em dúvida diagnóstica, mas não é método padrão para avaliar gravidade da obstrução." },
+    { text: "Tomografia de tórax imediata.", correct: false,
+      explain: "Incorreto — TC não é indicada rotineiramente na avaliação inicial da crise." }
+]
+    },
+{
+  q: "3) Interpretação do Peak Flow — qual alternativa representa obstrução grave conforme a aula?",
+  choices: [
+    { text: "<= 50% do valor basal ou < 200 L/min.", correct: true,
+      explain: "Correto — a aula estabelece <=50% do basal ou PF <200 L/min como indicativo de obstrução grave. Valores intermediários (50–70%) representam obstrução moderada." },
+    { text: "> 80% do basal é critério de gravidade.", correct: false,
+      explain: "Incorreto — >80% indica boa recuperação; não é critério de gravidade." },
+    { text: "PF absoluto < 400 L/min sempre indica gravidade.", correct: false,
+      explain: "Incorreto — limites absolutos dependem do paciente; os cortes práticos da aula são <200 L/min ou % do basal." },
+    { text: "PF não é útil em crise e não deve ser usado.", correct: false,
+      explain: "Incorreto — PF é útil e recomendado quando o paciente consegue colaborar." }
+]},
+{
+  q: "4) Quando a gasometria arterial é indicada durante uma exacerbação asmática?",
+  choices: [
+    { text: "Suspeita de hipercapnia, rebaixamento do nível de consciência ou falha do tratamento.", correct: true,
+      explain: "Correto — ABG é indicada quando há suspeita de hipoventilação/hipercapnia ou alteração do sensorium e falha terapêutica." },
+    { text: "Em todas as crises leves na triagem.", correct: false,
+      explain: "Incorreto — não é indicada rotineiramente em crises leves." },
+    { text: "Somente se houver dor abdominal.", correct: false,
+      explain: "Incorreto — dor abdominal não é indicação para gasometria na asma." },
+    { text: "Nunca, pois atrasa o tratamento.", correct: false,
+      explain: "Incorreto — ABG tem papel diagnósticode em casos selecionados; não se evita quando clinicamente necessário." }
+]},
+{
+  q: "5) Qual a meta de SpO₂ para pacientes com asma na emergência segundo a apresentação?",
+  choices: [
+    { text: "Manter SpO₂ > 92% (oxigênio se SpO₂ < 90%).", correct: true,
+      explain: "Correto — a aula recomenda O₂ se SpO₂ <90% e alvo de manter >92% em asma não hipercápnica." },
+    { text: "Evitar O₂, independentemente da SpO₂.", correct: false,
+      explain: "Incorreto — O₂ é indicado quando há hipoxemia (SpO₂ <90%)." },
+    { text: "Manter SpO₂ entre 98–100% sempre.", correct: false,
+      explain: "Incorreto — hiperóxia não é desejável e não foi recomendada; objetivo prático é >92%." },
+    { text: "Alvo de SpO₂ 70–80% para evitar retenção de CO₂.", correct: false,
+      explain: "Incorreto — esses valores são perigosamente baixos para asma; alvos reduzidos (88–92%) aplicam-se a DPOC, não à asma típica." }
+]},
+{
+  q: "6) Qual o esquema padrão de SABA nas primeiras 1 hora de tratamento na emergência (conforme a aula)?",
+  choices: [
+    { text: "Três aplicações (a cada 20 minutos) na 1ª hora.", correct: true,
+      explain: "Correto — o protocolo recomendado é 3 tratamentos na 1ª hora (a cada 20 min) com SABA via nebulização ou inalador com espaçador." },
+    { text: "Dose única e observar por 6 horas.", correct: false,
+      explain: "Incorreto — doses repetidas na 1ª hora são necessárias; esperar aumenta risco." },
+    { text: "SABA uma vez por dia via inalador.", correct: false,
+      explain: "Incorreto — esquema únicodiário é inadequado na crise aguda." },
+    { text: "Usar apenas β2 de longa ação (LABA).", correct: false,
+      explain: "Incorreto — LABA não é indicado como resgate inicial em crise aguda." }
+]},
+{
+  q: "7) Em crises moderadas a graves, o que a aula informa sobre SABA isolado (com base no GINA 2024)?",
+  choices: [
+    { text: "SABA isolado não é mais recomendado: todo paciente deve receber ICS (ou ICS+formoterol) associado.", correct: true,
+      explain: "Correto — GINA 2024 e a aula enfatizam que SABA isolado não é seguro; deve haver componente anti-inflamatório (ICS) no manejo." },
+    { text: "SABA isolado é a primeira e única escolha aceitável.", correct: false,
+      explain: "Incorreto — a recomendação atual é evitar SABA isolado como único tratamento." },
+    { text: "SABA isolado é preferível em idosos.", correct: false,
+      explain: "Incorreto — idade não altera a recomendação geral de não usar SABA isolado sem ICS." },
+    { text: "GINA 2024 permite SABA isolado em todos os casos leves.", correct: false,
+      explain: "Incorreto — até em casos leves recomenda-se ICS associado (ou ICS-formoterol no resgate)." }
+]},
+{
+  q: "8) Qual é a dose e via de sulfato de magnésio sugerida na aula para crise asmática grave?",
+  choices: [
+    { text: "Dose única de 2 g IV em 20 minutos.", correct: true,
+      explain: "Correto — a aula indica 2 g IV em 20 min para crises graves/ameaçadoras; contra-indicado em insuficiência renal." },
+    { text: "500 mg IM em dose única.", correct: false,
+      explain: "Incorreto — via IM e 500 mg não correspondem às recomendações apresentadas." },
+    { text: "2 g VO a cada 6 horas.", correct: false,
+      explain: "Incorreto — magnésio IV é a via usada na emergência; via oral não é adequada para crise aguda." },
+    { text: "Não usar magnésio em nenhuma circunstância.", correct: false,
+      explain: "Incorreto — magnésio tem papel em crises refratárias/graves conforme o material." }
+]},
+{
+  q: "9) Sobre ipratrópio (anticolinérgico) na emergência, qual alternativa descreve corretamente o esquema mostrado na aula?",
+  choices: [
+    { text: "500 mcg a cada 20 minutos, por 3 doses, associado ao SABA em casos moderados/graves.", correct: true,
+      explain: "Correto — o protocolo citado permite ipratrópio 500 mcg q20min x3 como adjuvante ao SABA." },
+    { text: "Ipratrópio 50 mcg via oral é a opção preferida.", correct: false,
+      explain: "Incorreto — ipratrópio é inalado/nebulizado; 50 mcg oral não é descrito." },
+    { text: "Ipratrópio substitui os corticoides sistêmicos em crises graves.", correct: false,
+      explain: "Incorreto — ipratrópio é adjuvante broncodilatador; corticoides sistêmicos atuam na inflamação e têm outro papel." },
+    { text: "Usar ipratrópio apenas em pacientes com insuficiência renal.", correct: false,
+      explain: "Incorreto — indicação não depende de função renal; é associado em exacerbações moderadas a graves." }
+]},
+{
+  q: "10) Quando a radiografia de tórax é indicada na avaliação da asma na emergência, segundo a aula?",
+  choices: [
+    { text: "Quando há febre, dor torácica ou hipoxemia significativa.", correct: true,
+      explain: "Correto — Rx não é de rotina; é solicitada para investigar complicações ou diagnóstico alternativo (pneumonia, atelectasia) quando presentes esses sinais." },
+    { text: "Sempre em toda crise asmática.", correct: false,
+      explain: "Incorreto — pedido rotineiro de Rx não é recomendado." },
+    { text: "Apenas se o paciente tem menos de 12 anos.", correct: false,
+      explain: "Incorreto — idade isolada não é critério para Rx; sinais clínicos determinam necessidade." },
+    { text: "Radiografia substitui Peak Flow na triagem.", correct: false,
+      explain: "Incorreto — Rx não substitui avaliação objetiva do fluxo; PF ou ABG têm papéis distintos." }
+]},
+{
+  q: "11) Qual a conduta com corticosteroides sistêmicos em exacerbação asmática segundo a apresentação?",
+  choices: [
+    { text: "Prednisona 40–60 mg VO por 5–7 (ou 5–10) dias quando não há melhora sustentada.", correct: true,
+      explain: "Correto — a aula recomenda prednisona 40–60 mg/dia por 5–7 (até 10) dias para reduzir risco de recorrência e melhorar desfecho." },
+    { text: "Corticóide sistêmico é contraindicado em exacerbação.", correct: false,
+      explain: "Incorreto — corticoide sistêmico é importante e reduz recorrências; não é contraindicado." },
+    { text: "Usar apenas se o paciente for intubado.", correct: false,
+      explain: "Incorreto — muitos pacientes recebem corticoide oral na emergência sem necessidade de intubação." },
+    { text: "Dose única de 1000 mg de metilprednisolona é sempre necessária.", correct: false,
+      explain: "Incorreto — doses muito altas não mostraram benefício superior; esquemas moderados são usuais." }
+]},
+{
+  q: "12) Após a primeira hora de tratamento, quais critérios a aula usa para decidir alta/observação/internação?",
+  choices: [
+    { text: "PF > 80% + melhora clínica → alta; PF 60–80% ou resposta incompleta → observar 1–3h; PF < 60% → internar/UTI.", correct: true,
+      explain: "Correto — o documento apresenta esse esquema de decisão baseado no peak flow e resposta clínica." },
+    { text: "Alta imediata se paciente quiser ir embora, mesmo sem melhora.", correct: false,
+      explain: "Incorreto — decisão deve ser baseada em critérios objetivos (PF e quadro clínico), não apenas desejo do paciente." },
+    { text: "Sempre internar pacientes com PF >80%.", correct: false,
+      explain: "Incorreto — PF >80% com melhora clinica é indicação de alta com orientações." },
+    { text: "Manter todos em observação por 24h independentemente da resposta.", correct: false,
+      explain: "Incorreto — observação deve ser proporcional à resposta; 24h desnecessário se houve melhora clara." }
+]},
+{
+  q: "13) Quais condutas a aula lista explicitamente como NÃO fazer na emergência asmática?",
+  choices: [
+    { text: "Usar benzodiazepínicos rotineiramente, teofilinas sem indicação e antibiótico empírico sem critério.", correct: true,
+      explain: "Correto — a apresentação alerta contra benzodiazepínicos (risco de depressão respiratória), teofilinas sem indicação e uso empírico de ATB sem critérios." },
+    { text: "Administrar oxigênio se SpO₂ < 90%.", correct: false,
+      explain: "Incorreto — administrar O₂ nessas condições é recomendado, não contraindicado." },
+    { text: "Aplicar broncodilatador em crise aguda.", correct: false,
+      explain: "Incorreto — broncodilatador é pilar do tratamento agudo." },
+    { text: "Medir Peak Flow em paciente colaborativo.", correct: false,
+      explain: "Incorreto — medir PF é recomendado; não é uma conduta a ser evitada." }
+]},
+{
+  q: "14) No manejo da DPOC agudizada, qual é o intervalo alvo de SpO₂ recomendado na aula?",
+  choices: [
+    { text: "88–92% (evitar hiperóxia).", correct: true,
+      explain: "Correto — para exacerbação de DPOC, a aula recomenda alvo de SpO₂ entre 88–92% para reduzir risco de retenção de CO₂." },
+    { text: "> 95% sempre.", correct: false,
+      explain: "Incorreto — alvos elevados podem predispor à retenção de CO₂ em DPOC; não são recomendados." },
+    { text: "< 80% para poupar O₂.", correct: false,
+      explain: "Incorreto — SpO₂ tão baixa é perigosa e não é aceita como alvo seguro." },
+    { text: "88–92% apenas em pacientes com pneumotórax.", correct: false,
+      explain: "Incorreto — esse alvo é aplicável de forma geral a exacerbações de DPOC, não apenas pneumotórax." }
+]},
+{
+  q: "15) Quais são os sintomas cardinais de exacerbação de DPOC listados na apresentação?",
+  choices: [
+    { text: "Aumento da tosse, aumento do volume/alteração do escarro e aumento da dispneia.", correct: true,
+      explain: "Correto — a aula descreve esses três sintomas cardinais como definidores de exacerbação de DPOC." },
+    { text: "Dor abdominal, síncope e hemoptise.", correct: false,
+      explain: "Incorreto — esses não são os sintomas cardinais clássicos de exacerbação de DPOC." },
+    { text: "Febre alta isolada sem sintomas respiratórios.", correct: false,
+      explain: "Incorreto — febre pode ocorrer por infecção mas não é sintoma cardinal isolado para definir exacerbação." },
+    { text: "Anorexia, perda de peso e insônia.", correct: false,
+      explain: "Incorreto — sintomas crônicos ou sistêmicos não caracterizam a exacerbação aguda do modo descrito." }
+]},
+{
+  q: "16) Em exacerbação de DPOC, quando a VNI é indicada segundo o material?",
+  choices: [
+    { text: "pH < 7.35 com PaCO₂ > 45 mmHg e sinais de aumento do trabalho respiratório.", correct: true,
+      explain: "Correto — a aula apresenta esses critérios como indicações para ventilação não invasiva, que reduz necessidade de intubação." },
+    { text: "Sempre quando houver tosse.", correct: false,
+      explain: "Incorreto — tosse isolada não é indicação de VNI." },
+    { text: "Somente se SpO₂ > 98%.", correct: false,
+      explain: "Incorreto — SpO₂ alta não é indicação para VNI; pH e PaCO₂ determinam a necessidade ventilatória." },
+    { text: "VNI é contraindicada em todo paciente com DPOC.", correct: false,
+      explain: "Incorreto — VNI é uma ferramenta útil e indicada em muitos casos selecionados." }
+]},
+{
+  q: "17) Qual porcentagem das exacerbações de DPOC é atribuída a infecções respiratórias, conforme a aula?",
+  choices: [
+    { text: "Cerca de 70% são causadas por infecções respiratórias.", correct: true,
+      explain: "Correto — a apresentação citeia infecções respiratórias como causa em ~70% das exacerbações." },
+    { text: "10% apenas.", correct: false,
+      explain: "Incorreto — número muito baixo em relação ao apresentado." },
+    { text: "100% sem exceção.", correct: false,
+      explain: "Incorreto — nem todas as exacerbações são infecciosas; 30% têm outras causas (poluição, TVP, etc.)." },
+    { text: "0% — infecções nunca causam exacerbação.", correct: false,
+      explain: "Incorreto — infecções são a causa mais frequente na maioria dos estudos e segundo a aula." }
+]},
+{
+  q: "18) Quando os antibióticos são indicados numa exacerbação de DPOC segundo a aula?",
+  choices: [
+    { text: "Se houver ≥2 sintomas cardinais ou escarro purulento.", correct: true,
+      explain: "Correto — aula recomenda ATB quando há dois ou mais sintomas cardinais ou escarro purulento (indicativo de infecção bacteriana)." },
+    { text: "Em todas as exacerbações, independentemente dos sinais.", correct: false,
+      explain: "Incorreto — uso empírico indiscriminado de ATB não é recomendado." },
+    { text: "Só se houver febre >39°C.", correct: false,
+      explain: "Incorreto — febre isolada não é critério exclusivo; a presença de sintomas respiratórios cardinales é mais relevante." },
+    { text: "Nunca — antibióticos são sempre contraindicados.", correct: false,
+      explain: "Incorreto — ATB tem indicação clara em certas exacerbações com critérios clínicos." }
+]},
+{
+  q: "19) Segundo a aula, qual conduta reduz a necessidade de IOT e diminui mortalidade em exacerbação de DPOC?",
+  choices: [
+    { text: "Uso apropriado de ventilação não invasiva (VNI) quando indicada.", correct: true,
+      explain: "Correto — VNI reduz necessidade de intubação e está associada a menor mortalidade quando criteriosamente utilizada." },
+    { text: "Evitar o uso de corticoide sistêmico sempre.", correct: false,
+      explain: "Incorreto — corticoide oral melhora função e diminui tempo de internação; não deve ser evitado indiscriminadamente." },
+    { text: "Uso rotineiro de sedativos para diminuir ansiedade respiratória.", correct: false,
+      explain: "Incorreto — sedativos podem piorar ventilação e são contraindicados sem avaliação cuidadosa." },
+    { text: "Jamais administrar broncodilatadores.", correct: false,
+      explain: "Incorreto — broncodilatadores (β2 + ipratrópio) são parte essencial do tratamento." }
+]},
+{
+  q: "20) Qual checklist rápido a aula recomenda para asma na emergência (resuma itens essenciais)?",
+  choices: [
+    { text: "Oxigênio se SpO₂<90%; Salbutamol (3 doses/1h); Ipratrópio (3 doses/1h); Corticoide inalatório/ sistêmico; Considerar sulfato de magnésio se grave; avaliar PF.", correct: true,
+      explain: "Correto — esse resumo corresponde ao checklist apresentado: medidas de suporte, broncodilatação, corticoide e considerar magnésio em casos refratários." },
+    { text: "Somente repouso e hidratação.", correct: false,
+      explain: "Incorreto — repouso/hidratação isolados não tratam a obstrução brônquica aguda." },
+    { text: "Intubação imediata para todo paciente com tosse.", correct: false,
+      explain: "Incorreto — intubação é reservada a insuficiência respiratória grave; não é rotineira para tosse." },
+    { text: "Usar apenas antibiótico e dispensar broncodilatador.", correct: false,
+      explain: "Incorreto — ATB não substitui broncodilatadores; uso de ATB só com critérios." }
+]},
+
+/* =================== 10 CASOS CLÍNICOS =================== */
+{
+  q: "21) (Caso) Mulher, 21 anos asmática, exposição a mofo, SpO₂ 88%, FR 34 ipm, uso de musculatura acessória e fala entrecortada. O que fazer nos PRIMEIROS 3 minutos?",
+  choices: [
+    { text: "Iniciar O₂ (alvo >92%), administrar SABA via nebulização/espaciador e preparar ipratrópio; monitorização e avaliação rápida.", correct: true,
+      explain: "Correto — iniciar O₂ por hipoxemia, broncodilatador imediato (SABA) e considerar ipratrópio; estabilizar vias aéreas e monitorar. Outras opções que sugerem aguardar ou não tratar imediatamente estão erradas." },
+    { text: "Aguardar para ver se melhora espontaneamente.", correct: false,
+      explain: "Incorreto — atraso no tratamento em crise aguda aumenta risco de desfecho ruim; agir rápido é obrigatório." },
+    { text: "Dar apenas analgésico e mandar pra casa.", correct: false,
+      explain: "Incorreto — não trata a obstrução; gestão incorreta para caso com hipoxemia e sinais de gravidade." },
+    { text: "Aplicar apenas antibiótico de larga cobertura.", correct: false,
+      explain: "Incorreto — ausência de critério para ATB; prioridade é suporte ventilatório e broncodilatação." }
+]},
+{
+  q: "22) (Caso) Mesmo paciente, após 40 minutos de tratamento inicial houve melhora mínima. Qual exame é mais indicado AGORA para avaliar comprometimento ventilatório?",
+  choices: [
+    { text: "Gasometria arterial para verificar PaCO₂ e pH.", correct: true,
+      explain: "Correto — se há falha do tratamento inicial ou suspeita de hipercapnia, ABG é indicada para avaliar insuficiência respiratória. Peak flow também é útil se paciente cooperar, mas ABG responde a dúvidas sobre hipercapnia." },
+    { text: "Tomografia de tórax emergencial.", correct: false,
+      explain: "Incorreto — TC não é exame de primeira linha neste contexto agudo sem sinais de complicação específica." },
+    { text: "Nada — continuar observando sem investigar.", correct: false,
+      explain: "Incorreto — em resposta clínica insuficiente, investigar com ABG e/ou PF é indicado." },
+    { text: "Solicitar ecocardiograma imediato.", correct: false,
+      explain: "Incorreto — ECG/ecocardio não são prioritários para avaliar falha ventilatória aguda na crise asmática." }
+]},
+{
+  q: "23) (Caso) Paciente asmático com piora apesar de SABA + ipratrópio; qual intervenção adjuvante a considerar segundo a aula?",
+  choices: [
+    { text: "Sulfato de magnésio 2 g IV em 20 minutos.", correct: true,
+      explain: "Correto — magnésio IV é indicado em crise grave/refratária. Alternativas que propõem medidas ineficazes ou contraindicações infundadas estão erradas." },
+    { text: "Somente aumentar benzodiazepínicos para reduzir ansiedade.", correct: false,
+      explain: "Incorreto — benzodiazepínicos podem causar depressão respiratória e não são recomendados rotineiramente." },
+    { text: "Aguardar 24 horas sem alterar terapia.", correct: false,
+      explain: "Incorreto — atraso em intensificar tratamento em crise refratária é perigoso." },
+    { text: "Aplicar diurético de alça imediatamente.", correct: false,
+      explain: "Incorreto — diuréticos não tratam broncoespasmo e só seriam usados se houver sobrecarga volêmica comprovada." }
+]},
+{
+  q: "24) (Caso DPOC) Homem, 69 anos, tabagista, dispneia intensa e sonolência. ABG: pH 7.24, PaCO₂ 68 mmHg, PaO₂ 56 mmHg. Qual a conduta mais apropriada inicialmente?",
+  choices: [
+    { text: "Iniciar ventilação não invasiva (VNI) se não houver contraindicações.", correct: true,
+      explain: "Correto — pH <7.35 com PaCO₂ elevado e sinais de fadiga respiratória são indicações de VNI para evitar IOT; contraindicações devem ser avaliadas." },
+    { text: "Manter somente broncodilatador e alta para casa.", correct: false,
+      explain: "Incorreto — quadro com acidose e hipercapnia grave exige suporte ventilatório, não alta." },
+    { text: "Administrar apenas antibiótico e observar.", correct: false,
+      explain: "Incorreto — ATB não corrige insuficiência ventilatória aguda; ventilação é prioridade." },
+    { text: "Dar sedativo para aliviar sonolência e observar.", correct: false,
+      explain: "Incorreto — sedativos podem piorar depressão ventilatória e são contraindicados nesse contexto." }
+]},
+{
+  q: "25) (Caso) Paciente com exacerbação de DPOC apresenta pH 7.37, PaCO₂ 50 mmHg, SpO₂ 90% com O₂ suplementar. VNI ou suporte conservador? Segundo a aula, a melhor opção é:",
+  choices: [
+    { text: "Suporte clínico e otimização broncodilatadora/corticóide; VNI não é indicado se pH normal e sem sinais de aumento do trabalho respiratório.", correct: true,
+      explain: "Correto — VNI é reservada para acidose/PaCO₂ elevada com pH<7.35 ou sinais de fadiga respiratória; com pH normal, otimizar terapia clínica é apropriado." },
+    { text: "Intubação imediata sem tentar outras medidas.", correct: false,
+      explain: "Incorreto — intubação precoce não é indicada sem sinais de falha ventilatória iminente." },
+    { text: "Retirada de O₂ para reduzir PaCO₂ imediatamente.", correct: false,
+      explain: "Incorreto — retirada abrupta de O₂ pode causar hipoxemia; ajuste cuidadoso é necessário." },
+    { text: "Administrar sulfato de magnésio como primeira linha.", correct: false,
+      explain: "Incorreto — magnésio tem papel na asma grave; não é terapia de escolha inicial para DPOC." }
+]},
+{
+  q: "26) (Caso) Paciente asmático que fazia uso crônico de corticoide inalatório interrompeu a medicação e apresenta exarcebação recurrente. Qual conduta sistemática é indicada segundo a aula?",
+  choices: [
+    { text: "Corticosteroide sistêmico (prednisona 40–60 mg/dia por 5–7 dias) e reintroduzir plano de manutenção com ICS.", correct: true,
+      explain: "Correto — exacerbações após suspensão de ICS muitas vezes respondem a corticoide sistêmico e reestabelecimento de terapia anti-inflamatória." },
+    { text: "Suspender todos os broncodilatadores e iniciar antibiótico apenas.", correct: false,
+      explain: "Incorreto — suspender broncodilatadores é inadequado; ATB só com critérios." },
+    { text: "Indicar apenas repouso domiciliar sem medicação.", correct: false,
+      explain: "Incorreto — manejo ativo é necessário para reduzir risco de evolução." },
+    { text: "Iniciar teofilina empírica em altas doses.", correct: false,
+      explain: "Incorreto — teofilinas não são recomendadas rotineiramente e têm perfil de efeitos adversos." }
+]},
+{
+  q: "27) (Caso) Paciente asmático apresentou melhora subjetiva com broncodilatador, mas PF após 1h está 65% do basal. Qual a conduta mais adequada?",
+  choices: [
+    { text: "Manter observação por 1–3 horas e reavaliar; considerar corticóide sistêmico se resposta incompleta.", correct: true,
+      explain: "Correto — PF entre 60–80% indica resposta incompleta e requer observação e possível corticoterapia; alta prematura não é segura." },
+    { text: "Alta imediata sem prescrição.", correct: false,
+      explain: "Incorreto — PF 65% é insuficiente para alta imediata sem observação e orientações." },
+    { text: "Intubar imediatamente.", correct: false,
+      explain: "Incorreto — intubação não é indicada se paciente está estável e sem sinais de falha respiratória." },
+    { text: "Suspender toda a terapia e repetir PF só em 24h.", correct: false,
+      explain: "Incorreto — suspender terapia atrasaria tratamento necessário; reavaliação precoce é mandatória." }
+]},
+{
+  q: "28) (Caso) Paciente com asma apresenta 'silent chest' (ausência de sibilos) durante quadro com muita dispneia e fala entrecortada. Qual interpretação é correta?",
+  choices: [
+    { text: "Ausência de sibilos pode indicar obstrução muito severa ('silent chest') e é um sinal de gravidade.", correct: true,
+      explain: "Correto — 'silent chest' pode significar fluxo muito reduzido e risco de insuficiência; não tranquiliza o clínico." },
+    { text: "Ausência de sibilos garante que o paciente não tem doença broncoespástica.", correct: false,
+      explain: "Incorreto — pode ocorrer em obstrução grave; não exclui asma." },
+    { text: "Significa que o paciente está recuperado.", correct: false,
+      explain: "Incorreto — ao contrário, pode ser sinal de piora grave." },
+    { text: "Indica que é exclusivamente problema cardíaco.", correct: false,
+      explain: "Incorreto — ausência de sibilos não direciona o diagnóstico apenas para causa cardíaca." }
+]},
+{
+  q: "29) (Caso) Jovem asmático chegou com SpO₂ 88%. Após O₂ e broncodilatador, SpO₂ subiu para 94% e PF >80% com melhora clínica. O que o protocolo da aula sugere?",
+  choices: [
+    { text: "Alta com prescrição, educação e orientação de retorno se recidiva.", correct: true,
+      explain: "Correto — se PF>80% e melhora clínica sustentada, alta é possível com orientações e prescrição de corticoide e plano de manutenção/instrução." },
+    { text: "Manter em observação por 72 horas obrigatoriamente.", correct: false,
+      explain: "Incorreto — observação prolongada não é necessária se critérios de alta forem atingidos." },
+    { text: "Internação rotineira em UTI apesar da melhora.", correct: false,
+      explain: "Incorreto — UTI só para pacientes com falha ventilatória ou critérios de gravidade persistente." },
+    { text: "Retirar todo o tratamento e proibir atividade física indefinidamente.", correct: false,
+      explain: "Incorreto — não condiz com manejo; alta inclui orientações e retomada gradual de atividades conforme quadro." }
+]},
+{
+  q: "30) (Caso) Em paciente com exacerbação de DPOC com escarro purulento e aumento da dispneia, qual a conduta conforme a apresentação?",
+  choices: [
+    { text: "Considerar antibiótico (pois há ≥2 sintomas cardinais) além de broncodilatador e corticoide.", correct: true,
+      explain: "Correto — escarro purulento + aumento da dispneia preenche critérios para ATB; tratamento inclui broncodilatadores e corticoide sistêmico conforme indicação." },
+    { text: "Nunca usar antibiótico; somente broncodilatador.", correct: false,
+      explain: "Incorreto — se critérios para infecção bacteriana estiverem presentes, ATB é indicado." },
+    { text: "Iniciar só O₂ e dispensar broncodilatador.", correct: false,
+      explain: "Incorreto — broncodilatadores são essenciais; O₂ pode ser necessário, mas não substitui o restante." },
+    { text: "Indicar magnésio IV como principal medida.", correct: false,
+      explain: "Incorreto — magnésio é para asma grave; não é terapia de primeira linha em DPOC." }
+]}
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

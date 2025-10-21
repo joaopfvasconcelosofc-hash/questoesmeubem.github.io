@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Parada Cardiorrespiratória e Reanimação Cardiopulmonar</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Parada Cardiorrespiratória e Reanimação Cardiopulmonar ⚡💧🩺</h1>
+    <p class="lead">30 questões baseadas exclusivamente no PDF "PCR" — 20 gerais e 10 casos clínicos.</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+  /* =================== 20 QUESTÕES GERAIS =================== */
+
+  {
+    q: "1) Qual é a principal etiologia da parada cardiorrespiratória (PCR) em adultos?",
+    choices: [
+      { text: "Choque hipovolêmico", correct: false, explain: "Embora importante, não é a principal causa descrita no material." },
+      { text: "Infarto agudo do miocárdio (IAM)", correct: true, explain: "O PDF destaca o IAM como principal etiologia da PCR em adultos." },
+      { text: "Embolia pulmonar maciça", correct: false, explain: "É causa possível, porém menos frequente." },
+      { text: "Tromboembolismo cerebral", correct: false, explain: "Não é citada como etiologia principal de PCR." }
+    ]
+  },
+
+  {
+    q: "2) De acordo com o documento, cerca de que percentual das PCR ocorrem fora do ambiente hospitalar?",
+    choices: [
+      { text: "50%", correct: false, explain: "A taxa é mais alta segundo o PDF." },
+      { text: "70%", correct: true, explain: "O material informa que 70% das PCR são extra-hospitalares." },
+      { text: "30%", correct: false, explain: "Valor inferior ao relatado." },
+      { text: "90%", correct: false, explain: "Exagerado, acima do descrito." }
+    ]
+  },
+
+  {
+    q: "3) Qual ritmo é o mais frequentemente encontrado nas PCR extra-hospitalares?",
+    choices: [
+      { text: "Assistolia", correct: false, explain: "A assistolia é comum em evoluções tardias, mas não é o ritmo inicial mais frequente." },
+      { text: "Fibrilação ventricular ou taquicardia ventricular", correct: true, explain: "O PDF afirma que 80% das PCR são FV ou TV." },
+      { text: "Atividade elétrica sem pulso", correct: false, explain: "Menos comum como ritmo inicial." },
+      { text: "Bradicardia sinusal grave", correct: false, explain: "Não é um ritmo de parada." }
+    ]
+  },
+
+  {
+    q: "4) O que ocorre com a chance de sobrevivência a cada minuto sem RCP após a PCR?",
+    choices: [
+      { text: "Aumenta 10%", correct: false, explain: "É o oposto: ela diminui." },
+      { text: "Cai cerca de 10% por minuto", correct: true, explain: "O material descreve que a cada minuto sem RCP a chance de sobrevida cai 10%." },
+      { text: "Permanece estável até 10 minutos", correct: false, explain: "Não há estabilidade; há queda progressiva." },
+      { text: "Cai apenas após 5 minutos", correct: false, explain: "A queda é imediata desde o início." }
+    ]
+  },
+
+  {
+    q: "5) O suporte básico de vida (BLS) é destinado principalmente a:",
+    choices: [
+      { text: "Profissionais médicos em ambiente hospitalar", correct: false, explain: "Isso caracteriza o ACLS." },
+      { text: "Leigos e socorristas fora do hospital", correct: true, explain: "O PDF afirma que o BLS é realizado por leigos no ambiente extra-hospitalar." },
+      { text: "Equipe de terapia intensiva", correct: false, explain: "Corresponde ao ACLS." },
+      { text: "Socorristas com treinamento avançado em via aérea", correct: false, explain: "O BLS não exige manejo de via aérea avançada." }
+    ]
+  },
+
+  {
+    q: "6) Qual das opções a seguir faz parte do BLS segundo o PDF?",
+    choices: [
+      { text: "Uso de drogas intravenosas", correct: false, explain: "Faz parte do ACLS, não do BLS." },
+      { text: "Intubação orotraqueal", correct: false, explain: "Procedimento do ACLS." },
+      { text: "Compressões torácicas e uso do DEA", correct: true, explain: "O BLS inclui compressões, ventilação e uso do desfibrilador automático (DEA)." },
+      { text: "Administração de amiodarona", correct: false, explain: "Faz parte do ACLS." }
+    ]
+  },
+
+  {
+    q: "7) O ritmo assistolia deve ser inicialmente avaliado com qual conduta imediata?",
+    choices: [
+      { text: "Aplicar choque elétrico imediato", correct: false, explain: "Assistolia não é ritmo chocável." },
+      { text: "Checar cabos e conexões, aumentar ganho e mudar derivação", correct: true, explain: "O PDF destaca essa conduta inicial frente à assistolia para excluir falhas técnicas." },
+      { text: "Administrar amiodarona", correct: false, explain: "Amiodarona é antiarrítmico indicado em FV/TV, não em assistolia." },
+      { text: "Suspender as compressões", correct: false, explain: "As compressões devem continuar." }
+    ]
+  },
+
+  {
+    q: "8) Qual a frequência recomendada de compressões por minuto na RCP?",
+    choices: [
+      { text: "80 a 100", correct: false, explain: "O PDF recomenda um valor maior." },
+      { text: "100 a 120", correct: true, explain: "A taxa correta é 100–120 compressões por minuto." },
+      { text: "60 a 80", correct: false, explain: "Muito baixa, reduz perfusão." },
+      { text: "120 a 140", correct: false, explain: "Excessiva, pode prejudicar eficácia." }
+    ]
+  },
+
+  {
+    q: "9) Qual a profundidade ideal de compressão torácica em adultos?",
+    choices: [
+      { text: "2 cm", correct: false, explain: "Muito superficial para gerar débito eficaz." },
+      { text: "5 cm", correct: true, explain: "O material orienta deprimir o tórax em aproximadamente 5 cm (2 polegadas)." },
+      { text: "8 cm", correct: false, explain: "Compressão exagerada e potencialmente lesiva." },
+      { text: "1 cm", correct: false, explain: "Ineficaz para circulação." }
+    ]
+  },
+
+  {
+    q: "10) Sobre as ventilações durante a RCP, cada insuflação deve durar:",
+    choices: [
+      { text: "0,3 segundos", correct: false, explain: "Tempo insuficiente para troca gasosa." },
+      { text: "1 segundo", correct: true, explain: "Cada ventilação deve durar aproximadamente 1 segundo." },
+      { text: "5 segundos", correct: false, explain: "Tempo muito prolongado." },
+      { text: "2 segundos", correct: false, explain: "Acima do tempo recomendado." }
+    ]
+  },
+
+  {
+    q: "11) Na ausência de respiração, mas com pulso presente, qual é a conduta segundo o PDF?",
+    choices: [
+      { text: "Iniciar RCP completa", correct: false, explain: "Não há parada circulatória; deve-se ventilar." },
+      { text: "Ventilar 1 vez a cada 6 segundos e checar pulso a cada 2 minutos", correct: true, explain: "Essa é a conduta descrita no documento." },
+      { text: "Aplicar choque elétrico", correct: false, explain: "O choque só é indicado para ritmos chocáveis." },
+      { text: "Administrar adrenalina 1 mg", correct: false, explain: "Adrenalina é usada apenas em PCR." }
+    ]
+  },
+
+  {
+    q: "12) Segundo o PDF, o uso do desfibrilador é prioritário quando:",
+    choices: [
+      { text: "A PCR é presenciada e há DEA disponível imediatamente", correct: true, explain: "Nesses casos deve-se aplicar o choque o mais rápido possível." },
+      { text: "A PCR ocorreu há mais de 15 minutos", correct: false, explain: "Nesse caso o choque é menos eficaz." },
+      { text: "O ritmo é assistolia", correct: false, explain: "Assistolia não é ritmo chocável." },
+      { text: "O paciente está em AESP", correct: false, explain: "Atividade elétrica sem pulso não é chocável." }
+    ]
+  },
+
+  {
+    q: "13) A energia recomendada para desfibrilação com aparelho bifásico é:",
+    choices: [
+      { text: "360 J", correct: false, explain: "Esse valor é usado em monofásicos." },
+      { text: "120–200 J", correct: true, explain: "O PDF indica 120–200 J para aparelhos bifásicos." },
+      { text: "80 J", correct: false, explain: "Valor abaixo do mínimo eficaz." },
+      { text: "500 J", correct: false, explain: "Valor acima do permitido." }
+    ]
+  },
+
+  {
+    q: "14) Qual vasopressor é indicado na RCP segundo o material?",
+    choices: [
+      { text: "Dopamina", correct: false, explain: "Não indicada no algoritmo de PCR." },
+      { text: "Epinefrina 1 mg a cada 3–5 minutos", correct: true, explain: "Essa é a dose e intervalo corretos segundo o PDF." },
+      { text: "Noradrenalina 0,5 mcg/kg/min", correct: false, explain: "Usada em choque, não durante RCP." },
+      { text: "Vasopressina isolada", correct: false, explain: "Não é mais recomendada nas diretrizes atuais." }
+    ]
+  },
+
+  {
+    q: "15) A amiodarona é utilizada em qual situação da PCR?",
+    choices: [
+      { text: "Assistolia", correct: false, explain: "Amiodarona é usada em ritmos chocáveis." },
+      { text: "FV/TV sem pulso após 3º ou 5º choque", correct: true, explain: "É a indicação citada: 300 mg após 3º ou 5º choque, seguida de 150 mg." },
+      { text: "AESP", correct: false, explain: "Não há indicação nesses ritmos." },
+      { text: "PCR por hipóxia", correct: false, explain: "Amiodarona não trata a causa primária." }
+    ]
+  },
+
+  {
+    q: "16) Qual complicação pode ocorrer devido às compressões torácicas?",
+    choices: [
+      { text: "Laceração hepática", correct: true, explain: "Entre as possíveis complicações listadas estão fraturas, contusões e laceração hepática/esplênica." },
+      { text: "Trombose coronariana", correct: false, explain: "Não é descrita como complicação direta da compressão." },
+      { text: "Edema cerebral", correct: false, explain: "Pode ocorrer posteriormente, não é efeito direto da compressão." },
+      { text: "Isquemia de retina", correct: false, explain: "Não consta no PDF." }
+    ]
+  },
+
+  {
+    q: "17) A hipotermia terapêutica pós-PCR é indicada para:",
+    choices: [
+      { text: "Diminuir o metabolismo hepático", correct: false, explain: "O objetivo principal é neurológico." },
+      { text: "Melhorar o prognóstico neurológico", correct: true, explain: "O PDF cita hipotermia de 32–36°C por 24h para melhora do prognóstico cerebral." },
+      { text: "Tratar arritmias ventriculares", correct: false, explain: "Não é seu objetivo." },
+      { text: "Reverter acidose metabólica", correct: false, explain: "A hipotermia não corrige acidose diretamente." }
+    ]
+  },
+
+  {
+    q: "18) Qual é o parâmetro que sugere futilidade da RCP após 20 minutos, segundo o PDF?",
+    choices: [
+      { text: "PaO2 abaixo de 60 mmHg", correct: false, explain: "Não é usado como critério isolado." },
+      { text: "Capnografia (CO2) menor que 10 mmHg", correct: true, explain: "O PDF indica que aumento <10 mmHg no capnógrafo após 20min é critério de mau prognóstico." },
+      { text: "Pressão arterial média <60 mmHg", correct: false, explain: "Não citado como parâmetro para encerrar RCP." },
+      { text: "Ausência de reflexos pupilares", correct: false, explain: "Isoladamente não define interrupção." }
+    ]
+  },
+
+  {
+    q: "19) Em ambiente hospitalar, o tempo ideal entre FV/TV e desfibrilação é de:",
+    choices: [
+      { text: "<3 minutos", correct: true, explain: "O material destaca intervalo inferior a 3 minutos como ideal." },
+      { text: "5–10 minutos", correct: false, explain: "Tempo prolongado reduz sucesso." },
+      { text: "Até 15 minutos", correct: false, explain: "Muito tardio." },
+      { text: "Não há limite definido", correct: false, explain: "Há sim recomendação clara no PDF." }
+    ]
+  },
+
+  {
+    q: "20) Em que situação é apropriado considerar o uso de naloxona durante abordagem da PCR?",
+    choices: [
+      { text: "Quando o paciente está em FV", correct: false, explain: "Naloxona não tem efeito sobre arritmias." },
+      { text: "Em suspeita de intoxicação por opioides com pulso presente", correct: true, explain: "O PDF cita ventilação e uso de naloxona nesses casos." },
+      { text: "Em assistolia prolongada", correct: false, explain: "Não há indicação." },
+      { text: "Durante todas as RCPs", correct: false, explain: "Uso é específico para intoxicação." }
+    ]
+  },
+
+  /* =================== 10 QUESTÕES DE CASOS CLÍNICOS =================== */
+
+  {
+    q: "21) Paciente masculino, 58 anos, hipertenso e tabagista, colapsa subitamente em casa. O filho verifica ausência de resposta e respiração agônica. Qual a próxima conduta correta?",
+    choices: [
+      { text: "Checar pulso carotídeo por 30 segundos antes de agir", correct: false, explain: "A checagem deve durar no máximo 10 segundos; demora atrasa compressões." },
+      { text: "Acionar emergência e iniciar compressões torácicas", correct: true, explain: "O PDF orienta acionar ajuda e iniciar RCP imediatamente se não há respiração normal." },
+      { text: "Administrar 1 mg de adrenalina imediatamente", correct: false, explain: "Só após acesso venoso e equipe treinada (ACLS)." },
+      { text: "Fazer duas ventilações antes das compressões", correct: false, explain: "Inicia-se pelas compressões no adulto (C–A–B)." }
+    ]
+  },
+
+  {
+    q: "22) Mulher de 67 anos, internada em UTI por pneumonia grave, evolui com bradicardia e parada cardíaca assistida. Equipe inicia RCP. Após 20 minutos, capnógrafo mostra ETCO2 persistente em 8 mmHg. Qual conduta considerar?",
+    choices: [
+      { text: "Prosseguir RCP por mais 40 minutos", correct: false, explain: "Prolongar sem resposta e CO2 <10 mmHg é fútil." },
+      { text: "Avaliar causas reversíveis, mas considerar interrupção do esforço", correct: true, explain: "CO2 <10 mmHg após 20min é critério de mau prognóstico conforme o PDF." },
+      { text: "Administrar amiodarona 300 mg", correct: false, explain: "Amiodarona só em FV/TV." },
+      { text: "Resfriar paciente imediatamente", correct: false, explain: "Hipotermia é pós-ROSC, não durante RCP." }
+    ]
+  },
+
+  {
+    q: "23) Homem de 35 anos, vítima de afogamento, é retirado da água inconsciente, sem respiração. Pulso carotídeo palpável. Qual conduta inicial?",
+    choices: [
+      { text: "Iniciar compressões torácicas", correct: false, explain: "Há pulso; compressões não são indicadas." },
+      { text: "Ventilar 1x a cada 6 segundos e monitorar pulso", correct: true, explain: "Conduta exata do PDF para paciente sem respiração e pulso presente." },
+      { text: "Aplicar choque elétrico", correct: false, explain: "Não há indicação sem PCR." },
+      { text: "Iniciar amiodarona empírica", correct: false, explain: "Inadequado para o caso." }
+    ]
+  },
+
+  {
+    q: "24) Homem de 60 anos apresenta colapso súbito no pronto-socorro. ECG mostra FV. O desfibrilador está pronto. Qual sequência correta?",
+    choices: [
+      { text: "Iniciar compressões por 2 minutos antes do choque", correct: false, explain: "Quando DEA disponível imediatamente, o choque é prioritário." },
+      { text: "Aplicar o choque o mais rápido possível", correct: true, explain: "O PDF orienta choque imediato em FV presenciada com DEA disponível." },
+      { text: "Administrar epinefrina antes do choque", correct: false, explain: "A droga vem após 2º choque, conforme algoritmo." },
+      { text: "Checar pulso antes de aplicar o choque", correct: false, explain: "Já se confirmou PCR; não há necessidade." }
+    ]
+  },
+
+  {
+    q: "25) Paciente jovem em PCR apresenta FV persistente após três choques e RCP. Próxima conduta medicamentosa adequada?",
+choices: [
+{ text: "Amiodarona 300 mg IV", correct: true, explain: "Indicação conforme diretriz do PDF: 300 mg após 3º ou 5º choque." },
+{ text: "Adrenalina 1 mg IM", correct: false, explain: "Administração IM é incorreta." },
+{ text: "Lidocaína 50 mg EV", correct: false, explain: "Amiodarona é preferida." },
+{ text: "Dobutamina 5 mcg/kg/min", correct: false, explain: "Não se usa em PCR." }
+]
+},
+
+{
+q: "26) Homem de 40 anos, vítima de acidente, entra em PCR no pronto-atendimento. Após RCP eficaz, há retorno de circulação espontânea (ROSC). Qual medida deve ser instituída na fase pós-PCR?",
+choices: [
+{ text: "Induzir hipotermia de 32–36°C por 24h", correct: true, explain: "O PDF indica essa medida para melhorar prognóstico neurológico." },
+{ text: "Suspender oxigênio suplementar", correct: false, explain: "Manter suporte ventilatório é essencial." },
+{ text: "Iniciar amiodarona profilática", correct: false, explain: "Não indicada após ROSC sem arritmia." },
+{ text: "Evitar UTI, pois o risco já passou", correct: false, explain: "Transferência à UTI é obrigatória." }
+]
+},
+
+{
+q: "27) Homem, 55 anos, em RCP hospitalar, recebe choque em FV. A equipe interrompe ventilações no momento do choque. Essa atitude está:",
+choices: [
+{ text: "Correta, pois o PDF orienta interromper ventilação durante a desfibrilação", correct: true, explain: "É orientação expressa: interromper ventilação para segurança e eficácia do choque." },
+{ text: "Incorreta, deve-se ventilar continuamente", correct: false, explain: "Contraria recomendação." },
+{ text: "Errada, deve aplicar choque com paciente molhado", correct: false, explain: "Deve-se secar o paciente antes do choque." },
+{ text: "Incorreta, pois a ventilação deve ser sincronizada ao choque", correct: false, explain: "Não há sincronização nesse contexto." }
+]
+},
+
+{
+q: "28) Mulher de 45 anos em PCR intra-hospitalar. O líder da equipe designa funções específicas a cada membro antes de iniciar RCP. Essa conduta influencia o desfecho porque:",
+choices: [
+{ text: "Diminui o fluxo cerebral", correct: false, explain: "Organização melhora, não piora, o fluxo." },
+{ text: "Favorece execução sincrônica e eficaz", correct: true, explain: "O PDF reforça a importância da divisão de tarefas e trabalho em equipe para melhor prognóstico." },
+{ text: "Dispensa o uso de desfibrilador", correct: false, explain: "Não tem relação." },
+{ text: "Substitui necessidade de drogas", correct: false, explain: "As drogas seguem indicadas." }
+]
+},
+
+{
+q: "29) Homem de 62 anos em PCR por FV. Após 2 minutos de RCP e segundo choque, o protocolo indica:",
+choices: [
+{ text: "Aplicar adrenalina 1 mg", correct: true, explain: "O PDF recomenda iniciar adrenalina após o 2º choque e repetir a cada 3–5 minutos." },
+{ text: "Suspender compressões", correct: false, explain: "Compressões nunca devem ser interrompidas além do mínimo necessário." },
+{ text: "Checar pulso imediatamente após o choque", correct: false, explain: "Deve-se retomar compressões por 2 minutos antes da checagem." },
+{ text: "Administrar amiodarona", correct: false, explain: "A amiodarona entra após o 3º choque." }
+]
+},
+
+{
+q: "30) Mulher de 70 anos, portadora de DPOC, é encontrada inconsciente. Após 10 segundos, confirma-se ausência de pulso e respiração. Inicia-se RCP. Qual das seguintes complicações é possível durante compressões eficazes?",
+choices: [
+{ text: "Fratura de arcos costais", correct: true, explain: "O PDF cita fratura de arcos costais/esterno como complicação frequente da compressão torácica." },
+{ text: "Edema agudo de pulmão", correct: false, explain: "Não é efeito direto das compressões." },
+{ text: "Isquemia renal aguda imediata", correct: false, explain: "Pode ocorrer depois, não como complicação direta do ato." },
+{ text: "Hemorragia subaracnóidea", correct: false, explain: "Não é mencionada." }
+]
+}
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

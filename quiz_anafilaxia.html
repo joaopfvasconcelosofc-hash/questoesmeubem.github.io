@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Anafilaxia</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Anafilaxia </h1>
+    <p class="lead">35 questões baseadas exclusivamente no PDF "Anafilaxia" — 20 gerais e 15 casos clínicos.</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+  /* =================== 20 QUESTÕES GERAIS =================== */
+
+  {
+    q: "1) Qual é a definição de anafilaxia segundo a OMS (2019)?",
+    choices: [
+      { text: "Reação local de hipersensibilidade cutânea", correct: false, explain: "A OMS descreve a anafilaxia como uma reação sistêmica, não apenas local." },
+      { text: "Reação de hipersensibilidade sistêmica grave, de início rápido e potencialmente fatal", correct: true, explain: "Definição correta segundo a OMS, com acometimento de via aérea, respiratório e/ou circulatório." },
+      { text: "Reação autoimune de progressão lenta", correct: false, explain: "A anafilaxia não é autoimune e ocorre de forma aguda." },
+      { text: "Processo inflamatório mediado por neutrófilos", correct: false, explain: "Os principais mediadores são mastócitos e basófilos, não neutrófilos." }
+    ]
+  },
+
+  {
+    q: "2) Qual a diferença entre anafilaxia e choque anafilático?",
+    choices: [
+      { text: "Não há diferença, são sinônimos", correct: false, explain: "O choque anafilático é uma forma grave de anafilaxia com colapso cardiovascular." },
+      { text: "O choque anafilático envolve colapso circulatório e hipóxia tecidual", correct: true, explain: "Correto — é definido como falha de oxigenação tecidual secundária ao colapso cardiovascular." },
+      { text: "A anafilaxia é menos grave que o choque séptico", correct: false, explain: "A gravidade varia; ambas podem ser fatais." },
+      { text: "O choque anafilático é uma forma leve de reação alérgica", correct: false, explain: "É a forma mais grave, não leve." }
+    ]
+  },
+
+  {
+    q: "3) Qual dos mediadores abaixo NÃO está envolvido na anafilaxia?",
+    choices: [
+      { text: "Histamina", correct: false, explain: "Está diretamente envolvida na vasodilatação e broncoconstrição." },
+      { text: "Prostaglandinas", correct: false, explain: "Participam da inflamação e permeabilidade vascular." },
+      { text: "Trombina", correct: true, explain: "Trombina é envolvida na coagulação, não no processo anafilático." },
+      { text: "Leucotrienos", correct: false, explain: "São potentes broncoconstritores liberados pelos mastócitos." }
+    ]
+  },
+
+  {
+    q: "4) As reações pseudoalérgicas diferem das anafiláticas porque:",
+    choices: [
+      { text: "Ocorrem sem participação do sistema imunológico", correct: true, explain: "São mediadas por ativação direta de mastócitos, não por IgE." },
+      { text: "Têm sempre evolução mais grave", correct: false, explain: "A gravidade é variável, não obrigatoriamente maior." },
+      { text: "Apenas ocorrem com alimentos", correct: false, explain: "Podem ocorrer com fármacos e contrastes." },
+      { text: "Sempre requerem adrenalina EV", correct: false, explain: "O tratamento depende da gravidade clínica." }
+    ]
+  },
+
+  {
+    q: "5) Qual dos fatores abaixo é considerado predisponente para anafilaxia?",
+    choices: [
+      { text: "Histórico prévio de anafilaxia", correct: true, explain: "Episódio prévio é fator de risco importante." },
+      { text: "Baixa exposição ambiental a alérgenos", correct: false, explain: "Maior exposição, não baixa, é fator predisponente." },
+      { text: "Anemia ferropriva", correct: false, explain: "Sem relação causal." },
+      { text: "Infecções virais", correct: false, explain: "Não é predisponente direto." }
+    ]
+  },
+
+  {
+    q: "6) Sobre o curso clínico da anafilaxia, o termo 'bifásico' significa:",
+    choices: [
+      { text: "Recorrência dos sintomas após 8–72h da primeira reação", correct: true, explain: "O PDF explica que o quadro bifásico pode surgir até 72h depois." },
+      { text: "Reação limitada à pele", correct: false, explain: "É sistêmica, não limitada." },
+      { text: "Presença de dois alérgenos diferentes", correct: false, explain: "Não depende do número de alérgenos." },
+      { text: "Sintomas apenas respiratórios e cutâneos", correct: false, explain: "Pode envolver vários sistemas." }
+    ]
+  },
+
+  {
+    q: "7) Qual exame laboratorial é útil para confirmar retrospectivamente uma anafilaxia?",
+    choices: [
+      { text: "Triptase sérica", correct: true, explain: "Seu pico ocorre entre 60–90 minutos e permanece elevado por até 6h." },
+      { text: "Dosagem de histamina sérica", correct: false, explain: "A histamina não é dosada, conforme o PDF." },
+      { text: "PCR", correct: false, explain: "Não é marcador específico." },
+      { text: "Procalcitonina", correct: false, explain: "Relaciona-se à infecção bacteriana, não à anafilaxia." }
+    ]
+  },
+
+  {
+    q: "8) A conduta inicial correta na abordagem de um paciente com suspeita de anafilaxia é:",
+    choices: [
+      { text: "Administração imediata de corticoide EV", correct: false, explain: "Corticoide é adjuvante, não primeira medida." },
+      { text: "Avaliar via aérea, respiração e circulação (ABCDE)", correct: true, explain: "A avaliação sistemática ABCDE é a prioridade inicial." },
+      { text: "Coletar exames laboratoriais", correct: false, explain: "Não devem atrasar o tratamento." },
+      { text: "Colocar o paciente sentado", correct: false, explain: "Deve-se colocá-lo em posição supina com pernas elevadas." }
+    ]
+  },
+
+  {
+    q: "9) Qual é o tratamento de escolha para anafilaxia?",
+    choices: [
+      { text: "Adrenalina intramuscular", correct: true, explain: "O PDF reforça ser o principal tratamento, via intramuscular (vasto lateral da coxa)." },
+      { text: "Antihistamínicos EV", correct: false, explain: "São adjuvantes, não o tratamento principal." },
+      { text: "Corticosteroides VO", correct: false, explain: "Usados apenas após estabilização." },
+      { text: "Glicose hipertônica EV", correct: false, explain: "Sem indicação." }
+    ]
+  },
+
+  {
+    q: "10) A dose recomendada de adrenalina IM em adultos é:",
+    choices: [
+      { text: "0,3 a 0,5 mL da solução 1:1000", correct: true, explain: "Essa é a dose padrão indicada no PDF." },
+      { text: "1 mg/kg", correct: false, explain: "Exagerado; causaria toxicidade." },
+      { text: "10 mL de 1:10.000", correct: false, explain: "Corresponde à diluição EV, não IM." },
+      { text: "0,05 mL/kg de 1:10000", correct: false, explain: "Proporção incorreta para via IM." }
+    ]
+  },
+
+  {
+    q: "11) Quando a via endovenosa de adrenalina é indicada?",
+    choices: [
+      { text: "Em todos os casos de anafilaxia", correct: false, explain: "Somente em situações graves ou refratárias." },
+      { text: "Apenas em casos graves com choque ou PCR", correct: true, explain: "Conforme o PDF, é reservada para esses casos." },
+      { text: "Quando há urticária extensa", correct: false, explain: "Apenas urticária não indica uso EV." },
+      { text: "Para prevenir reação bifásica", correct: false, explain: "Não tem essa finalidade." }
+    ]
+  },
+
+  {
+    q: "12) Em casos de hipotensão na anafilaxia, a ressuscitação volêmica inicial deve ser feita com:",
+    choices: [
+      { text: "Soro fisiológico 0,9%, 5–10 mL/kg nos primeiros minutos", correct: true, explain: "Protocolo indicado no PDF, podendo chegar a 30 mL/kg na 1ª hora." },
+      { text: "Soro glicosado 5%", correct: false, explain: "Não é solução de escolha para reposição volêmica." },
+      { text: "Albumina humana", correct: false, explain: "Sem indicação inicial." },
+      { text: "Plasma fresco congelado", correct: false, explain: "Não é repositor volêmico." }
+    ]
+  },
+
+  {
+    q: "13) Caso a pressão arterial permaneça baixa após reposição volêmica e adrenalina, o próximo passo é:",
+    choices: [
+      { text: "Associar noradrenalina", correct: true, explain: "É o vasopressor de escolha em hipotensão refratária." },
+      { text: "Suspender adrenalina", correct: false, explain: "Deve ser mantida até estabilização." },
+      { text: "Aumentar dose de corticoide", correct: false, explain: "Não tem efeito imediato na PA." },
+      { text: "Iniciar dopamina", correct: false, explain: "Noradrenalina é preferida." }
+    ]
+  },
+
+  {
+    q: "14) Qual é o papel dos anti-histamínicos no tratamento da anafilaxia?",
+    choices: [
+      { text: "Tratamento de primeira linha", correct: false, explain: "São adjuvantes, não primeira linha." },
+      { text: "Reduzem os efeitos da histamina sobre pele e mucosas", correct: true, explain: "O PDF destaca esse papel como sintomático." },
+      { text: "Revertem broncoespasmo", correct: false, explain: "Não agem sobre musculatura brônquica." },
+      { text: "Substituem a adrenalina", correct: false, explain: "Jamais substituem o fármaco principal." }
+    ]
+  },
+
+  {
+    q: "15) Por que os corticoides são utilizados na anafilaxia?",
+    choices: [
+      { text: "Para tratar broncoespasmo imediato", correct: false, explain: "O efeito é lento, não imediato." },
+      { text: "Para evitar reações bifásicas ou tardias", correct: true, explain: "A principal justificativa clínica segundo o PDF." },
+      { text: "Por terem efeito vasoconstritor", correct: false, explain: "Não possuem esse efeito." },
+      { text: "Para aumentar a ação da adrenalina", correct: false, explain: "Essa não é sua função principal." }
+    ]
+  },
+
+  {
+    q: "16) Qual dos medicamentos abaixo pode ser útil em paciente com broncoespasmo persistente na anafilaxia?",
+    choices: [
+      { text: "Broncodilatador inalatório", correct: true, explain: "Indicado para sintomas respiratórios conforme o PDF." },
+      { text: "Ranitidina EV", correct: false, explain: "Antagonista H2, sem efeito broncodilatador." },
+      { text: "Furosemida", correct: false, explain: "Sem benefício nesse contexto." },
+      { text: "Insulina regular", correct: false, explain: "Não relacionada ao quadro." }
+    ]
+  },
+
+  {
+    q: "17) O azul de metileno pode ser utilizado na anafilaxia por qual mecanismo?",
+    choices: [
+      { text: "Bloqueio da ativação do óxido nítrico (NO)", correct: true, explain: "Mencionado no PDF como tratamento em hipotensão refratária." },
+      { text: "Aumento da liberação de histamina", correct: false, explain: "Seria deletério, não terapêutico." },
+      { text: "Estimulação beta-adrenérgica", correct: false, explain: "Essa é a ação da adrenalina, não do azul de metileno." },
+      { text: "Inibição de leucotrienos", correct: false, explain: "Não é seu mecanismo principal." }
+    ]
+  },
+
+  {
+    q: "18) Qual droga pode ser usada em pacientes pouco responsivos à adrenalina, especialmente em uso de betabloqueadores?",
+    choices: [
+      { text: "Glucagon", correct: true, explain: "O PDF explica que o glucagon tem efeito inotrópico e cronotrópico positivo, útil nesses casos." },
+      { text: "Noradrenalina", correct: false, explain: "Usada em hipotensão refratária, não por antagonismo beta." },
+      { text: "Dobutamina", correct: false, explain: "Alternativa menos efetiva." },
+      { text: "Nitroprussiato", correct: false, explain: "Causa vasodilatação, o que pioraria a hipotensão." }
+    ]
+  },
+
+  {
+    q: "19) Após melhora e alta hospitalar, o paciente deve receber:",
+    choices: [
+      { text: "Prednisona VO por 3–5 dias e orientação sobre sinais de alerta", correct: true, explain: "Conduta indicada no PDF para prevenir reações tardias." },
+      { text: "Alta sem medicação", correct: false, explain: "Há risco de reação bifásica." },
+      { text: "Antihistamínico de uso contínuo por 30 dias", correct: false, explain: "Não é indicado prolongadamente." },
+      { text: "Antibiótico profilático", correct: false, explain: "Sem necessidade." }
+    ]
+  },
+
+  {
+    q: "20) O acompanhamento após episódio de anafilaxia deve incluir:",
+    choices: [
+      { text: "Avaliação com alergologista", correct: true, explain: "Fundamental para identificar o agente causal e prevenir recorrência." },
+      { text: "Repetição de exames laboratoriais semanais", correct: false, explain: "Não necessário." },
+      { text: "Uso contínuo de corticoide", correct: false, explain: "Não indicado." },
+      { text: "Evitar qualquer medicação", correct: false, explain: "Apenas o agente suspeito deve ser evitado." }
+    ]
+  },
+
+  /* =================== 10 QUESTÕES DE CASOS CLÍNICOS =================== */
+
+  {
+    q: "21) Mulher de 32 anos apresenta prurido intenso, urticária, dispneia e hipotensão minutos após ingestão de camarão. Qual a primeira conduta?",
+    choices: [
+      { text: "Administrar adrenalina IM imediatamente", correct: true, explain: "É o tratamento de primeira linha para anafilaxia." },
+      { text: "Realizar exame de sangue urgente", correct: false, explain: "Não deve atrasar o tratamento." },
+      { text: "Administrar hidrocortisona EV antes da adrenalina", correct: false, explain: "Corticoide é adjuvante, não inicial." },
+      { text: "Observar evolução clínica sem intervenção", correct: false, explain: "Pode ser fatal sem tratamento imediato." }
+    ]
+  },
+
+  {
+    q: "22) Homem de 45 anos apresenta queda de PA e sibilância após uso de antibiótico EV. Após duas doses de adrenalina IM sem resposta, próxima conduta é:",
+    choices: [
+      { text: "Iniciar infusão de noradrenalina", correct: true, explain: "Indicado em hipotensão refratária à adrenalina e volume." },
+      { text: "Suspender adrenalina e observar", correct: false, explain: "A piora é esperada sem vasopressor." },
+      { text: "Administrar glicose 50%", correct: false, explain: "Sem efeito sobre choque." },
+      { text: "Coletar triptase", correct: false, explain: "Não é prioridade durante instabilidade." }
+    ]
+  },
+
+  {
+    q: "23) Paciente em uso crônico de betabloqueador apresenta anafilaxia por picada de abelha e não responde à adrenalina. Qual medicamento pode ajudar?",
+    choices: [
+      { text: "Glucagon", correct: true, explain: "Tem efeito inotrópico/cronotrópico independente de receptores beta." },
+      { text: "Amiodarona", correct: false, explain: "Sem relação terapêutica." },
+      { text: "Atropina", correct: false, explain: "Indicada para bradicardia, não anafilaxia." },
+      { text: "Azul de metileno", correct: false, explain: "É opção apenas para vasoplegia refratária." }
+    ]
+  },
+
+  {
+    q: "24) Mulher de 26 anos apresenta urticária, vômitos e tontura após administração de contraste iodado. Qual mecanismo explica essa reação?",
+    choices: [
+      { text: "Ativação direta do sistema complemento", correct: true, explain: "O PDF descreve esse mecanismo para contrastes iodados." },
+      { text: "Liberação mediada por IgE", correct: false, explain: "Caracteriza reação alérgica clássica, não pseudoalérgica." },
+      { text: "Autoimunidade contra basófilos", correct: false, explain: "Não existe tal mecanismo." },
+            { text: "Ação direta do histamino-metiltransferase", correct: false, explain: "Não há esse mecanismo descrito; trata-se de ativação do complemento." }
+    ]
+  },
+
+  {
+    q: "25) Homem de 60 anos, hipertenso, faz uso de losartana e apresenta prurido, edema de lábios e dispneia minutos após uma picada de vespa. PA: 80/50 mmHg. Após aplicação de adrenalina IM, qual deve ser a posição ideal do paciente?",
+    choices: [
+      { text: "Supina, com elevação dos membros inferiores", correct: true, explain: "Essa posição otimiza o retorno venoso e perfusão cerebral." },
+      { text: "Sentada, para facilitar a respiração", correct: false, explain: "Pode agravar hipotensão por redução do retorno venoso." },
+      { text: "Decúbito lateral esquerdo", correct: false, explain: "Indicada em gestantes, não neste caso." },
+      { text: "Ortopneica", correct: false, explain: "Não é indicada em choque." }
+    ]
+  },
+
+  {
+    q: "26) Criança de 8 anos é levada ao pronto-socorro após comer amendoim. Apresenta urticária, tosse, chiado e saturação de O₂ 88%. Após adrenalina IM, mantém broncoespasmo. Qual conduta adjuvante está indicada?",
+    choices: [
+      { text: "Iniciar broncodilatador inalatório", correct: true, explain: "O PDF recomenda broncodilatadores inalatórios para sintomas respiratórios persistentes." },
+      { text: "Aplicar segunda dose de corticoide", correct: false, explain: "O corticoide age tardiamente, não resolve broncoespasmo agudo." },
+      { text: "Administrar anti-histamínico EV", correct: false, explain: "Não alivia broncoespasmo." },
+      { text: "Encaminhar para observação sem medicação adicional", correct: false, explain: "O quadro ainda requer intervenção ativa." }
+    ]
+  },
+
+  {
+    q: "27) Paciente de 54 anos apresenta prurido, eritema difuso e hipotensão severa após transfusão sanguínea. Diagnóstico de anafilaxia é suspeitado. Qual mecanismo fisiopatológico está envolvido?",
+    choices: [
+      { text: "Citotoxicidade mediada por anticorpos", correct: true, explain: "O PDF cita esse mecanismo para reações transfusionais." },
+      { text: "Ativação de linfócitos T", correct: false, explain: "Não é o principal mecanismo na anafilaxia." },
+      { text: "Produção excessiva de serotonina", correct: false, explain: "Serotonina não é o principal mediador envolvido." },
+      { text: "Deposição de imunocomplexos renais", correct: false, explain: "Não ocorre nesse contexto." }
+    ]
+  },
+
+  {
+    q: "28) Homem de 40 anos, em pós-operatório, recebe relaxante muscular e apresenta queda súbita de saturação e hipotensão. Não há história de alergias. Qual é o provável tipo de reação?",
+    choices: [
+      { text: "Reação anafilactoide por degranulação não específica de mastócitos", correct: true, explain: "O PDF descreve esse mecanismo para opióides e relaxantes musculares." },
+      { text: "Anafilaxia clássica mediada por IgE", correct: false, explain: "Ausência de exposição prévia torna isso improvável." },
+      { text: "Reação autoimune mediada por IgG", correct: false, explain: "Não é descrita nesse contexto." },
+      { text: "Toxicidade farmacológica direta", correct: false, explain: "O quadro é imunológico, não tóxico." }
+    ]
+  },
+
+  {
+    q: "29) Paciente chega à emergência em colapso circulatório após exposição a látex. Mesmo com adrenalina IM e volume adequado, persiste hipotenso. Qual fármaco pode ser utilizado para bloquear a vasoplegia mediada por NO?",
+    choices: [
+      { text: "Azul de metileno", correct: true, explain: "Bloqueia a ativação do óxido nítrico, conforme indicado no PDF." },
+      { text: "Glucagon", correct: false, explain: "É útil em uso prévio de betabloqueadores, não neste mecanismo." },
+      { text: "Nitroglicerina", correct: false, explain: "Causa vasodilatação, agravando o choque." },
+      { text: "Dobutamina", correct: false, explain: "Melhora débito, mas não bloqueia NO." }
+    ]
+  },
+
+  {
+    q: "30) Mulher de 70 anos, diabética e em uso de betabloqueador, apresenta urticária, hipotensão e bradicardia após vacina. Após duas doses de adrenalina IM sem melhora, qual medicamento deve ser adicionado?",
+    choices: [
+      { text: "Glucagon EV", correct: true, explain: "O PDF orienta o uso em pacientes pouco responsivos à adrenalina, especialmente em uso de betabloqueadores." },
+      { text: "Atropina", correct: false, explain: "Pode ser usada para bradicardia isolada, mas não substitui o glucagon." },
+      { text: "Corticosteroide EV", correct: false, explain: "Não tem efeito imediato na reversão do choque." },
+      { text: "Noradrenalina", correct: false, explain: "Usada em hipotensão refratária, mas glucagon é indicado neste contexto específico." }
+    ]
+  },
+
+  {
+    q: "31) Homem de 28 anos, com rinite alérgica, apresenta prurido generalizado, edema de glote e saturação 82% após uso de anti-inflamatório. Qual a justificativa fisiopatológica para a rápida piora respiratória?",
+    choices: [
+      { text: "Liberação maciça de histamina e leucotrienos promovendo broncoconstrição e edema de mucosas", correct: true, explain: "Conforme o PDF, esses mediadores causam edema de glote e broncoespasmo." },
+      { text: "Ação tardia dos corticoides endógenos", correct: false, explain: "Não é um fator de piora aguda." },
+      { text: "Ativação de linfócitos T citotóxicos", correct: false, explain: "Não é o mecanismo agudo da anafilaxia." },
+      { text: "Inibição da histamina", correct: false, explain: "Ocorre o oposto: liberação excessiva." }
+    ]
+  },
+
+  {
+    q: "32) Paciente de 35 anos chega ao pronto-socorro com urticária, edema facial e sensação de desmaio após ingestão de castanhas. PA: 70/40 mmHg. Após uso de adrenalina IM, deve-se administrar:",
+    choices: [
+      { text: "Ressuscitação volêmica com SF 0,9%, 30 mL/kg na 1ª hora", correct: true, explain: "Conduta indicada para choque anafilático conforme o PDF." },
+      { text: "Corticosteroide oral imediato", correct: false, explain: "Usado após estabilização." },
+      { text: "Antibiótico profilático", correct: false, explain: "Não há infecção associada." },
+      { text: "Sedativo EV", correct: false, explain: "Contraindicado." }
+    ]
+  },
+
+  {
+    q: "33) Homem de 29 anos apresenta anafilaxia bifásica após exposição a amendoim. O primeiro episódio foi controlado, mas oito horas depois recidiva. O uso de qual fármaco poderia ter ajudado a prevenir essa recorrência?",
+    choices: [
+      { text: "Corticosteroide", correct: true, explain: "O PDF destaca que o uso empírico visa prevenir reações bifásicas." },
+      { text: "Anti-histamínico", correct: false, explain: "Reduz sintomas cutâneos, mas não previne bifásica." },
+      { text: "Broncodilatador", correct: false, explain: "Atua apenas em broncoespasmo." },
+      { text: "Azul de metileno", correct: false, explain: "Utilizado em choque refratário, não na prevenção de recorrência." }
+    ]
+  },
+
+  {
+    q: "34) Mulher de 23 anos chega com urticária e hipotensão após aplicação de penicilina. Após estabilização, quais medidas são adequadas na alta?",
+    choices: [
+      { text: "Prescrever prednisona VO por 3–5 dias e encaminhar ao alergologista", correct: true, explain: "São recomendações do PDF para alta e prevenção de novos episódios." },
+      { text: "Alta imediata sem prescrição", correct: false, explain: "Deve haver observação e tratamento preventivo." },
+      { text: "Reintroduzir penicilina para dessensibilização", correct: false, explain: "Contraindicado neste momento." },
+      { text: "Uso de antibiótico profilático", correct: false, explain: "Sem relação com a anafilaxia." }
+    ]
+  },
+
+  {
+    q: "35) Um paciente apresenta anafilaxia após infusão de gamaglobulina. Qual o mecanismo imunológico envolvido nesse tipo de reação?",
+    choices: [
+      { text: "Formação de imunocomplexos", correct: true, explain: "O PDF cita esse mecanismo específico para gamaglobulina." },
+      { text: "Ativação de complemento direto", correct: false, explain: "Esse é o mecanismo dos contrastes iodados." },
+      { text: "Degranulação inespecífica de mastócitos", correct: false, explain: "Ocorre com opióides e relaxantes musculares." },
+      { text: "Ativação de receptores nicotínicos", correct: false, explain: "Sem relação com o processo." }
+    ]
+  }
+];
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
