@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Patologias do Anel Linfático de Waldeyer</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Patologias do Anel Linfático de Waldeyer</h1>
+    <p class="lead">30 questões baseadas exclusivamente no PDF "Patologias do Anel Linfático de Waldeye clínicos".</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+/* ========== PARTE 1/2 — 15 QUESTÕES (10 GERAIS + 5 CASOS) ========== */
+
+/* 1 */
+{
+  q: "1) Qual das seguintes estruturas NÃO faz parte do Anel Linfático de Waldeyer?",
+  choices: [
+    { text: "Amígdalas palatinas.", correct: false,
+      explain: "Incorreto — as amígdalas palatinas são componente principal do anel de Waldeyer." },
+    { text: "Amígdalas faríngeas (adenoides).", correct: false,
+      explain: "Incorreto — as adenoides são parte central do anel linfático de Waldeyer." },
+    { text: "Glândula submandibular.", correct: true,
+      explain: "Correto — a glândula submandibular é uma glândula salivares e não integra o anel linfático de Waldeyer (que inclui palatinas, faríngeas, linguais e tubárias)."} ,
+    { text: "Amígdalas linguais.", correct: false,
+      explain: "Incorreto — as amígdalas linguais, na base da língua, fazem parte do anel." }
+  ]
+},
+/* 2 */
+{
+  q: "2) Sobre a função do anel linfático de Waldeyer, assinale a afirmativa CORRETA:",
+  choices: [
+    { text: "É uma barreira imunológica de primeira linha contra antígenos inalados e ingeridos.", correct: true,
+      explain: "Correto — o anel de Waldeyer tem papel de defesa local, com intensa produção de linfócitos, atuando na primeira linha de contato com antígenos." },
+    { text: "Produz enzimas digestivas para a digestão de proteínas.", correct: false,
+      explain: "Incorreto — o anel tem função imunológica, não função digestiva enzimática." },
+    { text: "É responsável exclusivamente pela produção de muco na orofaringe.", correct: false,
+      explain: "Incorreto — produção de muco é função das glândulas mucosas; o anel é tecido linfoide." },
+    { text: "Tem atividade apenas após a puberdade, estando inativo na infância.", correct: false,
+      explain: "Incorreto — é especialmente importante na infância, com involução progressiva após adolescência." }
+  ]
+},
+/* 3 */
+{
+  q: "3) A drenagem linfática da laringe é desigual. Qual das afirmativas abaixo está de acordo com o material?",
+  choices: [
+    { text: "Pregas vocais verdadeiras têm drenagem linfática pobre, enquanto a região supraglótica é rica em vasos linfáticos.", correct: true,
+      explain: "Correto — o texto descreve drenagem pobre nas pregas vocais e maior riqueza de vasos linfáticos nas regiões supra/infraglóticas, o que influencia disseminação tumoral." },
+    { text: "Toda a laringe tem drenagem linfática abundante e homogênea.", correct: false,
+      explain: "Incorreto — a drenagem não é homogênea; há áreas com menor rede linfática (pregas vocais)." },
+    { text: "A glote é a região com maior risco de disseminação linfática de neoplasias.", correct: false,
+      explain: "Incorreto — glote (pregas vocais) tem drenagem pobre; supraglote e infraglote têm mais vasos e maior risco de disseminação." },
+    { text: "A drenagem linfática é irrelevante para prognosis de tumores laríngeos.", correct: false,
+      explain: "Incorreto — é relevante: regiões com muita drenagem linfática têm maior risco de disseminação e pior prognóstico." }
+  ]
+},
+/* 4 */
+{
+  q: "4) Sobre cartilagens da laringe, assinale a opção correta:",
+  choices: [
+    { text: "A cartilagem cricoide é a única com formato de anel completo.", correct: true,
+      explain: "Correto — a cricoide é a única cartilagem laríngea com anel completo, localizada abaixo da tireoide." },
+    { text: "A epiglote tem função de sustentar as pregas vocais laterais.", correct: false,
+      explain: "Incorreto — a epiglote protege a via aérea durante a deglutição, não sustenta pregas vocais." },
+    { text: "A tireoide é a menor cartilagem da laringe.", correct: false,
+      explain: "Incorreto — a tireoide é a maior cartilagem da laringe e forma o pomo de Adão." },
+    { text: "As cartilagens aritenoides são ímpares e não movimentam as pregas vocais.", correct: false,
+      explain: "Incorreto — as aritenoides são pares e participam do controle da tensão e posição das pregas vocais." }
+  ]
+},
+/* 5 */
+{
+  q: "5) Em relação às indicações de tonsilectomia descritas no PDF, qual alternativa é correta?",
+  choices: [
+    { text: "Tonsilites de repetição, apneia documentada, abscesso peritonsilar recorrente e assimetria suspeita de neoplasia.", correct: true,
+      explain: "Correto — o material lista essas indicações, além de halitose associada à tonsilite crônica e impacto funcional/absenteísmo." },
+    { text: "Tonsilectomia está indicada após o primeiro episódio de faringotonsilite por GAS.", correct: false,
+      explain: "Incorreto — um episódio isolado não é indicação; a decisão é individualizada e requer repetição ou complicações." },
+    { text: "Indicação absoluta em qualquer episódio de halitose.", correct: false,
+      explain: "Incorreto — halitose isolada não é indicação; apenas quando associada a tonsilite crônica refratária pode justificar cirurgia." },
+    { text: "Tonsilectomia é indicada em todas as crianças com hipertrofia amigdalar, independentemente de sintoma.", correct: false,
+      explain: "Incorreto — hipertrofia sintomática (ex.: SAOS) pode justificar adenoidectomia/tonsilectomia, mas não todas as hipertrofias assintomáticas." }
+  ]
+},
+/* 6 */
+{
+  q: "6) Qual é o agente bacteriano clássico associado à faringotonsilite supurativa e às complicações não supurativas (febre reumática, glomerulonefrite)?",
+  choices: [
+    { text: "Streptococcus pyogenes (GAS).", correct: true,
+      explain: "Correto — o Streptococcus pyogenes do grupo A é o agente clássico vinculado a faringotonsilite e complicações não supurativas." },
+    { text: "Haemophilus influenzae não tipável.", correct: false,
+      explain: "Incorreto — H. influenzae pode causar infecções respiratórias, mas GAS é o agente clássico das complicações pós-estreptocócicas." },
+    { text: "Staphylococcus epidermidis.", correct: false,
+      explain: "Incorreto — S. epidermidis é comensal de pele, raramente causa faringotonsilite típica com essas complicações." },
+    { text: "Candida albicans.", correct: false,
+      explain: "Incorreto — Candida causa candidíase, não quadro clássico de faringotonsilite com risco reumático." }
+  ]
+},
+/* 7 */
+{
+  q: "7) Quanto aos testes diagnósticos para faringotonsilite por GAS, marque a opção correta:",
+  choices: [
+    { text: "Teste rápido imunocromatográfico tem sensibilidade variável (≈60–90%) e especificidade alta (≈80–90%); o swab de orofaringe é padrão para cultura.", correct: true,
+      explain: "Correto — o PDF descreve sensibilidade e especificidade do teste rápido e destaca swab/culutra como padrão dourado para identificação e orientação terapêutica." },
+    { text: "Teste rápido é 100% sensível e dispensa cultura sempre.", correct: false,
+      explain: "Incorreto — sensibilidade não é 100%; cultura pode ser necessária em casos de dúvida/resultado negativo com alta suspeita." },
+    { text: "PCR viral é o único teste recomendado para GAS.", correct: false,
+      explain: "Incorreto — PCR viral não se aplica para GAS; há testes rápidos de antígeno e cultura bacteriana." },
+    { text: "Hemocultura é o exame de escolha para faringotonsilite.", correct: false,
+      explain: "Incorreto — hemocultura não é rotineira para faringotonsilite; swab da orofaringe é o método apropriado." }
+  ]
+},
+/* 8 */
+{
+  q: "8) Sobre tratamento da faringotonsilite por GAS, qual é o esquema indicado pelo documento?",
+  choices: [
+    { text: "Amoxicilina por 10 dias (ou cefalosporinas/ clindamicina se necessário); evitar macrolídeos em resistência e tetraciclinas/sulfas em crianças.", correct: true,
+      explain: "Correto — o PDF recomenda amoxicilina 10 dias como primeira linha; alternativas incluem cefalosporinas e clindamicina quando necessário." },
+    { text: "Antibiótico por 24 horas apenas, independentemente do agente.", correct: false,
+      explain: "Incorreto — tratamento com 24h é insuficiente para GAS; esquema usual é 10 dias para erradicar carrier e prevenir complicações." },
+    { text: "Tetraciclinas são de escolha em crianças.", correct: false,
+      explain: "Incorreto — tetraciclinas são contraindicadas em crianças por toxicidade dentária; o documento orienta evitá-las." },
+    { text: "Nenhum antibiótico deve ser usado em GAS.", correct: false,
+      explain: "Incorreto — GAS requer tratamento antibiótico para reduzir complicações supurativas e não supurativas." }
+  ]
+},
+/* 9 */
+{
+  q: "9) Sobre abscesso peritonsilar (quale é o manejo correto?), marque a alternativa que condiz com o conteúdo:",
+  choices: [
+    { text: "Drenagem (punção ou incisão e drenagem), hidratação venosa e antibiótico dirigido a S. aureus, GAS e anaeróbios orais.", correct: true,
+      explain: "Correto — o material descreve drenagem e cobertura antibiótica considerando estafilococos, estreptococos e anaeróbios orais; um episódio isolado não obriga cirurgia." },
+    { text: "Terapia exclusivamente com antibiótico oral, sem drenagem, é geralmente suficiente.", correct: false,
+      explain: "Incorreto — coleção purulenta exige drenagem física; antibiótico isolado é insuficiente em muitos casos." },
+    { text: "Tratamento imediato com radioterapia local.", correct: false,
+      explain: "Incorreto — radioterapia não é tratamento para abscesso; opção é drenagem e antibioticoterapia." },
+    { text: "Aplicação local de corticosteroide tópico cura o abscesso sem necessidade de drenagem.", correct: false,
+      explain: "Incorreto — corticosteroides tópicos não resolvem coleção purulenta; não substituem drenagem." }
+  ]
+},
+/* 10 */
+{
+  q: "10) A tonsilite por Vírus Epstein-Barr (mononucleose infecciosa) tem particularidades. Qual das afirmações abaixo está correta?",
+  choices: [
+    { text: "Quadro típico inclui febre, odinofagia intensa, linfadenopatia generalizada e esplenomegalia; evitar amoxicilina (rash característico).", correct: true,
+      explain: "Correto — EBV produz quadro com linfocitose e anticorpos heterófilos; uso de amoxicilina pode desencadear rash característico e por isso é evitado." },
+    { text: "EBV é tratado rotineiramente com amoxicilina por 10 dias.", correct: false,
+      explain: "Incorreto — amoxicilina é evitada; tratamento é suportivo. Uso de amoxicilina causa rash em muitos casos." },
+    { text: "EBV nunca provoca aumento do volume das amígdalas.", correct: false,
+      explain: "Incorreto — pode causar hiperplasia adenotonsilar importante e obstrução das vias aéreas." },
+    { text: "Diagnóstico definitivo por hemocultura positiva para EBV.", correct: false,
+      explain: "Incorreto — hemocultura não detecta EBV; o diagnóstico usa linfocitose e anticorpos heterófilos (Paul-Bunnell) e testes sorológicos." }
+  ]
+},
+/* =========================== CASOS CLÍNICOS (nível 6º/7º) =========================== */
+
+/* 11 */
+{
+  q: "11) (Caso) Criança de 4 anos com ronco noturno progressivo, respirando pela boca, fala nasal e face adenoideana. Exame otorrinolaringológico revela hipertrofia adenoamigdalar. Qual a conduta mais indicada segundo o conteúdo?",
+  choices: [
+    { text: "Adenoidectomia e/ou tonsilectomia por associação com SAOS sintomático e alterações faciais.", correct: true,
+      explain: "Correto — hipertrofia que causa apneia obstrutiva do sono ou alterações funcionais/faciais é indicação de adenoidectomia/tonsilectomia conforme o material." },
+    { text: "Uso isolado de antibiótico por 3 dias e alta sem cirurgia.", correct: false,
+      explain: "Incorreto — hipertrofia funcional com SAOS exige avaliação cirúrgica; antibiótico isolado não corrige obstrução adenóide-tonsilar." },
+    { text: "Aguardar até adolescência, pois a adenoide sempre involui sem sequela.", correct: false,
+      explain: "Incorreto — embora haja involução na adolescência, quando há SAOS e repercussão clínica a cirurgia pode ser indicada antes." },
+    { text: "Indicar apenas terapia fonoaudiológica como primeira escolha.", correct: false,
+      explain: "Incorreto — fonoaudiologia pode ajudar, mas em SAOS por hipertrofia amigdalar a solução frequentemente é cirúrgica." }
+  ]
+},
+/* 12 */
+{
+  q: "12) (Caso) Adolescente com amigdalites recorrentes (≥7 episódios no último ano), queda no rendimento escolar e faltas frequentes. Segundo as indicações do PDF, qual o encaminhamento mais adequado?",
+  choices: [
+    { text: "Considerar tonsilectomia após avaliação individualizada (impacto funcional e frequência de episódios).", correct: true,
+      explain: "Correto — a indicação de tonsilectomia por tonsilites de repetição considera número de episódios e impacto funcional/absenteísmo." },
+    { text: "Negar cirurgia se houver qualquer histórico de febre.", correct: false,
+      explain: "Incorreto — febre sozinha não contraindica cirurgia; a decisão é multidimensional." },
+    { text: "Prescrever macrolídeo de longo prazo como alternativa cirúrgica em todos os casos.", correct: false,
+      explain: "Incorreto — uso prolongado de antibióticos não é indicado como substituto de cirurgia em quadros recorrentes e aumenta resistência." },
+    { text: "Encaminhar diretamente para radioterapia das amígdalas.", correct: false,
+      explain: "Incorreto — radioterapia não é tratamento para tonsilite recorrente; abordagem é medicamentosa e/ou cirúrgica (tonsilectomia)." }
+  ]
+},
+/* 13 */
+{
+  q: "13) (Caso) Paciente apresenta trismo, voz abafada (''voz de batata quente'') e desvio da úvula; qual diagnóstico e conduta imediata adequados conforme o PDF?",
+  choices: [
+    { text: "Abscesso peritonsilar — drenagem urgente, hidratação EV e antibioticoterapia cobrindo S. aureus, GAS e anaeróbios.", correct: true,
+      explain: "Correto — quadro clássico de abscesso peritonsilar com trismo e desvio da úvula; tratamento é drenagem e antibioticoterapia adequada." },
+    { text: "Faringite viral simples — repouso e antitérmico apenas.", correct: false,
+      explain: "Incorreto — sinais de coleção purulenta exigem drenagem; manejo sintomático é insuficiente." },
+    { text: "Hipertrofia amigdalar assintomática — observação sem intervenção.", correct: false,
+      explain: "Incorreto — achados de coleção e trismo não são compatíveis com hipertrofia assintomática." },
+    { text: "Administração rotineira de corticosteroide tópico resolve abscesso.", correct: false,
+      explain: "Incorreto — corticoterapia tópica não drena coleções; procedimento é necessário." }
+  ]
+},
+/* 14 */
+{
+  q: "14) (Caso) Criança com secreção nasal purulenta, obstrução nasal e roncos, sem aumento das amígdalas palatinas. Diagnóstico mais provável e tratamento sugerido segundo o material?",
+  choices: [
+    { text: "Adenoidite aguda — tratamento clínico (suporte) e considerar adenoidectomia se recorrente/obstrutiva.", correct: true,
+      explain: "Correto — adenoidite manifesta obstrução nasal e secreção, e adenoidectomia é indicada em casos recorrentes ou obstrutivos, conforme o PDF." },
+    { text: "Mononucleose por EBV — iniciar amoxicilina imediatamente.", correct: false,
+      explain: "Incorreto — EBV é tratado de forma suportiva; amoxicilina deve ser evitada (pode causar rash) e adenoide isolada pode ocorrer em infecções virais ou bacterianas." },
+    { text: "Rinite alérgica crônica — cirurgia imediata de cornetos.", correct: false,
+      explain: "Incorreto — rinite alérgica é causa de obstrução nasal, mas descrição e manejo cirúrgico imediato não condizem com o cenário fornecido." },
+    { text: "Tonsilite crônica — iniciar clindamicina por 30 dias.", correct: false,
+      explain: "Incorreto — tonsilite envolve amígdalas palatinas; adenoidite é mais provável com obstrução nasal; antibioticoterapia prolongada não é rotina." }
+  ]
+},
+/* 15 */
+{
+  q: "15) (Caso) Paciente com tonsilite crônica apresenta halitose persistente e presença de tonsilólitos (caseum). Segundo o PDF, qual a opção mais indicada?",
+  choices: [
+    { text: "Avaliar para tonsilectomia, pois halitose persistente associada à tonsilite crônica é indicação cirúrgica.", correct: true,
+      explain: "Correto — presença de halitose persistente e tonsilólitos em contexto de tonsilite crônica são indicações que podem justificar tonsilectomia." },
+    { text: "Prescrever apenas enxaguatório bucal por 2 dias e alta.", correct: false,
+      explain: "Incorreto — medidas tópicas podem ajudar, mas em tonsilite crônica com impacto e tonsilólitos a cirurgia pode ser indicada." },
+    { text: "Iniciar terapia antifúngica sistêmica imediatamente.", correct: false,
+      explain: "Incorreto — tonsilólitos e halitose por tonsilite crônica não implicam infecção fúngica obrigatória; antifúngicos não são a escolha." },
+    { text: "Recomendar dieta líquida por 7 dias sem outras intervenções.", correct: false,
+      explain: "Incorreto — dieta líquida não resolve a condição crônica e não é recomendada como tratamento definitivo." }
+  ]
+},
+
+/* Parte 2 (15 questões restantes) será enviada em seguida */
+/* ========== PARTE 2/2 — 15 QUESTÕES (10 GERAIS + 5 CASOS CLÍNICOS) ========== */
+
+/* 16 */
+{
+  q: "16) A amígdala faríngea (adenoide) é mais desenvolvida em qual faixa etária, e o que ocorre após a puberdade?",
+  choices: [
+    { text: "Mais desenvolvida na infância, com involução progressiva após a puberdade.", correct: true,
+      explain: "Correto — o PDF descreve que a adenoide é proeminente na infância e tende a involuir naturalmente na adolescência." },
+    { text: "Ausente na infância, desenvolvendo-se apenas na vida adulta.", correct: false,
+      explain: "Incorreto — o tecido adenoideano é típico da infância, não da vida adulta." },
+    { text: "Permanece constante em tamanho durante toda a vida.", correct: false,
+      explain: "Incorreto — há involução fisiológica com a idade." },
+    { text: "Aumenta progressivamente até a terceira idade.", correct: false,
+      explain: "Incorreto — o tecido sofre regressão após a puberdade, não aumento." }
+  ]
+},
+/* 17 */
+{
+  q: "17) O anel linfático de Waldeyer tem importância clínica especial porque:",
+  choices: [
+    { text: "É a principal porta de entrada e defesa imunológica contra patógenos do trato respiratório superior e digestivo.", correct: true,
+      explain: "Correto — o PDF enfatiza o papel imunológico do anel de Waldeyer, sendo ponto de vigilância imunológica contra microrganismos inalados ou ingeridos." },
+    { text: "Atua na digestão de carboidratos e lipídios.", correct: false,
+      explain: "Incorreto — função digestiva não é exercida por tecido linfático." },
+    { text: "Produz hormônios relacionados à tireoide.", correct: false,
+      explain: "Incorreto — não há função endócrina associada." },
+    { text: "É responsável pela secreção de saliva e enzimas digestivas.", correct: false,
+      explain: "Incorreto — secreção salivar é de glândulas salivares, não das amígdalas." }
+  ]
+},
+/* 18 */
+{
+  q: "18) Na otite média de repetição relacionada à hipertrofia adenoideana, o mecanismo principal é:",
+  choices: [
+    { text: "Obstrução mecânica da tuba auditiva por tecido adenoideano aumentado.", correct: true,
+      explain: "Correto — o PDF descreve que a hipertrofia adenoideana pode obstruir a tuba auditiva, predispondo a otite média de repetição." },
+    { text: "Infecção direta do canal auditivo externo.", correct: false,
+      explain: "Incorreto — otite externa não está relacionada à adenoide." },
+    { text: "Perfuração espontânea da membrana timpânica.", correct: false,
+      explain: "Incorreto — perfuração pode ser consequência, mas não é o mecanismo principal." },
+    { text: "Alteração neurológica do reflexo da tuba auditiva.", correct: false,
+      explain: "Incorreto — o fator é obstrutivo mecânico, não neurológico." }
+  ]
+},
+/* 19 */
+{
+  q: "19) Qual complicação pode ocorrer secundariamente à infecção das amígdalas palatinas?",
+  choices: [
+    { text: "Abscesso peritonsilar.", correct: true,
+      explain: "Correto — é a principal complicação supurativa das amigdalites bacterianas, com dor, trismo e desvio da úvula." },
+    { text: "Otite externa fúngica.", correct: false,
+      explain: "Incorreto — não está relacionada diretamente à infecção tonsilar." },
+    { text: "Epiglotite viral isolada.", correct: false,
+      explain: "Incorreto — epiglotite é infecção distinta, geralmente por H. influenzae tipo b." },
+    { text: "Laringocele traumática.", correct: false,
+      explain: "Incorreto — laringocele é dilatação aérea, sem relação com tonsilite." }
+  ]
+},
+/* 20 */
+{
+  q: "20) Em relação à tonsilite crônica, o que caracteriza o quadro segundo o documento?",
+  choices: [
+    { text: "Presença de criptas profundas, halitose, caseum e episódios repetidos de infecção.", correct: true,
+      explain: "Correto — o material cita tonsilólitos, halitose e episódios recorrentes como marcadores de tonsilite crônica." },
+    { text: "Aumento súbito das amígdalas sem inflamação.", correct: false,
+      explain: "Incorreto — aumento súbito sem inflamação é achado inespecífico; tonsilite crônica é inflamatória." },
+    { text: "Ausência de qualquer sintoma local.", correct: false,
+      explain: "Incorreto — há sintomas recorrentes e halitose persistente." },
+    { text: "Redução do número de criptas tonsilares.", correct: false,
+      explain: "Incorreto — há hipertrofia e aprofundamento das criptas, não redução." }
+  ]
+},
+/* 21 */
+{
+  q: "21) Em relação à mononucleose infecciosa, qual achado laboratorial é característico?",
+  choices: [
+    { text: "Linfocitose atípica e teste de anticorpos heterófilos positivo (Paul-Bunnell).", correct: true,
+      explain: "Correto — a mononucleose por EBV cursa com linfocitose e anticorpos heterófilos detectáveis; isso é citado no PDF." },
+    { text: "Neutropenia e eosinofilia severa.", correct: false,
+      explain: "Incorreto — há linfocitose, não eosinofilia." },
+    { text: "Hipocalcemia e anemia megaloblástica.", correct: false,
+      explain: "Incorreto — não há relação metabólica ou hematológica dessa natureza." },
+    { text: "PCR viral negativo e leucopenia.", correct: false,
+      explain: "Incorreto — EBV costuma causar leucocitose, não leucopenia." }
+  ]
+},
+/* 22 */
+{
+  q: "22) A amigdalite viral geralmente se diferencia da bacteriana por:",
+  choices: [
+    { text: "Presença de sintomas sistêmicos leves, ausência de exsudato purulento e curso autolimitado.", correct: true,
+      explain: "Correto — a amigdalite viral tende a ser mais branda, sem exsudato purulento; PDF descreve diferenciação clínica." },
+    { text: "Presença obrigatória de exsudato e linfonodos dolorosos.", correct: false,
+      explain: "Incorreto — esses achados sugerem origem bacteriana (GAS)." },
+    { text: "Resposta rápida à amoxicilina.", correct: false,
+      explain: "Incorreto — viral não melhora com antibiótico." },
+    { text: "Sempre evoluir para abscesso peritonsilar.", correct: false,
+      explain: "Incorreto — complicações são raras nas virais." }
+  ]
+},
+/* 23 */
+{
+  q: "23) A principal diferença anatômica entre amígdala palatina e lingual é:",
+  choices: [
+    { text: "A palatina é revestida por epitélio estratificado não queratinizado; a lingual por epitélio queratinizado.", correct: true,
+      explain: "Correto — o PDF descreve diferenças histológicas e localização anatômica; a lingual tem epitélio queratinizado." },
+    { text: "A lingual é suspensa por pedículo e localizada no palato mole.", correct: false,
+      explain: "Incorreto — a lingual está na base da língua, não suspensa no palato." },
+    { text: "A palatina é ímpar e mediana.", correct: false,
+      explain: "Incorreto — as palatinas são pares e laterais." },
+    { text: "A lingual é revestida por epitélio cilíndrico simples.", correct: false,
+      explain: "Incorreto — o epitélio é estratificado, não cilíndrico simples." }
+  ]
+},
+/* 24 */
+{
+  q: "24) Qual das condições abaixo é considerada contraindicação relativa para tonsilectomia?",
+  choices: [
+    { text: "Distúrbios hemorrágicos não controlados.", correct: true,
+      explain: "Correto — coagulopatias descompensadas são contraindicação relativa até estabilização clínica." },
+    { text: "Presença de halitose crônica.", correct: false,
+      explain: "Incorreto — é indicação possível, não contraindicação." },
+    { text: "Apneia obstrutiva do sono em criança.", correct: false,
+      explain: "Incorreto — é uma das indicações clássicas." },
+    { text: "Amigdalite de repetição comprovada.", correct: false,
+      explain: "Incorreto — é indicação, não contraindicação." }
+  ]
+},
+/* 25 */
+{
+  q: "25) Em relação ao linfoma de amígdala, qual achado clínico deve levantar suspeita segundo o PDF?",
+  choices: [
+    { text: "Assimetria tonsilar e crescimento endurecido de uma das amígdalas.", correct: true,
+      explain: "Correto — assimetria tonsilar sem infecção aparente é achado que pode sugerir neoplasia, incluindo linfoma." },
+    { text: "Aumento bilateral simétrico das amígdalas.", correct: false,
+      explain: "Incorreto — aumento simétrico é comum em infecção, não necessariamente maligno." },
+    { text: "Presença de exsudato purulento bilateral.", correct: false,
+      explain: "Incorreto — esse achado indica processo infeccioso, não neoplásico." },
+    { text: "Presença de caseum nas criptas.", correct: false,
+      explain: "Incorreto — caseum ocorre em tonsilite crônica, não é sinal de linfoma." }
+  ]
+},
+/* ======================= CASOS CLÍNICOS AVANÇADOS ======================= */
+
+/* 26 */
+{
+  q: "26) (Caso) Homem de 40 anos apresenta aumento unilateral de amígdala, endurecida, sem dor, e perda de peso nos últimos 3 meses. Qual hipótese e conduta sugerida?",
+  choices: [
+    { text: "Suspeita de neoplasia (linfoma ou carcinoma) — solicitar biópsia para histopatologia.", correct: true,
+      explain: "Correto — assimetria tonsilar endurecida e sintomas sistêmicos sugerem neoplasia; o PDF orienta biópsia e investigação histológica." },
+    { text: "Amigdalite bacteriana simples — iniciar antibiótico empírico.", correct: false,
+      explain: "Incorreto — quadro crônico indolor com perda de peso é atípico para infecção bacteriana aguda." },
+    { text: "Mononucleose infecciosa — tratar clinicamente e observar.", correct: false,
+      explain: "Incorreto — mononucleose é autolimitada e cursa com dor e linfadenopatia difusa, não massa endurecida unilateral persistente." },
+    { text: "Abscesso peritonsilar — realizar drenagem imediata.", correct: false,
+      explain: "Incorreto — ausência de dor e sinais flogísticos descarta abscesso." }
+  ]
+},
+/* 27 */
+{
+  q: "27) (Caso) Mulher de 35 anos com odinofagia intensa, febre, placas esbranquiçadas nas amígdalas e teste rápido positivo para GAS. Segundo o documento, qual o tratamento mais indicado?",
+  choices: [
+    { text: "Amoxicilina por 10 dias e hidratação; evitar interrupção precoce.", correct: true,
+      explain: "Correto — o PDF recomenda amoxicilina por 10 dias como tratamento padrão para faringotonsilite por GAS." },
+    { text: "Terapia com antifúngico sistêmico.", correct: false,
+      explain: "Incorreto — antifúngicos não tratam faringotonsilite bacteriana." },
+    { text: "Uso de corticóide tópico isolado.", correct: false,
+      explain: "Incorreto — corticoterapia isolada não trata a infecção." },
+    { text: "Observação sem antibiótico.", correct: false,
+      explain: "Incorreto — o tratamento antibiótico é essencial para prevenir complicações." }
+  ]
+},
+/* 28 */
+{
+  q: "28) (Caso) Criança com febre, odinofagia e linfadenopatia cervical posterior; teste rápido para GAS negativo, mas anticorpos heterófilos positivos. Qual a conduta correta?",
+  choices: [
+    { text: "Diagnóstico de mononucleose infecciosa; evitar amoxicilina e tratar de forma sintomática.", correct: true,
+      explain: "Correto — o quadro e testes indicam EBV; amoxicilina deve ser evitada pelo risco de rash." },
+    { text: "Repetir teste rápido para GAS e iniciar antibiótico empírico.", correct: false,
+      explain: "Incorreto — os testes sorológicos confirmam EBV; não há indicação de antibiótico." },
+    { text: "Prescrever penicilina benzatina.", correct: false,
+      explain: "Incorreto — EBV não é tratado com antibiótico." },
+    { text: "Realizar tonsilectomia imediata.", correct: false,
+      explain: "Incorreto — cirurgia não é indicada em infecção viral aguda." }
+  ]
+},
+/* 29 */
+{
+  q: "29) (Caso) Paciente com rinorreia purulenta, obstrução nasal e perda auditiva condutiva leve; otoscopia com retração timpânica. Qual a provável causa e tratamento indicado?",
+  choices: [
+    { text: "Hipertrofia adenoideana — considerar adenoidectomia.", correct: true,
+      explain: "Correto — o PDF descreve associação entre adenoide hipertrofiada e otite média serosa; adenoidectomia é opção terapêutica." },
+    { text: "Otosclerose — realizar estapedectomia imediata.", correct: false,
+      explain: "Incorreto — não há relação; quadro é obstrutivo e inflamatório, não ósseo." },
+    { text: "Sinusite maxilar — tratamento odontológico.", correct: false,
+      explain: "Incorreto — o quadro descrito é de disfunção tubária por adenoide, não sinusite odontogênica." },
+    { text: "Tumor nasal — solicitar radioterapia inicial.", correct: false,
+      explain: "Incorreto — o padrão clínico é compatível com obstrução adenoideana, não neoplasia." }
+  ]
+},
+/* 30 */
+{
+  q: "30) (Caso) Adolescente com amigdalite recorrente apresenta febre reumática prévia. Segundo o PDF, qual deve ser o cuidado específico neste caso?",
+  choices: [
+    { text: "Tratamento antibiótico completo em cada episódio e acompanhamento cardiológico contínuo.", correct: true,
+      explain: "Correto — o documento reforça a importância de evitar recidiva de infecção estreptocócica em quem já teve febre reumática." },
+    { text: "Evitar qualquer uso de antibióticos por risco de resistência.", correct: false,
+      explain: "Incorreto — nesses casos o uso correto do antibiótico é essencial para prevenir recorrência da febre reumática." },
+    { text: "Indicar tonsilectomia de urgência no primeiro episódio.", correct: false,
+      explain: "Incorreto — a cirurgia não é urgente; o tratamento clínico é prioritário." },
+    { text: "Usar antifúngico oral para profilaxia.", correct: false,
+      explain: "Incorreto — profilaxia é antibiótica, não antifúngica." }
+  ]
+}
+];
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

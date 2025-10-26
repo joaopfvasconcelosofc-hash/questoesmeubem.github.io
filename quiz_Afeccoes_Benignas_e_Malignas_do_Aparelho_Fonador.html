@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Afecções Benignas e Malignas do Aparelho Fonador</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Afecções Benignas e Malignas do Aparelho Fonador</h1>
+    <p class="lead">30 questões baseadas exclusivamente no PDF Afecções Benignas e Malignas do Aparelho Fonador</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+/* ========== PARTE 1/2 — 15 QUESTÕES (10 GERAIS + 5 CASOS CLÍNICOS) ========== */
+
+/* 1 */
+{
+  q: "1) Qual é a principal causa de disfonia crônica em profissionais da voz segundo o conteúdo do PDF?",
+  choices: [
+    { text: "Nódulos vocais decorrentes de abuso vocal.", correct: true,
+      explain: "Correto — o uso excessivo e inadequado da voz, comum em professores e cantores, causa microtraumas repetidos nas pregas vocais que evoluem para nódulos bilaterais." },
+    { text: "Paralisia unilateral de prega vocal.", correct: false,
+      explain: "Incorreto — causa importante, porém menos frequente que lesões fonotraumáticas em profissionais da voz." },
+    { text: "Papilomatose laríngea recorrente.", correct: false,
+      explain: "Incorreto — é menos comum e de etiologia viral (HPV), não relacionada ao abuso vocal." },
+    { text: "Laringite química por refluxo.", correct: false,
+      explain: "Incorreto — pode agravar disfonia, mas o abuso vocal é a principal causa." }
+  ]
+},
+/* 2 */
+{
+  q: "2) Sobre os nódulos vocais, é CORRETO afirmar que:",
+  choices: [
+    { text: "São lesões benignas, simétricas e localizadas no terço médio das pregas vocais.", correct: true,
+      explain: "Correto — o PDF descreve os nódulos como bilaterais e simétricos, situados no ponto de maior contato entre as pregas vocais." },
+    { text: "Apresentam caráter unilateral e frequentemente maligno.", correct: false,
+      explain: "Incorreto — são bilaterais e benignos." },
+    { text: "O tratamento é cirúrgico em todos os casos.", correct: false,
+      explain: "Incorreto — o tratamento inicial é fonoaudiológico e de higiene vocal; cirurgia é exceção." },
+    { text: "Resultam de trauma direto externo sobre a laringe.", correct: false,
+      explain: "Incorreto — são de origem funcional, por esforço fonatório crônico." }
+  ]
+},
+/* 3 */
+{
+  q: "3) O pólipo vocal difere do nódulo por apresentar:",
+  choices: [
+    { text: "Lesão unilateral, geralmente pediculada, relacionada a trauma vocal agudo.", correct: true,
+      explain: "Correto — pólipo é unilateral e pode surgir após esforço fonatório intenso ou trauma vascular agudo." },
+    { text: "Lesão bilateral e simétrica.", correct: false,
+      explain: "Incorreto — descrição compatível com nódulos, não pólipo." },
+    { text: "Natureza infecciosa e evolução rápida para malignidade.", correct: false,
+      explain: "Incorreto — pólipo é benigno e não tem caráter infeccioso." },
+    { text: "Origem congênita e presença de cartilagem na base.", correct: false,
+      explain: "Incorreto — pólipo é adquirido, sem estrutura cartilaginosa." }
+  ]
+},
+/* 4 */
+{
+  q: "4) A laringite por refluxo laringofaríngeo caracteriza-se principalmente por:",
+  choices: [
+    { text: "Irritação crônica da mucosa laríngea por ácido gástrico, causando pigarro e tosse seca.", correct: true,
+      explain: "Correto — refluxo ácido atinge a laringe causando sintomas irritativos e disfonia persistente; PDF cita tratamento com medidas antirrefluxo e IBPs." },
+    { text: "Infecção bacteriana aguda da laringe com pus visível.", correct: false,
+      explain: "Incorreto — laringite infecciosa apresenta outro quadro clínico." },
+    { text: "Trauma mecânico direto sobre as pregas vocais.", correct: false,
+      explain: "Incorreto — o mecanismo é químico, por ácido gástrico." },
+    { text: "Paralisia de nervo laríngeo recorrente.", correct: false,
+      explain: "Incorreto — é causa neurológica, não inflamatória." }
+  ]
+},
+/* 5 */
+{
+  q: "5) Em relação à leucoplasia laríngea, assinale a alternativa correta:",
+  choices: [
+    { text: "É uma lesão branca da mucosa, potencialmente pré-maligna, associada ao tabagismo.", correct: true,
+      explain: "Correto — o PDF classifica leucoplasia como lesão epitelial de risco, frequentemente relacionada a irritantes como fumo e álcool." },
+    { text: "É uma infecção viral benigna autolimitada.", correct: false,
+      explain: "Incorreto — leucoplasia é processo hiperplásico e displásico, não infeccioso." },
+    { text: "Responde bem a antibióticos orais.", correct: false,
+      explain: "Incorreto — não há infecção bacteriana envolvida." },
+    { text: "Ocorre apenas em crianças e regride espontaneamente.", correct: false,
+      explain: "Incorreto — é típica de adultos, principalmente tabagistas." }
+  ]
+},
+/* 6 */
+{
+  q: "6) Qual é a principal característica histopatológica da papilomatose laríngea recorrente?",
+  choices: [
+    { text: "Proliferação epitelial com eixos fibrovasculares, associada ao HPV tipos 6 e 11.", correct: true,
+      explain: "Correto — o PDF descreve papilomas múltiplos com projeções digitiformes e etiologia viral por HPV de baixo risco." },
+    { text: "Inflamação purulenta e necrose tecidual.", correct: false,
+      explain: "Incorreto — papilomatose é lesão proliferativa, não supurativa." },
+    { text: "Deposição de colágeno subepitelial intensa.", correct: false,
+      explain: "Incorreto — característica de cicatrizes, não de papilomas." },
+    { text: "Atrofia epitelial difusa.", correct: false,
+      explain: "Incorreto — há proliferação, não atrofia." }
+  ]
+},
+/* 7 */
+{
+  q: "7) A paralisia unilateral de prega vocal geralmente provoca:",
+  choices: [
+    { text: "Voz soprosa e ineficiente devido à falta de fechamento glótico.", correct: true,
+      explain: "Correto — com uma prega paralisada, há escape de ar na fonação, gerando voz soprosa." },
+    { text: "Voz bitonal grave e metálica.", correct: false,
+      explain: "Incorreto — voz bitonal é mais típica de lesões estruturais mínimas." },
+    { text: "Afonia total imediata.", correct: false,
+      explain: "Incorreto — há disfonia, mas não ausência total de voz." },
+    { text: "Melhora espontânea imediata em 24 horas.", correct: false,
+      explain: "Incorreto — recuperação depende da causa e pode demorar semanas ou meses." }
+  ]
+},
+/* 8 */
+{
+  q: "8) O granuloma de contato está frequentemente associado a:",
+  choices: [
+    { text: "Uso abusivo da voz e refluxo gastroesofágico.", correct: true,
+      explain: "Correto — microtraumas repetidos e irritação ácida causam granuloma posterior, comum em profissionais da voz e pacientes com refluxo." },
+    { text: "Infecção estreptocócica aguda.", correct: false,
+      explain: "Incorreto — granuloma é inflamatório crônico, não infeccioso." },
+    { text: "Paralisia bilateral de pregas vocais.", correct: false,
+      explain: "Incorreto — paralisia altera fonação, mas não causa granuloma." },
+    { text: "Reação autoimune difusa da laringe.", correct: false,
+      explain: "Incorreto — não é doença autoimune, mas traumática e irritativa." }
+  ]
+},
+/* 9 */
+{
+  q: "9) As lesões estruturais mínimas da laringe incluem:",
+  choices: [
+    { text: "Sulco vocal, ponte mucosa e cisto epidermoide.", correct: true,
+      explain: "Correto — o PDF cita essas alterações congênitas ou adquiridas como lesões estruturais mínimas, de diagnóstico endoscópico." },
+    { text: "Nódulos e pólipos vocais.", correct: false,
+      explain: "Incorreto — são lesões fonotraumáticas, não estruturais mínimas." },
+    { text: "Granulomas e leucoplasias.", correct: false,
+      explain: "Incorreto — granuloma é inflamatório, leucoplasia é displásica." },
+    { text: "Papilomas e carcinoma epidermoide.", correct: false,
+      explain: "Incorreto — papilomas e carcinoma são proliferativos, não estruturais mínimos." }
+  ]
+},
+/* 10 */
+{
+  q: "10) Na avaliação diagnóstica de afecções laríngeas, qual exame é considerado padrão para análise funcional das pregas vocais?",
+  choices: [
+    { text: "Videolaringoestroboscopia.", correct: true,
+      explain: "Correto — permite observar vibração das pregas vocais em câmera lenta e avaliar simetria, periodicidade e fechamento glótico." },
+    { text: "Tomografia computadorizada de pescoço.", correct: false,
+      explain: "Incorreto — útil para lesões infiltrativas, mas não para função vibratória." },
+    { text: "Radiografia cervical lateral.", correct: false,
+      explain: "Incorreto — não avalia estruturas moles com precisão." },
+    { text: "Esofagoscopia rígida.", correct: false,
+      explain: "Incorreto — avalia esôfago, não pregas vocais." }
+  ]
+},
+/* ====================== CASOS CLÍNICOS ====================== */
+
+/* 11 */
+{
+  q: "11) (Caso) Professora de 30 anos apresenta disfonia progressiva e fadiga vocal após longos períodos de fala. Laringoscopia mostra lesões bilaterais simétricas no terço médio das pregas vocais. Qual o diagnóstico e conduta?",
+  choices: [
+    { text: "Nódulos vocais — tratamento fonoaudiológico e higiene vocal.", correct: true,
+      explain: "Correto — quadro clássico de nódulos vocais funcionais; conduta inclui reeducação vocal e evitar esforço fonatório." },
+    { text: "Papilomatose laríngea — cirurgia imediata.", correct: false,
+      explain: "Incorreto — papilomatose é lesão múltipla, não simétrica no terço médio." },
+    { text: "Cisto epidermoide — drenagem cirúrgica de urgência.", correct: false,
+      explain: "Incorreto — cistos não exigem urgência; quadro descrito não sugere cisto." },
+    { text: "Paralisia de prega vocal — fisioterapia respiratória.", correct: false,
+      explain: "Incorreto — não há sinais de paralisia na descrição." }
+  ]
+},
+/* 12 */
+{
+  q: "12) (Caso) Paciente masculino de 45 anos, tabagista, refere disfonia há 2 meses. Laringoscopia mostra placa branca em prega vocal direita. Qual hipótese e conduta indicadas?",
+  choices: [
+    { text: "Leucoplasia laríngea — suspender tabaco e realizar biópsia.", correct: true,
+      explain: "Correto — leucoplasia é lesão branca potencialmente maligna; a biópsia é fundamental para excluir displasia grave ou carcinoma in situ." },
+    { text: "Laringite viral — uso de antivirais.", correct: false,
+      explain: "Incorreto — leucoplasia não é infecciosa." },
+    { text: "Nódulo vocal — tratamento fonoaudiológico simples.", correct: false,
+      explain: "Incorreto — lesão unilateral branca e endurecida não corresponde a nódulo funcional." },
+    { text: "Papilomatose — tratamento com antibiótico oral.", correct: false,
+      explain: "Incorreto — papiloma é viral, e antibióticos não são úteis." }
+  ]
+},
+/* 13 */
+{
+  q: "13) (Caso) Cantor profissional com histórico de abuso vocal apresenta lesão unilateral pediculada e edemaciada em prega vocal. Diagnóstico e manejo?",
+  choices: [
+    { text: "Pólipo vocal — microcirurgia e reabilitação fonoaudiológica.", correct: true,
+      explain: "Correto — pólipo geralmente é unilateral, pediculado e requer microcirurgia, seguida de terapia vocal." },
+    { text: "Nódulos vocais — repouso vocal e corticoide oral.", correct: false,
+      explain: "Incorreto — nódulos são bilaterais e simétricos; corticoide não é indicado de rotina." },
+    { text: "Laringite infecciosa — antibiótico oral.", correct: false,
+      explain: "Incorreto — lesão focal não é infecciosa." },
+    { text: "Sulco vocal — acompanhamento clínico sem intervenção.", correct: false,
+      explain: "Incorreto — sulco é alteração estrutural mínima, não pediculada." }
+  ]
+},
+/* 14 */
+{
+  q: "14) (Caso) Paciente refere pigarro crônico, tosse seca e disfonia leve, pior pela manhã. Niega tabagismo. Laringoscopia mostra hiperemia difusa de pregas vocais posteriores. Qual o diagnóstico provável?",
+  choices: [
+    { text: "Laringite por refluxo laringofaríngeo.", correct: true,
+      explain: "Correto — o quadro descrito é clássico de refluxo, com sintomas matinais e hiperemia posterior." },
+    { text: "Papilomatose laríngea.", correct: false,
+      explain: "Incorreto — papilomas produzem lesões exofíticas, não hiperemia difusa." },
+    { text: "Nódulos vocais iniciais.", correct: false,
+      explain: "Incorreto — nódulos são localizados no terço médio, não posterior." },
+    { text: "Laringite bacteriana aguda.", correct: false,
+      explain: "Incorreto — ausência de febre e secreção purulenta afasta essa hipótese." }
+  ]
+},
+/* 15 */
+{
+  q: "15) (Caso) Criança de 5 anos apresenta disfonia persistente e episódios de obstrução respiratória leve. Laringoscopia revela múltiplas lesões verrucosas nas pregas vocais. Qual o diagnóstico e etiologia?",
+  choices: [
+    { text: "Papilomatose laríngea recorrente — infecção por HPV tipos 6 e 11.", correct: true,
+      explain: "Correto — o PDF descreve essa entidade típica da infância, causada por HPV de baixo risco transmitido perinatalmente." },
+    { text: "Cisto congênito de laringe — obstrução por secreção.", correct: false,
+      explain: "Incorreto — cisto é lesão única, não múltipla e verrucosa." },
+    { text: "Leucoplasia traumática — uso vocal intenso.", correct: false,
+      explain: "Incorreto — leucoplasia é branca, plana e ocorre em adultos tabagistas." },
+    { text: "Granuloma de contato — refluxo ácido.", correct: false,
+      explain: "Incorreto — granuloma é único e posterior, não múltiplo." }
+  ]
+},
+{
+  q: "16) Em relação às lesões estruturais mínimas da laringe, o sulco vocal é caracterizado por:",
+  choices: [
+    { text: "Depressão linear da mucosa sobre a prega vocal, com rigidez e disfonia crônica.", correct: true,
+      explain: "Correto — o sulco vocal é uma invaginação da mucosa que reduz a vibração e provoca voz soprosa e fraca." },
+    { text: "Projeção digitiforme de aspecto verrucoso.", correct: false,
+      explain: "Incorreto — descrição de papiloma, não de sulco vocal." },
+    { text: "Lesão esbranquiçada queratinizada da mucosa.", correct: false,
+      explain: "Incorreto — característica de leucoplasia." },
+    { text: "Edema difuso e simétrico de pregas vocais.", correct: false,
+      explain: "Incorreto — achado de edema de Reinke, não de sulco vocal." }
+  ]
+},
+/* 17 */
+{
+  q: "17) O edema de Reinke tem como principal fator etiológico:",
+  choices: [
+    { text: "Tabagismo e abuso vocal crônico.", correct: true,
+      explain: "Correto — o PDF aponta o tabagismo e uso excessivo da voz como causas do acúmulo de fluido na camada superficial da lâmina própria (espaço de Reinke)." },
+    { text: "Infecção estreptocócica.", correct: false,
+      explain: "Incorreto — edema de Reinke é degenerativo, não infeccioso." },
+    { text: "Trauma cirúrgico recente.", correct: false,
+      explain: "Incorreto — pode agravar, mas não é a causa primária." },
+    { text: "HPV de baixo risco.", correct: false,
+      explain: "Incorreto — HPV causa papilomatose, não edema de Reinke." }
+  ]
+},
+/* 18 */
+{
+  q: "18) O carcinoma epidermoide de laringe tem como fatores de risco mais importantes:",
+  choices: [
+    { text: "Tabagismo e etilismo crônico.", correct: true,
+      explain: "Correto — o PDF ressalta o sinergismo entre tabaco e álcool como principal fator carcinogênico da laringe." },
+    { text: "Infecção bacteriana crônica.", correct: false,
+      explain: "Incorreto — não há relação direta entre bactérias e carcinoma epidermoide." },
+    { text: "Trauma vocal repetido.", correct: false,
+      explain: "Incorreto — trauma causa lesões benignas, não malignas." },
+    { text: "Refluxo gastroesofágico isolado.", correct: false,
+      explain: "Incorreto — refluxo é irritante, mas não principal agente oncogênico." }
+  ]
+},
+/* 19 */
+{
+  q: "19) Qual é o sintoma mais precoce do carcinoma glótico?",
+  choices: [
+    { text: "Disfonia progressiva.", correct: true,
+      explain: "Correto — lesões na glote atingem diretamente as pregas vocais, levando a disfonia inicial e persistente." },
+    { text: "Dispneia súbita.", correct: false,
+      explain: "Incorreto — ocorre em estágios mais avançados." },
+    { text: "Hemoptise maciça.", correct: false,
+      explain: "Incorreto — não é manifestação inicial típica." },
+    { text: "Odinofagia intensa.", correct: false,
+      explain: "Incorreto — mais comum em tumores supraglóticos." }
+  ]
+},
+/* 20 */
+{
+  q: "20) No estadiamento tumoral da laringe, a presença de metástase em linfonodo cervical homolateral classifica-se como:",
+  choices: [
+    { text: "N1.", correct: true,
+      explain: "Correto — metástase única, menor que 3 cm e homolateral, corresponde a N1 segundo TNM." },
+    { text: "T2.", correct: false,
+      explain: "Incorreto — T2 refere-se ao tumor primário, não ao linfonodo." },
+    { text: "M1.", correct: false,
+      explain: "Incorreto — M1 indica metástase à distância." },
+    { text: "N3.", correct: false,
+      explain: "Incorreto — N3 implica linfonodos maiores que 6 cm ou bilaterais." }
+  ]
+},
+/* 21 */
+{
+  q: "21) Sobre o tratamento do carcinoma de laringe inicial (T1-T2), o PDF aponta como opções:",
+  choices: [
+    { text: "Cirurgia conservadora e/ou radioterapia.", correct: true,
+      explain: "Correto — casos iniciais podem ser tratados com microcirurgia endoscópica ou radioterapia exclusiva, preservando a função vocal." },
+    { text: "Quimioterapia exclusiva.", correct: false,
+      explain: "Incorreto — quimioterapia isolada não é indicada em tumores iniciais." },
+    { text: "Laringectomia total obrigatória.", correct: false,
+      explain: "Incorreto — indicada apenas em estágios avançados." },
+    { text: "Antibiótico profilático prolongado.", correct: false,
+      explain: "Incorreto — não tem papel no tratamento oncológico." }
+  ]
+},
+/* 22 */
+{
+  q: "22) O carcinoma supraglótico tem maior tendência a metástases porque:",
+  choices: [
+    { text: "Região supraglótica é ricamente vascularizada e com drenagem linfática abundante.", correct: true,
+      explain: "Correto — o PDF destaca que a rica drenagem linfática da supraglote favorece disseminação precoce." },
+    { text: "A mucosa supraglótica é avascular.", correct: false,
+      explain: "Incorreto — exatamente o oposto; há vascularização rica." },
+    { text: "O tumor é confinado e sem acesso a vasos linfáticos.", correct: false,
+      explain: "Incorreto — há extensa rede linfática." },
+    { text: "Lesões supraglóticas nunca metastizam.", correct: false,
+      explain: "Incorreto — são as que mais frequentemente apresentam metástases regionais." }
+  ]
+},
+/* 23 */
+{
+  q: "23) Em relação à papilomatose laríngea, assinale a alternativa incorreta:",
+  choices: [
+    { text: "É causada por HPV, frequentemente recorrente e pode comprometer via aérea.", correct: false,
+      explain: "Correto — essa afirmação é verdadeira; a incorreta está abaixo." },
+    { text: "Acomete principalmente adultos tabagistas.", correct: true,
+      explain: "Correto (questão pede incorreta) — papilomatose é mais comum em crianças e jovens, não relacionada ao tabagismo." },
+    { text: "O tratamento inclui microcirurgia e controle de recidivas.", correct: false,
+      explain: "Incorreto — esta é verdadeira, o tratamento é cirúrgico e recorrente." },
+    { text: "Pode exigir múltiplas intervenções cirúrgicas.", correct: false,
+      explain: "Incorreto — também verdadeira, devido à recidiva frequente." }
+  ]
+},
+/* 24 */
+{
+  q: "24) As lesões benignas mais associadas a refluxo laringofaríngeo são:",
+  choices: [
+    { text: "Granuloma de contato e edema de Reinke.", correct: true,
+      explain: "Correto — ambas as condições têm relação com irritação crônica ácida e uso vocal inadequado." },
+    { text: "Papilomatose e carcinoma epidermoide.", correct: false,
+      explain: "Incorreto — uma é viral, a outra neoplásica maligna." },
+    { text: "Cisto congênito e leucoplasia.", correct: false,
+      explain: "Incorreto — sem relação direta com refluxo." },
+    { text: "Sulco vocal e nódulo congênito.", correct: false,
+      explain: "Incorreto — são estruturais, não inflamatórios por ácido." }
+  ]
+},
+/* 25 */
+{
+  q: "25) O exame complementar mais indicado para avaliar vibração glótica é:",
+  choices: [
+    { text: "Estroboscopia laríngea.", correct: true,
+      explain: "Correto — o PDF descreve a estroboscopia como o exame padrão-ouro para estudo da vibração das pregas vocais." },
+    { text: "Laringoscopia rígida convencional.", correct: false,
+      explain: "Incorreto — permite visualização anatômica, mas não dinâmica vibratória." },
+    { text: "Ressonância magnética.", correct: false,
+      explain: "Incorreto — útil para extensão tumoral, não para função vibratória." },
+    { text: "Tomografia computadorizada.", correct: false,
+      explain: "Incorreto — útil apenas em avaliação anatômica grosseira." }
+  ]
+},
+/* ===================== CASOS CLÍNICOS (NÍVEL AVANÇADO) ===================== */
+
+/* 26 */
+{
+  q: "26) (Caso) Paciente de 60 anos, tabagista, apresenta disfonia persistente e perda de peso. Laringoscopia revela lesão infiltrativa na comissura anterior. Qual hipótese e conduta?",
+  choices: [
+    { text: "Carcinoma glótico — encaminhar para biópsia e estadiamento.", correct: true,
+      explain: "Correto — lesão infiltrativa na glote com fatores de risco clássicos é sugestiva de carcinoma epidermoide." },
+    { text: "Nódulo vocal — indicar fonoterapia.", correct: false,
+      explain: "Incorreto — nódulos são bilaterais e benignos." },
+    { text: "Granuloma de contato — suspender álcool e reavaliar.", correct: false,
+      explain: "Incorreto — granuloma é posterior e não infiltrativo." },
+    { text: "Edema de Reinke — prescrever antibiótico.", correct: false,
+      explain: "Incorreto — não é infeccioso e não infiltra tecido." }
+  ]
+},
+/* 27 */
+{
+  q: "27) (Caso) Mulher de 35 anos com rouquidão, sensação de corpo estranho e diagnóstico de granuloma posterior. Qual associação causal é mais provável?",
+  choices: [
+    { text: "Refluxo gastroesofágico e esforço vocal.", correct: true,
+      explain: "Correto — irritação ácida e trauma fonatório são fatores citados como principais no PDF." },
+    { text: "Infecção estreptocócica aguda.", correct: false,
+      explain: "Incorreto — não é infeccioso." },
+    { text: "HPV tipo 11.", correct: false,
+      explain: "Incorreto — HPV causa papilomatose, não granuloma." },
+    { text: "Deficiência vitamínica.", correct: false,
+      explain: "Incorreto — sem relação etiológica." }
+  ]
+},
+/* 28 */
+{
+  q: "28) (Caso) Jovem cantora relata queda de rendimento vocal e rouquidão após apresentação intensa. Laringoscopia mostra edema bilateral das pregas vocais. Diagnóstico e manejo?",
+  choices: [
+    { text: "Edema de Reinke — suspensão do tabaco e fonoterapia.", correct: true,
+      explain: "Correto — conduta conservadora inicial, incluindo cessar tabagismo e reeducação vocal." },
+    { text: "Pólipo vocal — microcirurgia imediata.", correct: false,
+      explain: "Incorreto — edema bilateral não caracteriza pólipo." },
+    { text: "Leucoplasia — biópsia de urgência.", correct: false,
+      explain: "Incorreto — não há lesão branca nem fator de malignidade aparente." },
+    { text: "Sulco vocal — tratamento cirúrgico direto.", correct: false,
+      explain: "Incorreto — diagnóstico endoscópico específico diferente de edema." }
+  ]
+},
+/* 29 */
+{
+  q: "29) (Caso) Paciente masculino, 50 anos, refere disfonia e odinofagia. Exame mostra massa supraglótica e linfonodo cervical aumentado. Próximo passo diagnóstico?",
+  choices: [
+    { text: "Laringoscopia direta com biópsia.", correct: true,
+      explain: "Correto — é necessário exame histológico para diagnóstico e estadiamento de carcinoma supraglótico." },
+    { text: "Antibioticoterapia empírica.", correct: false,
+      explain: "Incorreto — atraso diagnóstico é prejudicial; deve-se biopsiar." },
+    { text: "Observação por 30 dias.", correct: false,
+      explain: "Incorreto — suspeita neoplásica exige ação imediata." },
+    { text: "Fonoterapia intensiva.", correct: false,
+      explain: "Incorreto — não indicada sem diagnóstico definitivo." }
+  ]
+},
+/* 30 */
+{
+  q: "30) (Caso) Paciente idosa submetida à intubação prolongada desenvolve disfonia. Laringoscopia revela lesão ulcerada na região posterior da glote. Diagnóstico provável?",
+  choices: [
+    { text: "Granuloma pós-intubação.", correct: true,
+      explain: "Correto — o PDF cita trauma de intubação prolongada como causa de granuloma posterior, semelhante ao de contato." },
+    { text: "Carcinoma glótico.", correct: false,
+      explain: "Incorreto — sem fatores de risco oncológicos ou massa infiltrativa." },
+    { text: "Cisto de laringe.", correct: false,
+      explain: "Incorreto — cisto é lesão de conteúdo líquido, não ulcerada." },
+    { text: "Papilomatose viral.", correct: false,
+      explain: "Incorreto — lesões múltiplas, não isoladas e ulceradas." }
+  ]
+}
+
+/* Parte 2 — questões 16–30 será enviada em seguida. */
+];
+
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
