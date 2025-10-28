@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Síndrome Nefrótica</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Síndrome Nefrótica</h1>
+    <p class="lead">Síndrome Nefrótica</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+{
+  q: "1) Qual dos mecanismos abaixo explica a proteinúria maciça observada na síndrome nefrótica?",
+  choices: [
+    { text: "Lesão da barreira de filtração glomerular, com perda da seletividade de carga e tamanho.", correct: true, explain: "Correto — o dano estrutural aos podócitos e à membrana basal glomerular compromete a seletividade, permitindo passagem de grandes proteínas plasmáticas." },
+    { text: "Redução da taxa de filtração glomerular (TFG).", correct: false, explain: "Incorreto — a TFG pode estar normal ou reduzida, mas não causa diretamente a proteinúria maciça." },
+    { text: "Aumento da pressão hidrostática capilar.", correct: false, explain: "Incorreto — esse mecanismo causa hematuria, não proteinúria." },
+    { text: "Aumento da reabsorção tubular de proteínas.", correct: false, explain: "Incorreto — ocorre o oposto: há sobrecarga tubular devido ao excesso de proteína filtrada." }
+  ]
+},
+{
+  q: "2) Na síndrome nefrótica, qual é o componente clínico-laboratorial essencial para o diagnóstico?",
+  choices: [
+    { text: "Proteinúria maior que 3,5 g/1,73 m²/24h.", correct: true, explain: "Correto — o diagnóstico exige proteinúria maciça superior a 3,5 g/dia, sendo o principal critério quantitativo." },
+    { text: "Presença de hematúria dismórfica.", correct: false, explain: "Incorreto — sugere síndrome nefrítica, não nefrótica." },
+    { text: "Hipocalemia e alcalose metabólica.", correct: false, explain: "Incorreto — não fazem parte do quadro clássico da síndrome nefrótica." },
+    { text: "Hiponatremia e oligúria.", correct: false, explain: "Incorreto — podem ocorrer, mas não são critérios diagnósticos." }
+  ]
+},
+{
+  q: "3) A doença de lesão mínima apresenta qual achado característico na microscopia eletrônica?",
+  choices: [
+    { text: "Fusão dos processos podocitários.", correct: true, explain: "Correto — esse achado é patognomônico, explicando a perda seletiva de albumina e o caráter reversível com corticoides." },
+    { text: "Espessamento difuso da membrana basal glomerular.", correct: false, explain: "Incorreto — achado típico da glomerulopatia membranosa." },
+    { text: "Depósitos subendoteliais e hipercelularidade mesangial.", correct: false, explain: "Incorreto — ocorre na GN membranoproliferativa." },
+    { text: "Presença de esclerose segmentar e colapso capilar.", correct: false, explain: "Incorreto — achado de GESF." }
+  ]
+},
+{
+  q: "4) Em relação à glomerulopatia membranosa, assinale a alternativa correta:",
+  choices: [
+    { text: "Apresenta anticorpos contra o receptor da fosfolipase A2 (PLA2R) em cerca de 70% dos casos primários.", correct: true, explain: "Correto — o anti-PLA2R é marcador sorológico e patogênico importante na forma primária da doença." },
+    { text: "É a principal causa de síndrome nefrótica infantil.", correct: false, explain: "Incorreto — essa posição pertence à doença de lesão mínima." },
+    { text: "Raramente causa proteinúria significativa.", correct: false, explain: "Incorreto — cursa com proteinúria maciça e progressiva." },
+    { text: "Não apresenta depósito imune na biópsia.", correct: false, explain: "Incorreto — há depósitos subepiteliais granulares de IgG e C3." }
+  ]
+},
+{
+  q: "5) Qual é a causa primária mais comum de síndrome nefrótica em adultos afrodescendentes?",
+  choices: [
+    { text: "Glomeruloesclerose segmentar e focal (GESF).", correct: true, explain: "Correto — GESF é a causa predominante entre afrodescendentes, associada a variantes genéticas como APOL1." },
+    { text: "Doença de lesão mínima.", correct: false, explain: "Incorreto — mais prevalente em crianças." },
+    { text: "Glomerulopatia membranosa.", correct: false, explain: "Incorreto — predomina em adultos brancos." },
+    { text: "Amiloidose renal.", correct: false, explain: "Incorreto — é causa secundária, não primária." }
+  ]
+},
+{
+  q: "6) O edema presente na síndrome nefrótica resulta principalmente de:",
+  choices: [
+    { text: "Redução da pressão oncótica plasmática causada pela hipoalbuminemia.", correct: true, explain: "Correto — a perda de albumina reduz a pressão coloidosmótica, facilitando o extravasamento de líquido para o interstício." },
+    { text: "Aumento da pressão hidrostática glomerular.", correct: false, explain: "Incorreto — esse mecanismo não explica o edema generalizado." },
+    { text: "Ativação da aldosterona isoladamente.", correct: false, explain: "Incorreto — é um mecanismo compensatório, não primário." },
+    { text: "Acúmulo de potássio intracelular.", correct: false, explain: "Incorreto — sem relação com o edema." }
+  ]
+},
+{
+  q: "7) Qual complicação metabólica é típica da síndrome nefrótica?",
+  choices: [
+    { text: "Hiperlipidemia com aumento de LDL e VLDL.", correct: true, explain: "Correto — o fígado aumenta a produção de lipoproteínas em resposta à hipoalbuminemia." },
+    { text: "Hipocalcemia severa.", correct: false, explain: "Incorreto — ocorre apenas hipocalcemia leve pela perda de albumina." },
+    { text: "Hiperglicemia refratária.", correct: false, explain: "Incorreto — não está associada diretamente." },
+    { text: "Hiperfosfatemia intensa.", correct: false, explain: "Incorreto — é achado de insuficiência renal avançada, não de síndrome nefrótica isolada." }
+  ]
+},
+{
+  q: "8) Qual das condições abaixo está mais associada à síndrome nefrótica secundária?",
+  choices: [
+    { text: "Diabetes mellitus.", correct: true, explain: "Correto — é a principal causa de síndrome nefrótica secundária no mundo, devido à lesão glomerular progressiva." },
+    { text: "Glomeruloesclerose segmentar e focal idiopática.", correct: false, explain: "Incorreto — é primária." },
+    { text: "Doença de lesão mínima.", correct: false, explain: "Incorreto — é primária." },
+    { text: "GN membranosa idiopática.", correct: false, explain: "Incorreto — também primária." }
+  ]
+},
+{
+  q: "9) A perda urinária de antitrombina III e proteínas reguladoras da coagulação explica qual complicação frequente da síndrome nefrótica?",
+  choices: [
+    { text: "Hipercoagulabilidade com risco de trombose venosa profunda.", correct: true, explain: "Correto — a perda de antitrombina III e o aumento de fibrinogênio tornam o paciente propenso a fenômenos trombóticos." },
+    { text: "Hipotensão arterial sistêmica.", correct: false, explain: "Incorreto — não está relacionada ao distúrbio proteico." },
+    { text: "Anemia ferropriva.", correct: false, explain: "Incorreto — pode ocorrer perda de transferrina, mas não é a principal complicação." },
+    { text: "Policitemia secundária.", correct: false, explain: "Incorreto — sem relação fisiopatológica." }
+  ]
+},
+{
+  q: "10) Em relação ao tratamento da síndrome nefrótica, qual medida é fundamental para controle do edema?",
+  choices: [
+    { text: "Uso de diuréticos de alça e restrição de sódio na dieta.", correct: true, explain: "Correto — o manejo do edema combina restrição de sal e uso de diuréticos de alta potência, como furosemida." },
+    { text: "Administração de soluções hipertônicas de albumina isoladamente.", correct: false, explain: "Incorreto — deve ser reservada a casos graves e associada a diuréticos." },
+    { text: "Aumento da ingesta proteica.", correct: false, explain: "Incorreto — pode aumentar a proteinúria e sobrecarga renal." },
+    { text: "Uso de antiagregantes plaquetários.", correct: false, explain: "Incorreto — não controla edema." }
+  ]
+},
+{
+  q: "11) Qual droga é considerada pilar no controle da proteinúria e proteção renal em pacientes com síndrome nefrótica?",
+  choices: [
+    { text: "Inibidores da ECA ou bloqueadores dos receptores de angiotensina (BRA).", correct: true, explain: "Correto — reduzem a pressão intraglomerular e diminuem a proteinúria." },
+    { text: "Diuréticos tiazídicos isolados.", correct: false, explain: "Incorreto — têm pouca ação antiproteinúrica." },
+    { text: "Estatinas.", correct: false, explain: "Incorreto — tratam dislipidemia, não proteinúria." },
+    { text: "Anticoagulantes diretos.", correct: false, explain: "Incorreto — usados apenas em casos de trombose." }
+  ]
+},
+{
+  q: "12) A presença de cilindros graxos na urina é característica de:",
+  choices: [
+    { text: "Síndrome nefrótica.", correct: true, explain: "Correto — os cilindros graxos formam-se pela filtração de lipoproteínas e colesterol, típicos dessa síndrome." },
+    { text: "Síndrome nefrítica.", correct: false, explain: "Incorreto — ocorre hematuria e cilindros hemáticos, não graxos." },
+    { text: "Insuficiência renal aguda.", correct: false, explain: "Incorreto — predominam cilindros granulosos." },
+    { text: "Pielonefrite aguda.", correct: false, explain: "Incorreto — apresenta piúria, não lipidúria." }
+  ]
+},
+{
+  q: "13) A amiloidose renal provoca síndrome nefrótica por qual mecanismo?",
+  choices: [
+    { text: "Deposição de proteínas anormais na membrana basal glomerular.", correct: true, explain: "Correto — os depósitos de amiloide distorcem a estrutura glomerular, causando proteinúria maciça." },
+    { text: "Lesão imune mediada por anticorpos anti-PLA2R.", correct: false, explain: "Incorreto — é típico da glomerulopatia membranosa." },
+    { text: "Fusão de podócitos.", correct: false, explain: "Incorreto — é da doença de lesão mínima." },
+    { text: "Espessamento da cápsula de Bowman.", correct: false, explain: "Incorreto — não ocorre nessa doença." }
+  ]
+},
+{
+  q: "14) O prognóstico da síndrome nefrótica está mais relacionado a:",
+  choices: [
+    { text: "Grau de proteinúria e tipo histológico da glomerulopatia.", correct: true, explain: "Correto — proteinúria persistente e glomerulopatias escleróticas indicam pior prognóstico." },
+    { text: "Nível de colesterol plasmático.", correct: false, explain: "Incorreto — é apenas marcador metabólico." },
+    { text: "Quantidade de edema.", correct: false, explain: "Incorreto — é manifestação, não critério prognóstico." },
+    { text: "Tempo de uso de corticoide.", correct: false, explain: "Incorreto — influencia resposta terapêutica, não prognóstico isolado." }
+  ]
+},
+{
+  q: "15) Qual das glomerulopatias abaixo tem pior resposta ao tratamento imunossupressor?",
+  choices: [
+    { text: "Glomeruloesclerose segmentar e focal (GESF).", correct: true, explain: "Correto — a GESF costuma ser resistente ao tratamento e tem alto risco de progressão para insuficiência renal crônica." },
+    { text: "Doença de lesão mínima.", correct: false, explain: "Incorreto — excelente resposta a corticoides." },
+    { text: "GN membranosa.", correct: false, explain: "Incorreto — pode responder parcialmente ao tratamento imunossupressor." },
+    { text: "GN por diabetes.", correct: false, explain: "Incorreto — é secundária e não imunomediada." }
+  ]
+},
+/* ================= PARTE 2 ================= */
+
+{
+  q: "16) Qual das opções abaixo corresponde à alteração lipídica típica da síndrome nefrótica?",
+  choices: [
+    { text: "Aumento de colesterol total, LDL e VLDL.", correct: true, explain: "Correto — o fígado aumenta a síntese de lipoproteínas em resposta à hipoalbuminemia, gerando hiperlipidemia mista." },
+    { text: "Redução de triglicerídeos e aumento de HDL.", correct: false, explain: "Incorreto — ocorre o oposto: triglicerídeos e LDL aumentam, HDL tende a reduzir." },
+    { text: "Hipertrigliceridemia isolada.", correct: false, explain: "Incorreto — há elevação combinada de colesterol e triglicerídeos." },
+    { text: "Diminuição global dos lipídios séricos.", correct: false, explain: "Incorreto — há aumento significativo, não redução." }
+  ]
+},
+{
+  q: "17) Em relação à síndrome nefrótica secundária, qual associação é correta?",
+  choices: [
+    { text: "Diabetes mellitus — glomeruloesclerose nodular (Kimmelstiel-Wilson).", correct: true, explain: "Correto — é a lesão clássica da nefropatia diabética avançada." },
+    { text: "Lúpus eritematoso sistêmico — glomerulopatia de lesão mínima.", correct: false, explain: "Incorreto — o LES causa GN membranosa ou proliferativa, não lesão mínima." },
+    { text: "Amiloidose — glomeruloesclerose segmentar e focal.", correct: false, explain: "Incorreto — a amiloidose leva a depósitos fibrilares difusos, não esclerose segmentar." },
+    { text: "Sífilis — doença de lesão mínima.", correct: false, explain: "Incorreto — sífilis cursa com GN membranosa secundária." }
+  ]
+},
+{
+  q: "18) Em pacientes com síndrome nefrótica, o uso de anticoagulação profilática deve ser considerado quando:",
+  choices: [
+    { text: "Albumina sérica < 2,0 g/dL e imobilização ou trombose prévia.", correct: true, explain: "Correto — hipoalbuminemia acentuada e risco adicional justificam profilaxia." },
+    { text: "Proteinúria inferior a 2 g/24h.", correct: false, explain: "Incorreto — níveis baixos não justificam anticoagulação." },
+    { text: "Ausência de edema.", correct: false, explain: "Incorreto — edema não é critério isolado para anticoagulação." },
+    { text: "Presença de hiperlipidemia leve.", correct: false, explain: "Incorreto — não há correlação direta com trombose." }
+  ]
+},
+{
+  q: "19) Em relação à função renal na síndrome nefrótica, assinale a afirmativa correta:",
+  choices: [
+    { text: "Pode estar preservada inicialmente, mas deteriorar-se em glomerulopatias progressivas como GESF.", correct: true, explain: "Correto — muitas formas primárias mantêm TFG no início, porém evoluem com esclerose e perda funcional." },
+    { text: "Sempre há redução da TFG desde o diagnóstico.", correct: false, explain: "Incorreto — a função pode estar normal na apresentação." },
+    { text: "A TFG elevada é característica da doença.", correct: false, explain: "Incorreto — hiperfiltração ocorre em diabetes, não define síndrome nefrótica isolada." },
+    { text: "A TFG não tem importância clínica na evolução.", correct: false, explain: "Incorreto — é determinante do prognóstico e decisão terapêutica." }
+  ]
+},
+{
+  q: "20) Qual das afirmações sobre o tratamento da síndrome nefrótica é verdadeira?",
+  choices: [
+    { text: "O controle pressórico deve manter a PA <130/80 mmHg, preferindo-se IECA/BRA.", correct: true, explain: "Correto — o controle rigoroso da PA reduz proteinúria e retarda progressão." },
+    { text: "A reposição proteica oral é recomendada rotineiramente.", correct: false, explain: "Incorreto — agrava a proteinúria e sobrecarga renal." },
+    { text: "Os corticoides são indicados em todas as causas secundárias.", correct: false, explain: "Incorreto — devem ser reservados a glomerulopatias imunomediadas primárias." },
+    { text: "A anticoagulação é contraindicada.", correct: false, explain: "Incorreto — pode ser necessária em alto risco trombótico." }
+  ]
+},
+
+/* ===================== CASOS CLÍNICOS ===================== */
+
+{
+  q: "21) (Caso clínico) Criança de 5 anos apresenta edema periorbitário, proteinúria maciça, sem hematúria. Diagnóstico provável:",
+  choices: [
+    { text: "Doença de lesão mínima.", correct: true, explain: "Correto — quadro típico infantil, com boa resposta a corticoide e ausência de hematúria." },
+    { text: "GN pós-estreptocócica.", correct: false, explain: "Incorreto — cursa com hematúria, não proteinúria isolada." },
+    { text: "GESF.", correct: false, explain: "Incorreto — mais comum em adolescentes e adultos." },
+    { text: "GN membranosa.", correct: false, explain: "Incorreto — rara em crianças pequenas." }
+  ]
+},
+{
+  q: "22) (Caso clínico) Mulher de 42 anos, lúpus eritematoso sistêmico, apresenta proteinúria de 6 g/24h e hipoalbuminemia. Qual o diagnóstico mais provável?",
+  choices: [
+    { text: "Síndrome nefrótica secundária ao LES.", correct: true, explain: "Correto — o LES pode causar glomerulopatia membranosa com perda maciça de proteínas." },
+    { text: "Doença de lesão mínima.", correct: false, explain: "Incorreto — não é típica de LES." },
+    { text: "GESF idiopática.", correct: false, explain: "Incorreto — é forma primária, não autoimune." },
+    { text: "GN pós-infecciosa.", correct: false, explain: "Incorreto — curso clínico distinto." }
+  ]
+},
+{
+  q: "23) (Caso clínico) Homem de 55 anos com diabetes de longa data evolui com proteinúria nefrótica, sem hematúria. Qual achado histológico é mais esperado?",
+  choices: [
+    { text: "Nódulos de Kimmelstiel-Wilson.", correct: true, explain: "Correto — a glomeruloesclerose nodular é o padrão clássico da nefropatia diabética avançada." },
+    { text: "Depósitos subepiteliais difusos de IgG.", correct: false, explain: "Incorreto — achado da GN membranosa." },
+    { text: "Fusão de podócitos isolada.", correct: false, explain: "Incorreto — pertence à doença de lesão mínima." },
+    { text: "Depósitos de amiloide corados por vermelho do Congo.", correct: false, explain: "Incorreto — achado de amiloidose." }
+  ]
+},
+{
+  q: "24) (Caso clínico) Homem de 63 anos apresenta edema generalizado, macroglossia e proteinúria de 5 g/24h. Qual diagnóstico provável?",
+  choices: [
+    { text: "Amiloidose sistêmica com acometimento renal.", correct: true, explain: "Correto — macroglossia e proteinúria sugerem depósito sistêmico de amiloide." },
+    { text: "GN membranosa primária.", correct: false, explain: "Incorreto — não há macroglossia nem sinais sistêmicos." },
+    { text: "GESF.", correct: false, explain: "Incorreto — curso clínico distinto." },
+    { text: "Síndrome nefrítica.", correct: false, explain: "Incorreto — não há hematúria nem azotemia aguda." }
+  ]
+},
+{
+  q: "25) (Caso clínico) Homem de 30 anos com uso crônico de heroína apresenta edema e proteinúria de 7 g/24h. Diagnóstico provável:",
+  choices: [
+    { text: "GESF secundária a drogas.", correct: true, explain: "Correto — o uso de heroína é causa clássica de GESF secundária." },
+    { text: "GN membranoproliferativa.", correct: false, explain: "Incorreto — não se associa a drogas ilícitas." },
+    { text: "Doença de lesão mínima.", correct: false, explain: "Incorreto — rara em adultos usuários de drogas." },
+    { text: "GN pós-infecciosa.", correct: false, explain: "Incorreto — etiologia infecciosa, não tóxica." }
+  ]
+},
+{
+  q: "26) (Caso clínico) Paciente de 40 anos com síndrome nefrótica desenvolve dor lombar súbita e hematúria. Suspeitar de:",
+  choices: [
+    { text: "Trombose de veia renal.", correct: true, explain: "Correto — complicação trombótica clássica, especialmente na GN membranosa." },
+    { text: "Pielonefrite aguda.", correct: false, explain: "Incorreto — febre e piúria seriam proeminentes." },
+    { text: "Cálculo renal.", correct: false, explain: "Incorreto — dor semelhante, mas sem contexto trombótico." },
+    { text: "Ruptura de cisto renal.", correct: false, explain: "Incorreto — achado incidental, não comum nessa síndrome." }
+  ]
+},
+{
+  q: "27) (Caso clínico) Mulher de 50 anos com GN membranosa apresenta edema refratário. Qual conduta terapêutica deve ser ajustada?",
+  choices: [
+    { text: "Reforçar restrição de sódio e otimizar diurético de alça.", correct: true, explain: "Correto — o manejo do edema requer controle rigoroso de sal e ajuste da diurese." },
+    { text: "Suspender IECA/BRA.", correct: false, explain: "Incorreto — esses fármacos reduzem proteinúria e devem ser mantidos." },
+    { text: "Introduzir corticoide isoladamente.", correct: false, explain: "Incorreto — tratamento imunossupressor é reservado a casos refratários após 6 meses." },
+    { text: "Usar albumina em doses diárias indefinidas.", correct: false, explain: "Incorreto — uso rotineiro é ineficaz e caro." }
+  ]
+},
+{
+  q: "28) (Caso clínico) Paciente em uso de IECA para controle de proteinúria apresenta creatinina subindo 30% em 10 dias. Conduta:",
+  choices: [
+    { text: "Manter a medicação e reavaliar em 1 semana.", correct: true, explain: "Correto — aumento leve (<30%) é esperado e indica redução da pressão intraglomerular." },
+    { text: "Suspender imediatamente o IECA.", correct: false, explain: "Incorreto — não há necessidade se o aumento for moderado e sem hipercalemia." },
+    { text: "Introduzir diurético poupador de potássio.", correct: false, explain: "Incorreto — risco de hipercalemia é alto." },
+    { text: "Realizar biópsia renal de urgência.", correct: false, explain: "Incorreto — não há suspeita de nova glomerulopatia." }
+  ]
+},
+{
+  q: "29) (Caso clínico) Homem de 47 anos com síndrome nefrótica grave e albumina 1,8 g/dL apresenta dor torácica súbita e dispneia. Hipótese diagnóstica:",
+  choices: [
+    { text: "Embolia pulmonar secundária à hipercoagulabilidade.", correct: true, explain: "Correto — hipoalbuminemia e perda de antitrombina III aumentam o risco de tromboembolismo." },
+    { text: "Pneumonia bacteriana.", correct: false, explain: "Incorreto — não há febre ou expectoração." },
+    { text: "Infarto agudo do miocárdio.", correct: false, explain: "Incorreto — dor e contexto diferentes." },
+    { text: "Edema agudo de pulmão.", correct: false, explain: "Incorreto — ausente congestão e crepitações." }
+  ]
+},
+{
+  q: "30) (Caso clínico) Homem de 60 anos em tratamento para síndrome nefrótica apresenta queda progressiva da TFG e proteinúria persistente. Qual conduta a longo prazo?",
+  choices: [
+    { text: "Encaminhar para avaliação de terapia renal substitutiva.", correct: true, explain: "Correto — proteinúria persistente e queda da TFG indicam evolução para DRC terminal." },
+    { text: "Suspender todos os anti-hipertensivos.", correct: false, explain: "Incorreto — controle pressórico é essencial." },
+    { text: "Aumentar corticoide indefinidamente.", correct: false, explain: "Incorreto — risco de efeitos adversos e pouca resposta em estágios tardios." },
+    { text: "Reduzir diurético e aumentar ingestão de sal.", correct: false, explain: "Incorreto — piora o edema e o controle hemodinâmico." }
+  ]
+}
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

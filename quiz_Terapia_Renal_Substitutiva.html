@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Terapia Renal Substitutiva</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Terapia Renal Substitutiva</h1>
+    <p class="lead">Terapia Renal Substitutiva</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+/* ========== PARTE 1/2 — 15 QUESTÕES GERAIS SOBRE TRS ========== */
+
+/* 1 */
+{
+  q: "1) A principal função da terapia renal substitutiva é:",
+  choices: [
+    { text: "Remover substâncias nitrogenadas e corrigir distúrbios hidroeletrolíticos.", correct: true,
+      explain: "Correto — a TRS substitui funções excretoras renais, eliminando ureia, creatinina e controlando sódio, potássio e volume extracelular." },
+    { text: "Restaurar a função renal de forma definitiva.", correct: false,
+      explain: "Incorreto — a TRS é suporte, não reverte a falência renal." },
+    { text: "Reduzir a pressão arterial sem alterar eletrólitos.", correct: false,
+      explain: "Incorreto — o controle pressórico é consequência indireta da remoção de volume." },
+    { text: "Estimular a produção endógena de eritropoietina.", correct: false,
+      explain: "Incorreto — a TRS não tem efeito sobre a produção hormonal renal." }
+  ]
+},
+/* 2 */
+{
+  q: "2) Em pacientes com insuficiência renal aguda, a TRS está indicada quando:",
+  choices: [
+    { text: "Há hipercalemia refratária, acidose metabólica grave ou sobrecarga volêmica.", correct: true,
+      explain: "Correto — segundo o PDF, essas são as indicações clássicas de TRS na IRA." },
+    { text: "A creatinina sérica ultrapassa 2,0 mg/dL.", correct: false,
+      explain: "Incorreto — o valor isolado de creatinina não define necessidade de TRS." },
+    { text: "O paciente apresenta poliúria persistente.", correct: false,
+      explain: "Incorreto — a poliúria não requer TRS." },
+    { text: "A ureia está levemente aumentada, sem sintomas.", correct: false,
+      explain: "Incorreto — a decisão depende de repercussões clínicas, não do valor absoluto." }
+  ]
+},
+/* 3 */
+{
+  q: "3) A ultrafiltração na hemodiálise é o processo responsável por:",
+  choices: [
+    { text: "Remover água e solutos por diferença de pressão transmembrana.", correct: true,
+      explain: "Correto — a ultrafiltração depende do gradiente hidráulico entre sangue e dialisato, removendo volume." },
+    { text: "Trocar solutos por gradiente de concentração.", correct: false,
+      explain: "Incorreto — isso descreve difusão, não ultrafiltração." },
+    { text: "Remover moléculas grandes por transporte ativo.", correct: false,
+      explain: "Incorreto — o transporte é passivo, sem gasto energético." },
+    { text: "Filtrar proteínas plasmáticas para o dialisato.", correct: false,
+      explain: "Incorreto — a membrana impede passagem de proteínas." }
+  ]
+},
+/* 4 */
+{
+  q: "4) A principal diferença entre hemodiálise e diálise peritoneal é:",
+  choices: [
+    { text: "O local onde ocorre a depuração: extracorpóreo na HD e intracorpóreo na DP.", correct: true,
+      explain: "Correto — a HD usa membrana sintética no dialisador; a DP utiliza o peritônio como membrana natural." },
+    { text: "A TRS por DP é sempre mais eficaz que a HD.", correct: false,
+      explain: "Incorreto — a eficácia depende do contexto clínico e da adesão." },
+    { text: "A HD é isenta de complicações hemodinâmicas.", correct: false,
+      explain: "Incorreto — hipotensão é uma intercorrência comum." },
+    { text: "A DP não requer controle de infecção.", correct: false,
+      explain: "Incorreto — a principal complicação é a peritonite infecciosa." }
+  ]
+},
+/* 5 */
+{
+  q: "5) O mecanismo de depuração predominante na hemodiálise convencional é:",
+  choices: [
+    { text: "Difusão.", correct: true,
+      explain: "Correto — a HD baseia-se no gradiente de concentração, permitindo troca de solutos pequenos através da membrana semipermeável." },
+    { text: "Convecção.", correct: false,
+      explain: "Incorreto — convecção é predominante na hemodiafiltração." },
+    { text: "Ultrafiltração isolada.", correct: false,
+      explain: "Incorreto — é usada para controle volêmico, não para depuração principal." },
+    { text: "Endocitose seletiva.", correct: false,
+      explain: "Incorreto — processo celular, não aplicável à diálise." }
+  ]
+},
+/* 6 */
+{
+  q: "6) A hemodiafiltração combina os princípios de:",
+  choices: [
+    { text: "Difusão e convecção.", correct: true,
+      explain: "Correto — permite remover tanto moléculas pequenas (por difusão) quanto médias (por convecção)." },
+    { text: "Filtração e secreção tubular.", correct: false,
+      explain: "Incorreto — são processos fisiológicos renais, não dialíticos." },
+    { text: "Ultrafiltração e absorção ativa.", correct: false,
+      explain: "Incorreto — convecção não envolve absorção ativa." },
+    { text: "Osmose e secreção enzimática.", correct: false,
+      explain: "Incorreto — não há enzimas envolvidas." }
+  ]
+},
+/* 7 */
+{
+  q: "7) Sobre o dialisador, é CORRETO afirmar que:",
+  choices: [
+    { text: "Funciona como o 'rim artificial', contendo membranas semipermeáveis.", correct: true,
+      explain: "Correto — o dialisador contém capilares sintéticos que separam sangue e dialisato, permitindo trocas seletivas." },
+    { text: "É responsável por bombear o sangue.", correct: false,
+      explain: "Incorreto — a bomba está na máquina de diálise, não no dialisador." },
+    { text: "Contém heparina como anticoagulante interno.", correct: false,
+      explain: "Incorreto — a heparina é administrada no circuito, não incorporada ao filtro." },
+    { text: "Não necessita ser esterilizado.", correct: false,
+      explain: "Incorreto — todo dialisador precisa de esterilização antes do uso." }
+  ]
+},
+/* 8 */
+{
+  q: "8) O acesso vascular mais indicado para hemodiálise crônica é:",
+  choices: [
+    { text: "Fístula arteriovenosa (FAV) autóloga.", correct: true,
+      explain: "Correto — a FAV é o padrão ouro por ter menor taxa de infecção e trombose." },
+    { text: "Cateter venoso central temporário.", correct: false,
+      explain: "Incorreto — é indicado em caráter emergencial ou transitório." },
+    { text: "Enxerto arteriovenoso sintético.", correct: false,
+      explain: "Incorreto — indicado apenas quando não há veias adequadas." },
+    { text: "Ponte safeno-poplítea.", correct: false,
+      explain: "Incorreto — não tem aplicação dialítica." }
+  ]
+},
+/* 9 */
+{
+  q: "9) Uma das complicações mais comuns durante a hemodiálise é:",
+  choices: [
+    { text: "Hipotensão arterial.", correct: true,
+      explain: "Correto — ocorre por rápida remoção de volume, vasodilatação e uso de anti-hipertensivos." },
+    { text: "Hipertensão maligna.", correct: false,
+      explain: "Incorreto — é rara e geralmente pré-existente, não induzida pela HD." },
+    { text: "Hipoglicemia grave.", correct: false,
+      explain: "Incorreto — glicose pode cair, mas raramente causa hipoglicemia sintomática." },
+    { text: "Peritonite.", correct: false,
+      explain: "Incorreto — complicação típica da DP, não da HD." }
+  ]
+},
+/* 10 */
+{
+  q: "10) O fluido utilizado na diálise, o dialisato, possui composição:",
+  choices: [
+    { text: "Semelhante ao plasma, mas sem substâncias nitrogenadas.", correct: true,
+      explain: "Correto — o dialisato é uma solução eletrolítica balanceada sem ureia, creatinina e proteínas, permitindo gradiente difusional." },
+    { text: "Rica em potássio e ureia.", correct: false,
+      explain: "Incorreto — isso impediria a difusão de solutos do sangue para o dialisato." },
+    { text: "Hiperosmolar, com glicose elevada para hemodiálise.", correct: false,
+      explain: "Incorreto — essa característica é típica do dialisato da diálise peritoneal." },
+    { text: "Contendo proteínas plasmáticas e lipídios.", correct: false,
+      explain: "Incorreto — essas moléculas são grandes demais e não participam da troca." }
+  ]
+},
+/* 11 */
+{
+  q: "11) A anticoagulação do sistema extracorpóreo é feita com:",
+  choices: [
+    { text: "Heparina não fracionada.", correct: true,
+      explain: "Correto — o PDF cita a heparina padrão como anticoagulante mais usado durante HD." },
+    { text: "Ácido acetilsalicílico.", correct: false,
+      explain: "Incorreto — não previne coagulação no circuito extracorpóreo." },
+    { text: "Varfarina oral.", correct: false,
+      explain: "Incorreto — anticoagulante sistêmico, sem uso durante sessões." },
+    { text: "Protamina.", correct: false,
+      explain: "Incorreto — é antagonista da heparina, usada para reverter seu efeito." }
+  ]
+},
+/* 12 */
+{
+  q: "12) Entre as vantagens da diálise peritoneal, destaca-se:",
+  choices: [
+    { text: "Maior estabilidade hemodinâmica e autonomia do paciente.", correct: true,
+      explain: "Correto — a DP é contínua e lenta, mantendo estabilidade cardiovascular e permitindo tratamento domiciliar." },
+    { text: "Menor risco de infecção em relação à hemodiálise.", correct: false,
+      explain: "Incorreto — há maior risco de peritonite na DP." },
+    { text: "Menor necessidade de controle glicêmico.", correct: false,
+      explain: "Incorreto — o dialisato contém glicose, podendo elevar glicemia." },
+    { text: "Correção imediata de distúrbios metabólicos graves.", correct: false,
+      explain: "Incorreto — a depuração é mais lenta que na HD." }
+  ]
+},
+/* 13 */
+{
+  q: "13) A peritonite na diálise peritoneal é suspeitada quando o paciente apresenta:",
+  choices: [
+    { text: "Dor abdominal, líquido turvo e febre.", correct: true,
+      explain: "Correto — o PDF destaca esses achados como diagnóstico clínico típico." },
+    { text: "Aumento de diurese e hipotensão.", correct: false,
+      explain: "Incorreto — na DP, a diurese geralmente é reduzida." },
+    { text: "Hipotermia e líquor claro.", correct: false,
+      explain: "Incorreto — não há relação com SNC." },
+    { text: "Náuseas isoladas sem alteração do efluente.", correct: false,
+      explain: "Incorreto — o diagnóstico depende da turbidez do líquido dialítico." }
+  ]
+},
+/* 14 */
+{
+  q: "14) A diálise peritoneal contínua ambulatorial (DPCA) caracteriza-se por:",
+  choices: [
+    { text: "Trocas manuais de solução, realizadas várias vezes ao dia.", correct: true,
+      explain: "Correto — o método mais tradicional de DP, realizado manualmente em casa pelo próprio paciente." },
+    { text: "Trocas automáticas noturnas controladas por máquina.", correct: false,
+      explain: "Incorreto — descrição da DPA (diálise peritoneal automatizada)." },
+    { text: "Sessões intermitentes em hospital, 3x por semana.", correct: false,
+      explain: "Incorreto — característica da hemodiálise, não da DP." },
+    { text: "Uso de dialisato sem glicose.", correct: false,
+      explain: "Incorreto — todas as soluções de DP contêm glicose em concentrações variáveis." }
+  ]
+},
+/* 15 */
+{
+  q: "15) A remoção de moléculas médias (como beta-2-microglobulina) é mais eficiente em:",
+  choices: [
+    { text: "Hemodiafiltração.", correct: true,
+      explain: "Correto — a HDF associa difusão e convecção, aumentando a depuração de moléculas médias." },
+    { text: "Hemodiálise convencional.", correct: false,
+      explain: "Incorreto — remove principalmente moléculas pequenas." },
+    { text: "Diálise peritoneal de baixo volume.", correct: false,
+      explain: "Incorreto — apresenta menor capacidade de depuração de moléculas médias." },
+    { text: "Ultrafiltração isolada.", correct: false,
+      explain: "Incorreto — remove apenas água e eletrólitos, não proteínas pequenas." }
+  ]
+},
+
+/* 16 */
+{
+  q: "16) O principal determinante da eficiência da hemodiálise é:",
+  choices: [
+    { text: "Fluxo sanguíneo e fluxo do dialisato adequados.", correct: true,
+      explain: "Correto — o PDF destaca que a depuração depende do gradiente de concentração e da taxa de fluxo sanguíneo e do dialisato." },
+    { text: "Pressão venosa central aumentada.", correct: false,
+      explain: "Incorreto — elevação da PVC pode indicar obstrução, não maior eficiência." },
+    { text: "Uso de dialisador de baixa permeabilidade.", correct: false,
+      explain: "Incorreto — filtros de alta permeabilidade são mais eficazes." },
+    { text: "Duração curta das sessões.", correct: false,
+      explain: "Incorreto — quanto maior o tempo, maior a depuração." }
+  ]
+},
+/* 17 */
+{
+  q: "17) A água utilizada para o preparo do dialisato deve ser:",
+  choices: [
+    { text: "Ultra pura, livre de endotoxinas e metais pesados.", correct: true,
+      explain: "Correto — a qualidade da água é essencial para evitar reações pirogênicas e toxicidade." },
+    { text: "Mineralizada e rica em sais.", correct: false,
+      explain: "Incorreto — o excesso de sais pode causar distúrbios eletrolíticos." },
+    { text: "Filtrada apenas em carvão ativado.", correct: false,
+      explain: "Incorreto — exige osmose reversa e controle microbiológico rigoroso." },
+    { text: "Proveniente diretamente da rede pública sem tratamento.", correct: false,
+      explain: "Incorreto — inaceitável para uso em diálise." }
+  ]
+},
+/* 18 */
+{
+  q: "18) O controle de volume na hemodiálise é feito principalmente através de:",
+  choices: [
+    { text: "Ultrafiltração controlada pela máquina de diálise.", correct: true,
+      explain: "Correto — a remoção de líquido é ajustada de acordo com a pressão transmembrana e peso seco do paciente." },
+    { text: "Aumento da concentração de ureia no dialisato.", correct: false,
+      explain: "Incorreto — a ureia é removida, não adicionada." },
+    { text: "Infusão de glicose hipertônica.", correct: false,
+      explain: "Incorreto — esse método é usado em diálise peritoneal, não em HD." },
+    { text: "Uso de diuréticos de alça durante a sessão.", correct: false,
+      explain: "Incorreto — diuréticos não atuam durante a hemodiálise." }
+  ]
+},
+/* 19 */
+{
+  q: "19) A diálise peritoneal automatizada (DPA) diferencia-se da DPCA porque:",
+  choices: [
+    { text: "Utiliza cicladora automática que realiza as trocas durante a noite.", correct: true,
+      explain: "Correto — o PDF explica que a DPA é indicada para pacientes ativos, com trocas noturnas controladas por máquina." },
+    { text: "Usa soluções sem glicose.", correct: false,
+      explain: "Incorreto — ainda depende de glicose para gerar gradiente osmótico." },
+    { text: "É mais lenta e manual que a DPCA.", correct: false,
+      explain: "Incorreto — é justamente mais rápida e automatizada." },
+    { text: "Dispensa controle de assepsia.", correct: false,
+      explain: "Incorreto — o risco de infecção persiste, mesmo automatizada." }
+  ]
+},
+/* 20 */
+{
+  q: "20) O principal objetivo do conceito de ‘peso seco’ em hemodiálise é:",
+  choices: [
+    { text: "Determinar o volume de líquido a ser removido sem causar hipotensão.", correct: true,
+      explain: "Correto — o peso seco é o ponto de equilíbrio hemodinâmico sem sinais de hipovolemia." },
+    { text: "Calcular a dose de heparina.", correct: false,
+      explain: "Incorreto — heparina é ajustada conforme coagulação do circuito, não pelo peso." },
+    { text: "Avaliar a função residual renal.", correct: false,
+      explain: "Incorreto — essa avaliação é laboratorial, não baseada no peso." },
+    { text: "Controlar o tempo de sessão.", correct: false,
+      explain: "Incorreto — tempo é ajustado conforme depuração desejada, não pelo peso seco." }
+  ]
+},
+
+/* ====================== CASOS CLÍNICOS ====================== */
+
+/* 21 */
+{
+  q: "21) (Caso) Homem de 52 anos, diabético e hipertenso, apresenta hipercalemia (K+ = 7,2 mEq/L) e acidose metabólica refratária. Qual a conduta imediata?",
+  choices: [
+    { text: "Iniciar hemodiálise de urgência.", correct: true,
+      explain: "Correto — hipercalemia grave e acidose refratária são indicações clássicas de TRS emergencial." },
+    { text: "Aumentar dose de diuréticos e observar.", correct: false,
+      explain: "Incorreto — diuréticos não são eficazes na falência renal avançada." },
+    { text: "Administrar cálcio e suspender IECA, sem TRS.", correct: false,
+      explain: "Incorreto — medidas temporárias não substituem a necessidade de diálise." },
+    { text: "Corrigir acidose apenas com bicarbonato EV.", correct: false,
+      explain: "Incorreto — não resolverá o problema sem remoção de potássio." }
+  ]
+},
+/* 22 */
+{
+  q: "22) (Caso) Paciente com IRC dialítica há 3 anos apresenta fístula arteriovenosa com sopro ausente e edema no braço. Qual hipótese é mais provável?",
+  choices: [
+    { text: "Trombose de fístula arteriovenosa.", correct: true,
+      explain: "Correto — ausência de sopro e edema são achados típicos de oclusão trombótica do acesso." },
+    { text: "Infecção do cateter central.", correct: false,
+      explain: "Incorreto — o paciente possui FAV, não cateter." },
+    { text: "Hipotensão pós-diálise.", correct: false,
+      explain: "Incorreto — não explica o edema e ausência de fluxo." },
+    { text: "Hematoma subcutâneo discreto.", correct: false,
+      explain: "Incorreto — o achado clínico é de obstrução, não sangramento." }
+  ]
+},
+/* 23 */
+{
+  q: "23) (Caso) Homem de 68 anos com insuficiência cardíaca descompensada e oligúria persistente é indicado para diálise. Qual modalidade é mais segura inicialmente?",
+  choices: [
+    { text: "Diálise peritoneal ou hemodiálise lenta e contínua.", correct: true,
+      explain: "Correto — ambas oferecem estabilidade hemodinâmica e menor risco de hipotensão." },
+    { text: "Hemodiálise convencional de curta duração.", correct: false,
+      explain: "Incorreto — risco de colapso circulatório é alto." },
+    { text: "Ultrafiltração rápida isolada.", correct: false,
+      explain: "Incorreto — pode causar queda brusca da pressão arterial." },
+    { text: "Diálise intermitente de alta eficiência.", correct: false,
+      explain: "Incorreto — técnica agressiva para pacientes instáveis." }
+  ]
+},
+/* 24 */
+{
+  q: "24) (Caso) Paciente em diálise peritoneal refere dor abdominal e líquido peritoneal turvo. Qual o próximo passo diagnóstico?",
+  choices: [
+    { text: "Enviar o efluente peritoneal para contagem celular e cultura.", correct: true,
+      explain: "Correto — o PDF enfatiza que diagnóstico de peritonite é confirmado por ≥100 leucócitos/mm³ e cultura positiva." },
+    { text: "Suspender a diálise e iniciar corticoide oral.", correct: false,
+      explain: "Incorreto — tratamento é antibiótico intraperitoneal, não corticoide." },
+    { text: "Realizar ultrassonografia abdominal imediata.", correct: false,
+      explain: "Incorreto — diagnóstico é clínico e laboratorial." },
+    { text: "Trocar o cateter por acesso venoso central.", correct: false,
+      explain: "Incorreto — troca só é indicada em infecção persistente." }
+  ]
+},
+/* 25 */
+{
+  q: "25) (Caso) Homem de 40 anos com doença renal crônica em HD há 2 anos apresenta câimbras musculares intensas durante a sessão. Conduta inicial:",
+  choices: [
+    { text: "Reduzir a taxa de ultrafiltração e ofertar solução salina.", correct: true,
+      explain: "Correto — câimbras decorrem de hipovolemia e desequilíbrio eletrolítico." },
+    { text: "Suspender heparina e aumentar fluxo sanguíneo.", correct: false,
+      explain: "Incorreto — não tem relação direta com câimbras." },
+    { text: "Aplicar furosemida IV.", correct: false,
+      explain: "Incorreto — paciente anúrico não responderá a diurético." },
+    { text: "Aumentar tempo total da diálise.", correct: false,
+      explain: "Incorreto — não resolve sintoma agudo." }
+  ]
+},
+/* 26 */
+{
+  q: "26) (Caso) Mulher de 55 anos em HD apresenta cefaleia, náuseas e confusão mental nas primeiras sessões. Diagnóstico provável:",
+  choices: [
+    { text: "Síndrome do desequilíbrio da diálise.", correct: true,
+      explain: "Correto — ocorre pela rápida remoção de ureia, gerando gradiente osmótico cerebral e edema." },
+    { text: "Hipertensão intracraniana por AVC.", correct: false,
+      explain: "Incorreto — não há sinais focais nem história compatível." },
+    { text: "Hipoglicemia pós-diálise.", correct: false,
+      explain: "Incorreto — glicemia raramente causa sintomas neurológicos nessa fase." },
+    { text: "Infecção sistêmica aguda.", correct: false,
+      explain: "Incorreto — sintomas são típicos de desequilíbrio osmótico, não infeccioso." }
+  ]
+},
+/* 27 */
+{
+  q: "27) (Caso) Paciente com IRC terminal em DP evolui com glicemia elevada e ganho de peso progressivo. Qual ajuste é indicado?",
+  choices: [
+    { text: "Reduzir concentração de glicose no dialisato e reforçar controle alimentar.", correct: true,
+      explain: "Correto — excesso de glicose no dialisato leva à absorção sistêmica e ganho de peso." },
+    { text: "Aumentar glicose no dialisato para otimizar ultrafiltração.", correct: false,
+      explain: "Incorreto — agravaria a hiperglicemia." },
+    { text: "Suspender DP e iniciar HD imediata.", correct: false,
+      explain: "Incorreto — o ajuste pode ser feito antes da troca de modalidade." },
+    { text: "Associar corticoide para reduzir inflamação peritoneal.", correct: false,
+      explain: "Incorreto — sem indicação nesse caso." }
+  ]
+},
+/* 28 */
+{
+  q: "28) (Caso) Homem de 65 anos em HD apresenta hipotensão recorrente durante as sessões, mesmo com peso seco ajustado. Conduta adequada:",
+  choices: [
+    { text: "Avaliar uso de anti-hipertensivos e ajustar a medicação pré-diálise.", correct: true,
+      explain: "Correto — hipotensão intradialítica pode estar relacionada ao uso de anti-hipertensivos antes da sessão." },
+    { text: "Aumentar a taxa de ultrafiltração.", correct: false,
+      explain: "Incorreto — agravaria a hipotensão." },
+    { text: "Reduzir o tempo total de diálise.", correct: false,
+      explain: "Incorreto — pode comprometer depuração de solutos." },
+    { text: "Suspender anticoagulação.", correct: false,
+      explain: "Incorreto — não há relação direta entre heparina e hipotensão." }
+  ]
+},
+/* 29 */
+{
+  q: "29) (Caso) Jovem de 28 anos com glomerulonefrite rapidamente progressiva apresenta ureia 220 mg/dL e creatinina 9 mg/dL. Qual o momento ideal para iniciar TRS?",
+  choices: [
+    { text: "Quando houver sinais clínicos de uremia, hipercalemia ou hipervolemia refratária.", correct: true,
+      explain: "Correto — a decisão é clínica e laboratorial, não baseada apenas nos valores de ureia/creatinina." },
+    { text: "Assim que a creatinina ultrapassar 5 mg/dL.", correct: false,
+      explain: "Incorreto — não há valor fixo que determine início." },
+    { text: "Somente após estabilização hemodinâmica completa.", correct: false,
+      explain: "Incorreto — TRS pode ser iniciada mesmo em instabilidade com técnica adequada." },
+    { text: "Com a normalização dos eletrólitos.", correct: false,
+      explain: "Incorreto — o tratamento visa justamente corrigir esses distúrbios." }
+  ]
+},
+/* 30 */
+{
+  q: "30) (Caso) Paciente em HD refere prurido intenso generalizado. Qual causa mais provável segundo o PDF?",
+  choices: [
+    { text: "Uremia persistente devido à depuração inadequada.", correct: true,
+      explain: "Correto — o PDF cita o prurido urêmico como manifestação de acúmulo de toxinas e fósforo." },
+    { text: "Alergia ao dialisador sintético.", correct: false,
+      explain: "Incorreto — reações alérgicas são raras e agudas, não crônicas." },
+    { text: "Hipocalcemia pós-diálise.", correct: false,
+      explain: "Incorreto — hipocalcemia não cursa com prurido isolado." },
+    { text: "Infecção bacteriana de acesso.", correct: false,
+      explain: "Incorreto — infecção gera dor local e febre, não prurido difuso." }
+  ]
+}
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

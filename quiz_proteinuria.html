@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Proteinuria</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Proteinuria</h1>
+    <p class="lead">Proteinuria</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+  {
+    q: "1) Questão — Formação da urina: Qual das etapas abaixo é responsável pela passagem inicial do filtrado plasmático para o interior da cápsula de Bowman?",
+    choices: [
+      { text: "Reabsorção tubular.", correct: false, explain: "Incorreto. A reabsorção ocorre principalmente no túbulo proximal, responsável por recuperar substâncias úteis." },
+      { text: "Filtração glomerular.", correct: true, explain: "Correto. A filtração ocorre nos capilares glomerulares, resultando no filtrado glomerular, livre de proteínas." },
+      { text: "Secreção tubular.", correct: false, explain: "Incorreto. A secreção adiciona substâncias do sangue para o túbulo distal, não é a etapa inicial." },
+      { text: "Concentração urinária.", correct: false, explain: "Incorreto. A concentração ocorre sob ação do ADH nos túbulos distais e ductos coletores." }
+    ]
+  },
+  {
+    q: "2) Questão — Regulação hídrica: O hormônio antidiurético (ADH) atua no néfron com qual principal efeito?",
+    choices: [
+      { text: "Inibe a filtração glomerular para reduzir diurese.", correct: false, explain: "Incorreto. O ADH não altera diretamente a filtração, mas a reabsorção de água." },
+      { text: "Aumenta a permeabilidade dos túbulos distais e ductos coletores, promovendo reabsorção de água.", correct: true, explain: "Correto. O ADH aumenta a permeabilidade à água, concentrando a urina e reduzindo a eliminação hídrica." },
+      { text: "Estimula a secreção de sódio e potássio.", correct: false, explain: "Incorreto. O ADH atua sobre água; aldosterona regula o equilíbrio de sódio e potássio." },
+      { text: "Aumenta a secreção de proteínas na urina.", correct: false, explain: "Incorreto. O ADH não influencia diretamente a proteinúria." }
+    ]
+  },
+  {
+    q: "3) Questão — Definição: O que caracteriza a proteinúria em condições patológicas?",
+    choices: [
+      { text: "Eliminação de até 150 mg/dia de proteínas na urina.", correct: false, explain: "Incorreto. Esse é o valor normal de excreção proteica diária." },
+      { text: "Presença de proteínas urinárias superiores a 150 mg/24h, indicando lesão glomerular ou tubular.", correct: true, explain: "Correto. Proteinúria é a eliminação anormal de proteínas na urina acima de 150 mg/24h." },
+      { text: "Excreção de glicose junto com proteínas.", correct: false, explain: "Incorreto. Glicosúria é outro achado, não definidor de proteinúria." },
+      { text: "Exclusivamente presença de albumina sérica no filtrado.", correct: false, explain: "Incorreto. Outras proteínas (globulinas, mucoproteínas) também podem estar presentes." }
+    ]
+  },
+  {
+    q: "4) Questão — Classificação por intensidade: Qual faixa define a proteinúria nefrótica?",
+    choices: [
+      { text: "< 0,5 g/24h.", correct: false, explain: "Incorreto. Esse valor caracteriza proteinúria mínima." },
+      { text: "0,5 a 3,5 g/24h.", correct: false, explain: "Incorreto. Essa faixa é de proteinúria moderada." },
+      { text: "> 3,5 g/24h.", correct: true, explain: "Correto. Proteinúria superior a 3,5 g/24h caracteriza síndrome nefrótica." },
+      { text: "30–300 mg/24h.", correct: false, explain: "Incorreto. Essa faixa corresponde à microalbuminúria." }
+    ]
+  },
+  {
+    q: "5) Questão — Microalbuminúria: Qual faixa quantitativa define esse achado clínico?",
+    choices: [
+      { text: "3,5–5 g/24h.", correct: false, explain: "Incorreto. Esses valores são típicos de proteinúria maciça." },
+      { text: "150–300 mg/24h.", correct: false, explain: "Incorreto. O limite inferior da microalbuminúria é 30 mg." },
+      { text: "30–300 mg/24h.", correct: true, explain: "Correto. A microalbuminúria é definida pela excreção de 30–300 mg de albumina por 24h." },
+      { text: "300–1000 mg/24h.", correct: false, explain: "Incorreto. Acima de 300 mg já é considerada proteinúria franca." }
+    ]
+  },
+  {
+    q: "6) Questão — Classificação etiológica: A proteinúria por sobrecarga ocorre em qual situação típica?",
+    choices: [
+      { text: "Hemólise intravascular ou rabdomiólise, com liberação excessiva de proteínas filtráveis.", correct: true, explain: "Correto. Na sobrecarga, há excesso de proteínas como hemoglobina ou mioglobina que ultrapassam a capacidade tubular." },
+      { text: "Lesão podocitária primária.", correct: false, explain: "Incorreto. Isso é característico da proteinúria glomerular." },
+      { text: "Infecção urinária distal.", correct: false, explain: "Incorreto. Infecção pós-renal pode causar proteinúria pós-renal, não de sobrecarga." },
+      { text: "Lesão hereditária tubular proximal.", correct: false, explain: "Incorreto. Isso caracteriza proteinúria tubular." }
+    ]
+  },
+  {
+    q: "7) Questão — Proteinúria funcional: O que caracteriza essa condição?",
+    choices: [
+      { text: "É sempre patológica e indica glomerulopatia.", correct: false, explain: "Incorreto. É transitória e benigna." },
+      { text: "Excreção transitória de proteínas devido a febre, esforço físico ou infecção.", correct: true, explain: "Correto. Proteinúria funcional ocorre de forma transitória em situações de estresse fisiológico." },
+      { text: "Ocorre apenas em posição ereta.", correct: false, explain: "Incorreto. Essa é a proteinúria postural." },
+      { text: "Requer biópsia renal imediata.", correct: false, explain: "Incorreto. Não há necessidade de investigação invasiva em casos funcionais." }
+    ]
+  },
+  {
+    q: "8) Questão — Proteinúria postural: Em qual faixa etária é mais comum e qual é seu comportamento?",
+    choices: [
+      { text: "Em idosos e é permanente.", correct: false, explain: "Incorreto. É autolimitada e ocorre em jovens." },
+      { text: "Em adolescentes longilíneos e desaparece em decúbito.", correct: true, explain: "Correto. Proteinúria postural é benigna, típica de adolescentes e ausente na urina noturna." },
+      { text: "Em neonatos e causa síndrome nefrótica.", correct: false, explain: "Incorreto. Não ocorre em neonatos." },
+      { text: "Em adultos com insuficiência cardíaca.", correct: false, explain: "Incorreto. Isso é proteinúria funcional secundária, não postural." }
+    ]
+  },
+  {
+    q: "9) Questão — Tipos: Qual tipo de proteinúria é caracterizada por excreção de proteínas de baixo peso molecular devido à falha de reabsorção tubular?",
+    choices: [
+      { text: "Glomerular.", correct: false, explain: "Incorreto. A glomerular envolve principalmente albumina." },
+      { text: "Tubular.", correct: true, explain: "Correto. Na proteinúria tubular, há falha de reabsorção de proteínas de baixo peso molecular nos túbulos proximais." },
+      { text: "Pós-renal.", correct: false, explain: "Incorreto. Pós-renal decorre de inflamação do trato urinário." },
+      { text: "Funcional.", correct: false, explain: "Incorreto. É transitória e não envolve lesão estrutural tubular." }
+    ]
+  },
+  {
+    q: "10) Questão — Mecanismos fisiopatológicos: Qual alteração favorece o aparecimento de proteinúria glomerular?",
+    choices: [
+      { text: "Aumento da carga elétrica negativa da membrana basal glomerular.", correct: false, explain: "Incorreto. A carga negativa normal repele proteínas." },
+      { text: "Aumento do número de poros não discriminantes e perda de cargas aniônicas.", correct: true, explain: "Correto. Lesões que reduzem a seletividade de carga e tamanho aumentam a passagem de proteínas." },
+      { text: "Aumento da reabsorção tubular.", correct: false, explain: "Incorreto. A reabsorção maior reduziria proteinúria." },
+      { text: "Hipofiltração glomerular severa.", correct: false, explain: "Incorreto. A hipofiltração reduz o fluxo filtrado e não aumenta proteinúria." }
+    ]
+  },
+  {
+    q: "11) Questão — Métodos qualitativos: O teste de ácido sulfossalicílico é usado para quê?",
+    choices: [
+      { text: "Avaliar presença de glicose na urina.", correct: false, explain: "Incorreto. O teste identifica proteínas, não glicose." },
+      { text: "Detectar turvação da urina na presença de proteínas, permitindo avaliação semiquantitativa.", correct: true, explain: "Correto. A reação positiva indica presença de proteínas urinárias." },
+      { text: "Identificar cilindros urinários.", correct: false, explain: "Incorreto. A microscopia é usada para cilindros, não esse teste químico." },
+      { text: "Medir creatinina urinária.", correct: false, explain: "Incorreto. A creatinina é medida por métodos quantitativos, não ácido sulfossalicílico." }
+    ]
+  },
+  {
+    q: "12) Questão — Limitação das fitas reagentes: Por que elas podem falhar na detecção de microalbuminúria?",
+    choices: [
+      { text: "Porque detectam apenas proteínas básicas como globulinas.", correct: false, explain: "Incorreto. Detectam albumina, mas têm baixa sensibilidade." },
+      { text: "Porque sua sensibilidade é limitada a concentrações >300 mg/dia de proteína.", correct: true, explain: "Correto. Fitas comuns não detectam pequenas quantidades de albumina (30–300 mg/dia)." },
+      { text: "Porque dependem da presença de glicose.", correct: false, explain: "Incorreto. O teste é independente da glicosúria." },
+      { text: "Porque são sensíveis apenas a urina ácida.", correct: false, explain: "Incorreto. O pH influencia, mas não é a causa principal da limitação." }
+    ]
+  },
+  {
+    q: "13) Questão — Dosagem quantitativa: A coleta de urina de 24 horas é considerada o padrão-ouro para qual finalidade?",
+    choices: [
+      { text: "Avaliar função tubular.", correct: false, explain: "Incorreto. Serve para quantificar excreção proteica." },
+      { text: "Mensurar a excreção de proteínas totais.", correct: true, explain: "Correto. A coleta de 24h permite quantificar a proteinúria diária com maior precisão." },
+      { text: "Determinar densidade urinária.", correct: false, explain: "Incorreto. Densidade é avaliada por refratometria ou fitas, não coleta de 24h." },
+      { text: "Avaliar pH urinário.", correct: false, explain: "Incorreto. O pH é obtido em amostra isolada." }
+    ]
+  },
+  {
+    q: "14) Questão — Razão proteína/creatinina: Qual valor é considerado normal nessa relação em amostra isolada de urina?",
+    choices: [
+      { text: "< 0,1.", correct: true, explain: "Correto. Valores abaixo de 0,1 indicam excreção proteica normal." },
+      { text: "1,0.", correct: false, explain: "Incorreto. Esse valor indicaria proteinúria significativa." },
+      { text: "> 3,0.", correct: false, explain: "Incorreto. Esse valor indica faixa nefrótica." },
+      { text: "0,5–1,0.", correct: false, explain: "Incorreto. Essa faixa já indica proteinúria moderada." }
+    ]
+  },
+  {
+    q: "15) Questão — Síndrome nefrótica: Quais achados laboratoriais são típicos desse quadro?",
+    choices: [
+      { text: "Proteinúria >3,5 g/24h, hipoalbuminemia e hiperlipidemia.", correct: true, explain: "Correto. Esses achados definem a síndrome nefrótica." },
+      { text: "Hematúria e cilindros hemáticos.", correct: false, explain: "Incorreto. Esses achados são mais característicos da síndrome nefrítica." },
+      { text: "Hipocomplementemia e febre.", correct: false, explain: "Incorreto. Hipocomplementemia é mais comum em glomerulonefrites imunomediadas." },
+      { text: "Hipocalcemia e hipofosfatemia.", correct: false, explain: "Incorreto. Não são critérios diagnósticos para síndrome nefrótica." }
+    ]
+  },
+  {
+    q: "16) Questão — Proteinúria seletiva e não seletiva: Qual diferença principal distingue essas duas formas?",
+    choices: [
+      { text: "A seletiva contém apenas albumina e globulinas leves; a não seletiva contém também proteínas de alto peso molecular.", correct: true, explain: "Correto. Na proteinúria seletiva, predominam proteínas leves como albumina e transferrina; na não seletiva, há presença de proteínas maiores como imunoglobulinas." },
+      { text: "A seletiva é típica de amiloidose; a não seletiva de lesão mínima.", correct: false, explain: "Incorreto. O oposto é verdadeiro: lesão mínima cursa com proteinúria seletiva." },
+      { text: "Ambas têm o mesmo significado clínico.", correct: false, explain: "Incorreto. A seletividade ajuda a diferenciar tipos de glomerulopatias." },
+      { text: "A seletiva é pós-renal e a não seletiva é funcional.", correct: false, explain: "Incorreto. A seletividade se refere a origem glomerular, não pós-renal." }
+    ]
+  },
+  {
+    q: "17) Questão — Proteinúria de Bence-Jones: Qual é sua principal característica laboratorial?",
+    choices: [
+      { text: "Presença de albumina elevada e ausência de globulinas.", correct: false, explain: "Incorreto. Bence-Jones envolve cadeias leves de imunoglobulinas, não albumina." },
+      { text: "Presença de cadeias leves monoclonais que precipitam com calor e se dissolvem ao esfriar.", correct: true, explain: "Correto. A proteína de Bence-Jones é típica de mieloma múltiplo e tem essa propriedade térmica característica." },
+      { text: "Elevação de proteína de Tamm-Horsfall.", correct: false, explain: "Incorreto. Essa mucoproteína é fisiológica e não se eleva em mieloma." },
+      { text: "Aumento de globulinas plasmáticas com urina normal.", correct: false, explain: "Incorreto. Há proteinúria detectável por eletroforese." }
+    ]
+  },
+  {
+    q: "18) Questão — Microalbuminúria e risco cardiovascular: Por que sua detecção é clinicamente importante em pacientes diabéticos e hipertensos?",
+    choices: [
+      { text: "Indica apenas lesão renal avançada.", correct: false, explain: "Incorreto. Microalbuminúria ocorre antes da lesão avançada." },
+      { text: "É marcador precoce de lesão endotelial e aumento de risco cardiovascular e renal.", correct: true, explain: "Correto. Microalbuminúria reflete dano endotelial sistêmico e risco aumentado de mortalidade cardiovascular." },
+      { text: "Sempre desaparece espontaneamente.", correct: false, explain: "Incorreto. Requer controle glicêmico e pressórico rigoroso." },
+      { text: "Não tem relevância clínica.", correct: false, explain: "Incorreto. É altamente relevante para estratificação de risco." }
+    ]
+  },
+  {
+    q: "19) Questão — Métodos quantitativos: A razão proteína/creatinina na urina substitui a coleta de 24h com qual vantagem principal?",
+    choices: [
+      { text: "Evita erro por amostras concentradas.", correct: false, explain: "Incorreto. Corrige, mas não elimina toda variabilidade." },
+      { text: "Elimina a necessidade de coleta cronometrada e corrige pela concentração urinária.", correct: true, explain: "Correto. A razão proteína/creatinina permite estimar a excreção proteica em amostra isolada, simplificando o processo." },
+      { text: "É mais sensível que a eletroforese.", correct: false, explain: "Incorreto. Mede quantidade, não tipo de proteína." },
+      { text: "Só é válida em urinas concentradas.", correct: false, explain: "Incorreto. Pode ser usada em qualquer amostra." }
+    ]
+  },
+  {
+    q: "20) Questão — Proteína de Tamm-Horsfall: Qual é sua origem e função fisiológica?",
+    choices: [
+      { text: "Produzida pelo túbulo proximal, promove reabsorção de albumina.", correct: false, explain: "Incorreto. É sintetizada no ramo ascendente da alça de Henle e não reabsorve proteínas." },
+      { text: "Secretada pelo epitélio do ramo ascendente espesso, atua na defesa contra infecção urinária e previne cristalização.", correct: true, explain: "Correto. A proteína de Tamm-Horsfall é excretada em pequenas quantidades (30–50 mg/die tem funções protetoras no trato urinário." },
+      { text: "Deriva do plasma e indica glomerulopatia.", correct: false, explain: "Incorreto. É endógena e fisiológica." },
+      { text: "Formada pela bexiga durante o armazenamento da urina.", correct: false, explain: "Incorreto. É produzida nos néfrons." }
+    ]
+  },
+
+  /* Casos clínicos */
+  {
+    q: "21) Caso clínico — Homem 36 anos: Paciente com história de febre e esforço físico intenso nos últimos dias apresenta urina espumosa leve e resultado positivo para proteína 1+ em fita reagente. Coleta de 24h mostra excreção de 400 mg de proteína. Qual o diagnóstico mais provável e conduta?",
+    choices: [
+      { text: "Proteinúria funcional transitória; apenas repouso e reavaliação.", correct: true, explain: "Correto. O esforço e febre justificam proteinúria funcional leve, autolimitada." },
+      { text: "Síndrome nefrótica; iniciar corticoterapia.", correct: false, explain: "Incorreto. Proteinúria é leve e transitória, sem critérios de nefrótica." },
+      { text: "Glomerulonefrite aguda; solicitar biópsia.", correct: false, explain: "Incorreto. Ausência de hematúria e níveis baixos de proteína afastam GN." },
+      { text: "Proteinúria de Bence-Jones; realizar eletroforese urgente.", correct: false, explain: "Incorreto. Não há indícios de gamopatia monoclonal." }
+    ]
+  },
+  {
+    q: "22) Caso clínico — Mulher 19 anos: Jovem saudável, longilínea, apresenta proteinúria de 1 g/24h apenas em amostras diurnas, mas ausente na urina coletada ao acordar. Sem sintomas. Qual é o diagnóstico provável e conduta?",
+    choices: [
+      { text: "Proteinúria postural benigna; apenas observação.", correct: true, explain: "Correto. Proteinúria postural ocorre apenas na posição ereta, benigna e comum em adolescentes." },
+      { text: "Glomerulonefrite crônica.", correct: false, explain: "Incorreto. Não há evidência de disfunção renal ou sedimento ativo." },
+      { text: "Proteinúria por sobrecarga.", correct: false, explain: "Incorreto. Não há aumento de proteínas plasmáticas filtráveis." },
+      { text: "Nefropatia diabética inicial.", correct: false, explain: "Incorreto. A paciente é saudável e normoglicêmica." }
+    ]
+  },
+  {
+    q: "23) Caso clínico — Homem 60 anos: Apresenta dor óssea e fraqueza. Urina turva, densidade 1.025. Eletroforese mostra pico monoclonal nas betaglobulinas. Qual hipótese e conduta adequada?",
+    choices: [
+      { text: "Proteinúria de Bence-Jones associada a mieloma múltiplo; evitar contraste iodado e investigar doença hematológica.", correct: true, explain: "Correto. Pico monoclonal e idade compatível sugerem mieloma múltiplo com risco de anúria após contraste." },
+      { text: "Proteinúria funcional.", correct: false, explain: "Incorreto. Proteinúria funcional não cursa com pico monoclonal." },
+      { text: "Nefropatia por IgA.", correct: false, explain: "Incorreto. Não há hematúria glomerular nem padrão mesangial." },
+      { text: "Doença de lesão mínima.", correct: false, explain: "Incorreto. Essa ocorre em jovens e com proteinúria seletiva de albumina." }
+    ]
+  },
+  {
+    q: "24) Caso clínico — Mulher 44 anos: Hipertensa e diabética, apresenta microalbuminúria persistente (80 mg/24h) em duas coletas consecutivas. Creatinina normal. Qual a interpretação e conduta?",
+    choices: [
+      { text: "Achado irrelevante, sem necessidade de acompanhamento.", correct: false, explain: "Incorreto. Microalbuminúria em diabéticos é marcador precoce de nefropatia e risco cardiovascular." },
+      { text: "Microalbuminúria persistente; ajustar controle glicêmico e iniciar IECA/ARA-II.", correct: true, explain: "Correto. A presença persistente confirma lesão renal inicial e exige nefroproteção." },
+      { text: "Glomerulonefrite aguda; indicar biópsia renal.", correct: false, explain: "Incorreto. Não há sinais clínicos de glomerulonefrite." },
+      { text: "Proteinúria funcional pós-exercício.", correct: false, explain: "Incorreto. A paciente tem comorbidades crônicas e persistência do achado." }
+    ]
+  },
+  {
+    q: "25) Caso clínico — Homem 27 anos: Atleta de musculação, usa suplementos proteicos e apresenta proteinúria de 1,5 g/24h. Sem edema, PA 120/80, creatinina normal. Qual interpretação mais adequada?",
+    choices: [
+      { text: "Proteinúria de sobrecarga; investigar possível rabdomiólise e reavaliar após suspensão de suplementos.", correct: true, explain: "Correto. Excesso de proteínas filtráveis ou degradação muscular pode causar proteinúria de sobrecarga." },
+      { text: "Síndrome nefrótica; iniciar diurético.", correct: false, explain: "Incorreto. Proteinúria moderada sem hipoalbuminemia não define síndrome nefrótica." },
+      { text: "Glomerulopatia membranosa.", correct: false, explain: "Incorreto. Não há dados clínicos compatíveis." },
+      { text: "Proteinúria postural.", correct: false, explain: "Incorreto. O padrão não varia com a postura." }
+    ]
+  },
+  {
+    q: "26) Caso clínico — Mulher 52 anos: Hipertensa de longa data, apresenta edema e urina espumosa. Proteinúria 4,5 g/24h, albumina sérica 2,8 g/dL, colesterol 310 mg/dL. Qual diagnóstico provável?",
+    choices: [
+      { text: "Síndrome nefrótica; investigar etiologia glomerular.", correct: true, explain: "Correto. Proteinúria >3,5 g/24h, hipoalbuminemia e hiperlipidemia configuram síndrome nefrótica." },
+      { text: "Pielonefrite aguda.", correct: false, explain: "Incorreto. Pielonefrite cursa com febre e leucocitúria, não proteinúria maciça." },
+      { text: "Proteinúria funcional.", correct: false, explain: "Incorreto. A magnitude e sintomas afastam essa hipótese." },
+      { text: "Nefropatia tubular aguda.", correct: false, explain: "Incorreto. NTA cursa com azotemia e cilindros granulosos, não síndrome nefrótica." }
+    ]
+  },
+  {
+    q: "27) Caso clínico — Homem 49 anos: Portador de hepatite C crônica, apresenta edema, creatinina 1,8 mg/dL, proteinúria 2,8 g/24h e C3 baixo. Qual hipótese diagnóstica mais provável?",
+    choices: [
+      { text: "Glomerulonefrite membranoproliferativa secundária à infecção viral.", correct: true, explain: "Correto. GNMP associada à hepatite C cursa com proteinúria, hipocomplementemia e disfunção renal progressiva." },
+      { text: "Proteinúria funcional.", correct: false, explain: "Incorreto. Proteinúria é persistente e significativa, não funcional." },
+      { text: "Síndrome nefrítica aguda.", correct: false, explain: "Incorreto. Não há hematúria macroscópica nem declínio rápido da TFG." },
+      { text: "Nefropatia lúpica.", correct: false, explain: "Incorreto. Sem achados imunológicos compatíveis com LES." }
+    ]
+  },
+  {
+    q: "28) Caso clínico — Homem 61 anos: Apresenta creatinina 2,9 mg/dL, proteinúria 5,1 g/24h, hipoalbuminemia e pico monoclonal na eletroforese de soro. Qual conduta diagnóstica deve ser priorizada?",
+    choices: [
+      { text: "Biópsia renal e pesquisa de mieloma múltiplo.", correct: true, explain: "Correto. O quadro sugere amiloidose ou mieloma; investigar doença hematológica e realizar biópsia." },
+      { text: "Repetir exame em 1 mês sem investigação.", correct: false, explain: "Incorreto. Achados graves requerem investigação imediata." },
+      { text: "Prescrever diuréticos e suspender exame.", correct: false, explain: "Incorreto. Não trata a causa da proteinúria." },
+      { text: "Diagnóstico de síndrome nefrítica.", correct: false, explain: "Incorreto. Proteinúria maciça e ausência de hematúria definem síndrome nefrótica." }
+    ]
+  },
+  {
+    q: "29) Caso clínico — Mulher 34 anos: Em investigação de lúpus eritematoso sistêmico, apresenta proteinúria 2,3 g/24h, creatinina normal, C3 e C4 baixos. Qual conduta adequada?",
+    choices: [
+      { text: "Biópsia renal para classificação da nefrite lúpica e definição terapêutica.", correct: true, explain: "Correto. Proteinúria significativa e hipocomplementemia indicam atividade renal lúpica; biópsia é essencial." },
+      { text: "Aguardar e observar por 6 meses.", correct: false, explain: "Incorreto. A demora pode resultar em dano irreversível." },
+      { text: "Tratar apenas com IECA.", correct: false, explain: "Incorreto. É necessário imunossupressão específica conforme a classe histológica." },
+      { text: "Diagnosticar como proteinúria funcional.", correct: false, explain: "Incorreto. O contexto autoimune exclui causa funcional." }
+    ]
+  },
+  {
+    q: "30) Caso clínico — Homem 42 anos: Internado por infecção urinária grave. Após 3 dias, apresenta proteinúria moderada (2 g/24h) e hematúria leve. Qual mecanismo provável de proteinúria?",
+    choices: [
+      { text: "Pós-renal, devido à inflamação do trato urinário inferior.", correct: true, explain: "Correto. Infecções e inflamações pós-renais aumentam passagem de proteínas para a urina." },
+      { text: "Glomerular seletiva.", correct: false, explain: "Incorreto. Proteinúria glomerular geralmente é isolada e sem infecção ativa." },
+      { text: "Tubular hereditária.", correct: false, explain: "Incorreto. Não há evidência de doença hereditária." },
+      { text: "Funcional ortostática.", correct: false, explain: "Incorreto. Não se relaciona à postura nem à adolescência." }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

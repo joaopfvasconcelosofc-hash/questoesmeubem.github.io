@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hematúria – Diagnóstico e Abordagem Clínica</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Hematúria – Diagnóstico e Abordagem Clínica</h1>
+    <p class="lead">Hematúria – Diagnóstico e Abordagem Clínica</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+  {
+    q: "1) Questão — Definição: Qual é o critério laboratorial para considerar a hematúria significativa?",
+    choices: [
+      { text: "Mais de 2 hemácias por campo em uma amostra isolada.", correct: false, explain: "Incorreto. Esse valor pode ser transitório ou inespecífico." },
+      { text: "Mais de 5 hemácias por campo de grande aumento em duas ou mais amostras.", correct: true, explain: "Correto. A hematúria é considerada significativa quando há mais de 5 hemácias por campo em pelo menos duas amostras." },
+      { text: "Qualquer presença de hemácias na urina.", correct: false, explain: "Incorreto. É necessário quantificar para evitar falsos positivos." },
+      { text: "Presença de cilindros hemáticos isolados.", correct: false, explain: "Incorreto. Cilindros hemáticos indicam hematúria glomerular, mas não definem a presença isolada de hematúria." }
+    ]
+  },
+  {
+    q: "2) Questão — Localização: A hematúria pode originar-se de qualquer local do trato urinário. Quais estruturas estão incluídas nesse trajeto?",
+    choices: [
+      { text: "Apenas os rins.", correct: false, explain: "Incorreto. A hematúria pode ter origem em qualquer ponto do trato urinário." },
+      { text: "Desde os rins até a uretra.", correct: true, explain: "Correto. A hematúria pode derivar de lesões glomerulares, pielonefrite, cálculos ou até traumas uretrais." },
+      { text: "Apenas bexiga e uretra.", correct: false, explain: "Incorreto. Lesões renais também causam hematúria." },
+      { text: "Somente da pelve renal.", correct: false, explain: "Incorreto. Outras estruturas podem estar envolvidas." }
+    ]
+  },
+  {
+    q: "3) Questão — Morfologia eritrocitária: A presença de eritrócitos dismórficos na urina indica o quê?",
+    choices: [
+      { text: "Origem glomerular da hematúria.", correct: true, explain: "Correto. Eritrócitos dismórficos resultam da passagem das hemácias pela membrana basal glomerular alterada." },
+      { text: "Sangramento pós-renal.", correct: false, explain: "Incorreto. Lesões pós-renais apresentam eritrócitos normais." },
+      { text: "Contaminação vaginal.", correct: false, explain: "Incorreto. Contaminação gera hemácias morfologicamente normais." },
+      { text: "Hematúria por esforço físico.", correct: false, explain: "Incorreto. A hematúria de esforço é transitória e não apresenta dismorfismo eritrocitário." }
+    ]
+  },
+  {
+    q: "4) Questão — Causas comuns: Quais estão entre as causas mais frequentes de hematúria não glomerular?",
+    choices: [
+      { text: "Nefrite lúpica e glomerulonefrite difusa aguda.", correct: false, explain: "Incorreto. São causas glomerulares." },
+      { text: "Cálculos renais, tumores, trauma e infecção urinária.", correct: true, explain: "Correto. Essas são causas típicas de hematúria não glomerular." },
+      { text: "Síndrome nefrótica e GESF.", correct: false, explain: "Incorreto. Essas cursam com proteinúria, não hematúria isolada." },
+      { text: "Hipertensão arterial isolada.", correct: false, explain: "Incorreto. Hipertensão não causa hematúria sem outra lesão associada." }
+    ]
+  },
+  {
+    q: "5) Questão — Dismorfismos eritrocitários: Quais formas celulares são mais associadas à hematúria glomerular?",
+    choices: [
+      { text: "Codócitos e acantócitos.", correct: true, explain: "Correto. São dismorfismos típicos de lesões glomerulares e indicam origem renal." },
+      { text: "Esferócitos e equinócitos.", correct: false, explain: "Incorreto. Essas formas não se associam à hematúria glomerular." },
+      { text: "Hemácias falciformes.", correct: false, explain: "Incorreto. Essas são vistas em anemia falciforme." },
+      { text: "Hemácias normocíticas e normocrômicas.", correct: false, explain: "Incorreto. Essas indicam hematúria de origem não glomerular." }
+    ]
+  },
+  {
+    q: "6) Questão — Teste de fita reagente: Qual é o princípio do teste para detectar sangue na urina?",
+    choices: [
+      { text: "Reação com o grupo heme da hemoglobina, produzindo alteração de cor.", correct: true, explain: "Correto. O teste reage ao grupo heme, detectando sangue hemolisado ou não." },
+      { text: "Identificação direta de eritrócitos intactos ao microscópio.", correct: false, explain: "Incorreto. Isso é feito na análise microscópica, não pela fita." },
+      { text: "Reação química com proteínas plasmáticas.", correct: false, explain: "Incorreto. A fita para sangue não reage a proteínas." },
+      { text: "Precipitação de hemoglobina com ácido sulfossalicílico.", correct: false, explain: "Incorreto. Esse método detecta proteínas, não sangue." }
+    ]
+  },
+  {
+    q: "7) Questão — Hematúria x Hemoglobinúria: Qual exame auxilia a diferenciar essas condições?",
+    choices: [
+      { text: "Eletroforese de proteínas urinárias.", correct: false, explain: "Incorreto. Não diferencia hemoglobina de hemácias." },
+      { text: "Microscopia urinária.", correct: true, explain: "Correto. Na hematúria há hemácias intactas; na hemoglobinúria, ausência de hemácias e coloração avermelhada homogênea." },
+      { text: "Cultura de urina.", correct: false, explain: "Incorreto. Serve para infecção, não para diferenciar pigmentos." },
+      { text: "Dosagem de creatinina urinária.", correct: false, explain: "Incorreto. Não é um teste diferencial." }
+    ]
+  },
+  {
+    q: "8) Questão — Avaliação inicial: Após fita reagente positiva para sangue, qual deve ser o próximo passo diagnóstico?",
+    choices: [
+      { text: "Realizar cultura de urina diretamente.", correct: false, explain: "Incorreto. Deve-se confirmar a presença de hemácias." },
+      { text: "Confirmar com exame microscópico da urina (400x).", correct: true, explain: "Correto. O exame microscópico confirma a presença de hemácias e permite avaliar dismorfismos." },
+      { text: "Solicitar urografia excretora de imediato.", correct: false, explain: "Incorreto. Imagem é indicada apenas após confirmação e avaliação inicial." },
+      { text: "Iniciar antibiótico empírico.", correct: false, explain: "Incorreto. A conduta depende da causa confirmada." }
+    ]
+  },
+  {
+    q: "9) Questão — Hematúria glomerular: Quais achados urinários costumam acompanhá-la?",
+    choices: [
+      { text: "Hemácias normais e ausência de proteínas.", correct: false, explain: "Incorreto. Esse padrão indica origem não glomerular." },
+      { text: "Eritrócitos dismórficos e cilindros hemáticos.", correct: true, explain: "Correto. Esses achados são típicos de lesão glomerular." },
+      { text: "Cristais de oxalato e leucócitos.", correct: false, explain: "Incorreto. Esses achados sugerem litíase ou infecção." },
+      { text: "Muco e células epiteliais.", correct: false, explain: "Incorreto. São achados inespecíficos." }
+    ]
+  },
+  {
+    q: "10) Questão — Hematúria macroscópica: Como ela se manifesta clinicamente?",
+    choices: [
+      { text: "Urina clara com odor fétido.", correct: false, explain: "Incorreto. Isso indica infecção, não hematúria." },
+      { text: "Urina avermelhada ou acastanhada visível a olho nu.", correct: true, explain: "Correto. A presença de sangue visível caracteriza a hematúria macroscópica." },
+      { text: "Urina turva sem alteração de cor.", correct: false, explain: "Incorreto. Essa aparência pode indicar piúria." },
+      { text: "Coloração amarela intensa.", correct: false, explain: "Incorreto. Não indica sangue." }
+    ]
+  },
+  {
+    q: "11) Questão — Diagnóstico diferencial: A fita reagente positiva para sangue pode indicar também qual condição além da hematúria?",
+    choices: [
+      { text: "Hemoglobinúria e mioglobinúria.", correct: true, explain: "Correto. O teste reage ao grupo heme, presente na hemoglobina e mioglobina." },
+      { text: "Proteinúria isolada.", correct: false, explain: "Incorreto. O teste de sangue não reage a proteínas." },
+      { text: "Glicosúria.", correct: false, explain: "Incorreto. Fita específica mede glicose, não sangue." },
+      { text: "Urobilinogênio elevado.", correct: false, explain: "Incorreto. Esse é outro parâmetro da fita." }
+    ]
+  },
+  {
+    q: "12) Questão — Avaliação por imagem: Quais métodos são mais indicados na investigação de hematúria persistente?",
+    choices: [
+      { text: "Ultrassonografia renal e tomografia computadorizada.", correct: true, explain: "Correto. Ambos permitem identificar cálculos, tumores e alterações anatômicas." },
+      { text: "Raio-X de tórax.", correct: false, explain: "Incorreto. Não avalia o trato urinário." },
+      { text: "Endoscopia digestiva.", correct: false, explain: "Incorreto. Não tem relação com o trato urinário." },
+      { text: "ECG.", correct: false, explain: "Incorreto. É exame cardíaco." }
+    ]
+  },
+  {
+    q: "13) Questão — Síndrome nefrítica: Qual é o conjunto clássico de achados clínicos dessa síndrome?",
+    choices: [
+      { text: "Proteinúria maciça, hipoalbuminemia e hiperlipidemia.", correct: false, explain: "Incorreto. Esses são achados da síndrome nefrótica." },
+      { text: "Edema, hipertensão arterial, hematúria e oligúria.", correct: true, explain: "Correto. Esses achados definem a síndrome nefrítica, típica de lesões proliferativas glomerulares." },
+      { text: "Hematúria isolada e polaciúria.", correct: false, explain: "Incorreto. Isso ocorre em infecções ou irritação vesical." },
+      { text: "Glicosúria e cetonúria.", correct: false, explain: "Incorreto. São achados metabólicos, não renais." }
+    ]
+  },
+  {
+    q: "14) Questão — Glomerulonefrite rapidamente progressiva (GNRP): Qual é sua principal característica clínica?",
+    choices: [
+      { text: "Progressão para insuficiência renal terminal em semanas a meses.", correct: true, explain: "Correto. A GNRP é uma emergência nefrológica com rápida perda da função renal." },
+      { text: "Proteinúria leve e transitória.", correct: false, explain: "Incorreto. GNRP cursa com hematúria e proteinúria significativas." },
+      { text: "Evolução benigna e autolimitada.", correct: false, explain: "Incorreto. É grave e de rápida evolução." },
+      { text: "Predomínio de cilindros hialinos.", correct: false, explain: "Incorreto. Ocorrem cilindros hemáticos." }
+    ]
+  },
+  {
+    q: "15) Questão — Abordagem diagnóstica: Quando deve-se considerar a realização de biópsia renal em casos de hematúria?",
+    choices: [
+      { text: "Sempre que houver fita reagente positiva para sangue.", correct: false, explain: "Incorreto. Deve-se confirmar e avaliar contexto clínico." },
+      { text: "Em casos de hematúria persistente associada a proteinúria ou alteração da função renal.", correct: true, explain: "Correto. Esses achados sugerem lesão glomerular e justificam biópsia para diagnóstico etiológico." },
+      { text: "Apenas se houver hematúria macroscópica isolada.", correct: false, explain: "Incorreto. Essa costuma ter origem urológica." },
+      { text: "Se houver leucocitúria isolada.", correct: false, explain: "Incorreto. Leucocitúria sugere infecção, não lesão glomerular." }
+    ]
+  },
+  {
+    q: "16) Questão — Hematúria de esforço: Qual é o mecanismo mais provável para esse tipo de hematúria?",
+    choices: [
+      { text: "Trauma vesical direto durante exercício intenso.", correct: false, explain: "Incorreto. O trauma vesical é raro e geralmente não ocorre em exercícios comuns." },
+      { text: "Isquemia transitória da mucosa renal e liberação de hemácias após exercício intenso.", correct: true, explain: "Correto. Durante esforço físico extremo, há isquemia renal leve e liberação transitória de hemácias na urina, resolvendo-se em 24–72 horas." },
+      { text: "Formação de cálculos renais durante a atividade física.", correct: false, explain: "Incorreto. Cálculos não se formam agudamente por exercício isolado." },
+      { text: "Hemólise intravascular aguda.", correct: false, explain: "Incorreto. Hemólise pode ocorrer, mas não é a principal causa de hematúria de esforço." }
+    ]
+  },
+  {
+    q: "17) Questão — Hematúria pós-renal: Qual característica clínica a diferencia da hematúria glomerular?",
+    choices: [
+      { text: "Presença de eritrócitos dismórficos.", correct: false, explain: "Incorreto. Essa é típica da origem glomerular." },
+      { text: "Urina com coágulos visíveis e ausência de proteinúria significativa.", correct: true, explain: "Correto. Coágulos e ausência de proteinúria sugerem origem pós-renal (bexiga, uretra)." },
+      { text: "Hematúria microscópica isolada com cilindros hemáticos.", correct: false, explain: "Incorreto. Cilindros são achados glomerulares." },
+      { text: "Presença de hipoalbuminemia.", correct: false, explain: "Incorreto. Isso ocorre em síndromes nefróticas, não hematúria pós-renal." }
+    ]
+  },
+  {
+    q: "18) Questão — Causas sistêmicas: Qual doença hematológica pode se manifestar com hematúria por sangramento renal?",
+    choices: [
+      { text: "Anemia ferropriva.", correct: false, explain: "Incorreto. Essa não causa sangramento renal." },
+      { text: "Coagulopatias, como púrpura trombocitopênica ou uso de anticoagulantes.", correct: true, explain: "Correto. Distúrbios de coagulação e uso de anticoagulantes podem provocar hematúria de origem renal ou pós-renal." },
+      { text: "Leucemia mieloide crônica.", correct: false, explain: "Incorreto. Pode haver sangramento, mas não é a causa mais típica." },
+      { text: "Talassemia menor.", correct: false, explain: "Incorreto. Essa condição não causa hematúria." }
+    ]
+  },
+  {
+    q: "19) Questão — Exames complementares: Qual é o exame de escolha para avaliação inicial de hematúria persistente sem proteinúria?",
+    choices: [
+      { text: "Cistoscopia.", correct: true, explain: "Correto. Cistoscopia é indicada para excluir neoplasias vesicais, especialmente em adultos com hematúria sem proteinúria." },
+      { text: "Urografia excretora.", correct: false, explain: "Incorreto. É usada em casos selecionados, após exclusão de causas simples." },
+      { text: "Tomografia de tórax.", correct: false, explain: "Incorreto. Não avalia o trato urinário." },
+      { text: "Angiografia renal de rotina.", correct: false, explain: "Incorreto. Reservada para suspeita de lesões vasculares específicas." }
+    ]
+  },
+  {
+    q: "20) Questão — Hematúria associada à infecção: Qual achado clínico e laboratorial é mais típico nesse contexto?",
+    choices: [
+      { text: "Urina com nitrito positivo e leucocitúria.", correct: true, explain: "Correto. A infecção urinária frequentemente causa hematúria microscópica associada à leucocitúria e nitrito positivo." },
+      { text: "Eritrócitos dismórficos e cilindros hemáticos.", correct: false, explain: "Incorreto. Isso indica lesão glomerular." },
+      { text: "Proteinúria maciça sem febre.", correct: false, explain: "Incorreto. Proteinúria maciça não é achado típico de infecção." },
+      { text: "Densidade urinária elevada sem hematúria.", correct: false, explain: "Incorreto. A questão fala de hematúria associada à infecção." }
+    ]
+  },
+
+  /* Casos clínicos */
+  {
+    q: "21) Caso clínico — Homem 42 anos: Apresenta urina avermelhada e dor em flanco direito irradiando para a virilha. Exame mostra hematúria macroscópica, sem proteinúria e com cristais de oxalato. Qual é a hipótese diagnóstica mais provável?",
+    choices: [
+      { text: "Cálculo ureteral (litíase renal).", correct: true, explain: "Correto. A dor cólica em flanco e a presença de cristais e hematúria macroscópica sugerem litíase renal." },
+      { text: "Glomerulonefrite aguda.", correct: false, explain: "Incorreto. Haveria proteinúria e cilindros hemáticos." },
+      { text: "Cistite hemorrágica.", correct: false, explain: "Incorreto. Cistite causa disúria e polaciúria, não dor em flanco." },
+      { text: "Hematúria por esforço físico.", correct: false, explain: "Incorreto. Não há relação temporal com exercício." }
+    ]
+  },
+  {
+    q: "22) Caso clínico — Mulher 29 anos: Paciente refere hematúria visível logo após o início da micção, acompanhada de ardor e polaciúria. Qual é a origem mais provável do sangramento?",
+    choices: [
+      { text: "Uretra.", correct: true, explain: "Correto. Hematúria inicial indica origem uretral, frequentemente associada a uretrite ou trauma." },
+      { text: "Bexiga.", correct: false, explain: "Incorreto. A hematúria terminal sugere bexiga." },
+      { text: "Glomérulo.", correct: false, explain: "Incorreto. A glomerular é geralmente microscópica e sem ardor miccional." },
+      { text: "Pelve renal.", correct: false, explain: "Incorreto. Dor em flanco e hematúria total seriam mais típicas." }
+    ]
+  },
+  {
+    q: "23) Caso clínico — Homem 65 anos: Ex-tabagista, relata hematúria macroscópica indolor há duas semanas. Sem febre ou disúria. Ultrassom mostra massa vesical. Qual é a hipótese diagnóstica principal?",
+    choices: [
+      { text: "Neoplasia de bexiga (carcinoma urotelial).", correct: true, explain: "Correto. Em homens idosos, ex-tabagistas, a hematúria indolor é altamente sugestiva de neoplasia vesical." },
+      { text: "Glomerulonefrite crônica.", correct: false, explain: "Incorreto. A hematúria glomerular costuma ser microscópica." },
+      { text: "Pielonefrite aguda.", correct: false, explain: "Incorreto. Pielonefrite cursa com febre e dor lombar." },
+      { text: "Cálculo renal pequeno.", correct: false, explain: "Incorreto. Litíase causa dor, geralmente intensa." }
+    ]
+  },
+  {
+    q: "24) Caso clínico — Homem 18 anos: Após uma faringoamigdalite há 10 dias, desenvolve urina cor de “coca-cola”, edema leve e pressão 150/95 mmHg. Exame mostra proteinúria discreta e C3 baixo. Qual diagnóstico é mais provável?",
+    choices: [
+      { text: "Glomerulonefrite pós-estreptocócica.", correct: true, explain: "Correto. A história de infecção recente, hematúria escura, proteinúria leve e C3 baixo são típicos da GNPE." },
+      { text: "Nefropatia por IgA.", correct: false, explain: "Incorreto. Nefropatia por IgA aparece durante a infecção, sem período de latência." },
+      { text: "Pielonefrite aguda.", correct: false, explain: "Incorreto. Pielonefrite tem febre e leucocitúria." },
+      { text: "Cistite hemorrágica.", correct: false, explain: "Incorreto. Ocorre com disúria e não cursa com hipocomplementemia." }
+    ]
+  },
+  {
+    q: "25) Caso clínico — Mulher 55 anos: Apresenta hematúria terminal e disúria. Urina com leucócitos e bactérias. Qual diagnóstico é o mais provável?",
+    choices: [
+      { text: "Cistite hemorrágica.", correct: true, explain: "Correto. Hematúria terminal indica origem vesical, e a infecção associada confirma cistite hemorrágica." },
+      { text: "Glomerulonefrite aguda.", correct: false, explain: "Incorreto. Haveria proteinúria e cilindros." },
+      { text: "Nefropatia intersticial.", correct: false, explain: "Incorreto. Essa cursa com sintomas diferentes e não dá hematúria terminal." },
+      { text: "Litíase renal.", correct: false, explain: "Incorreto. Dor em flanco é ausente." }
+    ]
+  },
+  {
+    q: "26) Caso clínico — Homem 34 anos: Apresenta hematúria microscópica persistente, sem proteinúria, após trauma lombar há 3 meses. TC de abdome normal. Qual conduta é mais adequada?",
+    choices: [
+      { text: "Observação e reavaliação periódica.", correct: true, explain: "Correto. A hematúria pós-traumática residual tende a resolver espontaneamente; ausência de lesão estrutural permite acompanhamento clínico." },
+      { text: "Biópsia renal imediata.", correct: false, explain: "Incorreto. Não há sinais de lesão glomerular." },
+      { text: "Uso de antibiótico empírico.", correct: false, explain: "Incorreto. Sem sinais infecciosos." },
+      { text: "Cistoscopia urgente.", correct: false, explain: "Incorreto. Indicação não se aplica sem hematúria macroscópica persistente." }
+    ]
+  },
+  {
+    q: "27) Caso clínico — Mulher 48 anos: Portadora de lúpus eritematoso sistêmico, apresenta hematúria microscópica e proteinúria 1,5 g/24h. C3 e C4 baixos. Qual é o diagnóstico mais provável?",
+    choices: [
+      { text: "Nefrite lúpica ativa.", correct: true, explain: "Correto. A presença de hematúria e proteinúria associadas à hipocomplementemia é sugestiva de atividade renal do LES." },
+      { text: "Infecção urinária recorrente.", correct: false, explain: "Incorreto. Não há leucocitúria nem disúria." },
+      { text: "Síndrome nefrótica pura.", correct: false, explain: "Incorreto. A proteinúria é moderada e há hematúria, o que define um padrão nefrítico misto." },
+      { text: "Hipertensão essencial.", correct: false, explain: "Incorreto. Não explicaria os achados laboratoriais." }
+    ]
+  },
+  {
+    q: "28) Caso clínico — Homem 22 anos: Apresenta hematúria macroscópica recorrente, geralmente após episódios de infecção respiratória alta. Proteinúria leve. C3 normal. Qual hipótese diagnóstica é mais provável?",
+    choices: [
+      { text: "Nefropatia por IgA (Doença de Berger).", correct: true, explain: "Correto. A hematúria recorrente concomitante à infecção respiratória e complemento normal é típica de nefropatia por IgA." },
+      { text: "GN pós-estreptocócica.", correct: false, explain: "Incorreto. Nessa, há período de latência e hipocomplementemia." },
+      { text: "Pielonefrite aguda.", correct: false, explain: "Incorreto. Pielonefrite cursa com febre e leucocitúria." },
+      { text: "Síndrome nefrótica.", correct: false, explain: "Incorreto. Proteinúria leve afasta síndrome nefrótica." }
+    ]
+  },
+  {
+    q: "29) Caso clínico — Homem 58 anos: Portador de hipertensão e tabagismo, apresenta hematúria microscópica persistente. Sem proteinúria. Ultrassom mostra hidronefrose leve. Qual é a conduta inicial?",
+    choices: [
+      { text: "Tomografia de abdome e pelve com contraste.", correct: true, explain: "Correto. Deve-se investigar obstrução ou neoplasia urotelial; a TC é o exame de escolha." },
+      { text: "Iniciar antibiótico empírico.", correct: false, explain: "Incorreto. Sem sinais de infecção." },
+      { text: "Biópsia renal.", correct: false, explain: "Incorreto. Sem achados glomerulares." },
+      { text: "Observar por 6 meses sem exames.", correct: false, explain: "Incorreto. Paciente com fatores de risco requer investigação imediata." }
+    ]
+  },
+  {
+    q: "30) Caso clínico — Mulher 36 anos: Gesta 2, apresenta hematúria indolor no segundo trimestre da gestação. Urina sem leucócitos e sem proteinúria. Ultrassom mostra varizes pélvicas. Qual é o diagnóstico provável?",
+    choices: [
+      { text: "Síndrome da veia renal (varizes pélvicas).", correct: true, explain: "Correto. Durante a gestação, compressão da veia renal esquerda pode causar hematúria benigna transitória." },
+      { text: "Glomerulonefrite.", correct: false, explain: "Incorreto. Não há proteinúria ou disfunção renal." },
+      { text: "Cistite hemorrágica.", correct: false, explain: "Incorreto. Não há sintomas urinários irritativos." },
+      { text: "Hematúria de esforço.", correct: false, explain: "Incorreto. O quadro não está associado a exercício físico." }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

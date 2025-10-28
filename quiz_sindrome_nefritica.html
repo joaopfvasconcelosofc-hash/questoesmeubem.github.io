@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Síndrome Nefrítica</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Síndrome Nefrítica</h1>
+    <p class="lead">Síndrome Nefrítica</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* =================== SÍNDROME NEFRÍTICA — PARTE 1 =================== */
+
+const questions = [
+  {
+    q: "1) Questão — Definição: Qual das alternativas descreve corretamente a síndrome nefrítica?",
+    choices: [
+      { text: "Condição renal caracterizada por proteinúria maciça (>3,5 g/24h), hipoalbuminemia e edema generalizado.", correct: false, explain: "Incorreto. Esse conjunto caracteriza a síndrome nefrótica, não a síndrome nefrítica. A síndrome nefrítica tem predomínio de inflamação glomerular, hematúria e redução da TFG." },
+      { text: "Condição renal com inflamação aguda dos glomérulos, queda da TFG, hematúria (frequentemente com cilindros hemáticos) e proteinúria moderada.", correct: true, explain: "Correto. Síndrome nefrítica caracteriza-se por lesão inflamatória do capilar glomerular, hematúria dismórfica, cilindros hemáticos, oligúria e redução da TFG." },
+      { text: "Doença tubular aguda caracterizada por necrose tubular aguda e insuficiência renal com proteinúria mínima.", correct: false, explain: "Incorreto. Necrose tubular aguda é patologia tubular, não glomerular — não explica hematúria glomerular nem cilindros hemáticos típicos da síndrome nefrítica." },
+      { text: "Alteração hemodinâmica renal isolada por vasoconstrição aferente com preservação do sedimento urinário.", correct: false, explain: "Incorreto. Alterações hemodinâmicas isoladas não produzem o sedimento ativo (eritrócitos dismórficos, cilindros) típico da síndrome nefrítica." }
+    ]
+  },
+  {
+    q: "2) Questão — Sedimento urinário: Qual achado é mais sugestivo de origem glomerular para a hematúria?",
+    choices: [
+      { text: "Hemácias dismórficas (acantócitos) e cilindros hemáticos.", correct: true, explain: "Correto. Hemácias dismórficas e cilindros hemáticos indicam passagem das hemácias através da barreira glomerular lesionada, sugerindo origem glomerular." },
+      { text: "Hemácias eumórficas e bacteriúria.", correct: false, explain: "Incorreto. Hemácias eumórficas e bacteriúria sugerem origem extraglomerular (vias urinárias), não lesão glomerular." },
+      { text: "Proteinúria seletiva com albuminúria isolada.", correct: false, explain: "Incorreto. Proteinúria seletiva aparece mais em síndromes nefróticas por lesão podocitária, não é marcador específico de hematúria glomerular." },
+      { text: "Cilindros hialinos sem hemácias.", correct: false, explain: "Incorreto. Cilindros hialinos são inespecíficos (ex.: desidratação, exercício) e não indicam glomerulonefrite ativa." }
+    ]
+  },
+  {
+    q: "3) Questão — Etiologias: Qual das alternativas é uma causa clássica de síndrome nefrítica secundária imunomediada?",
+    choices: [
+      { text: "Lúpus eritematoso sistêmico (classes III e IV).", correct: true, explain: "Correto. LES (especialmente classes III e IV) é causa importante de síndrome nefrítica por deposição imune e inflamação glomerular." },
+      { text: "Nefrolitíase ureteral isolada.", correct: false, explain: "Incorreto. Cálculo ureteral causa dor e hematúria macroscópica por lesão mecânica, não um quadro de glomerulonefrite imunomediada." },
+      { text: "Hipertensão arterial essencial de longa data sem lesão glomerular.", correct: false, explain: "Incorreto. A HAS crônica pode causar nefrosclerose, mas não é uma causa típica de síndrome nefrítica aguda por imunocomplexos." },
+      { text: "Nefropatia por doenças cristalinas (ex.: ácido úrico).", correct: false, explain: "Incorreto. Doenças cristalinas causam injúria tubular/intersticial mais que glomerulonefrite nefrítica típica." }
+    ]
+  },
+  {
+    q: "4) Questão — Investigação laboratorial: Na glomerulonefrite pós-infecciosa clássica (pós-estreptocócica), qual padrão laboratorial é esperado comumente?",
+    choices: [
+      { text: "Hipocomplementemia (C3 baixo) transitória e títulos elevados de anti-estreptolisina O (ASO) em todos os casos.", correct: false, explain: "Incorreto. Embora hipocomplementemia (C3 baixo) seja comum, títulos de ASO nem sempre estão elevados (especialmente em infecções cutâneas onde ASO pode ser negativo)." },
+      { text: "Complemento normal e anticorpos anti-DNA elevados.", correct: false, explain: "Incorreto. Anti-DNA elevado é típico de nefrite lúpica; GN pós-estreptocócica costuma apresentar redução do C3." },
+      { text: "Hipocomplementemia (C3 baixo) e evidência sorológica ou culturar de infecção prévia (intervalo latente 5–28 dias).", correct: true, explain: "Correto. GN pós-infectiosa frequentemente mostra C3 baixo e um intervalo de latência entre infecção e sintomas de cerca de 5 a 28 dias (média 10–21)." },
+      { text: "Elevação isolada de C4 com C3 normal.", correct: false, explain: "Incorreto. GN pós-estreptocócica costuma reduzir C3 pela ativação da via alternativa; redução isolada de C4 não é o padrão típico." }
+    ]
+  },
+  {
+    q: "5) Questão — Nefropatia por IgA: Qual assertiva sobre a nefropatia por IgA é correta?",
+    choices: [
+      { text: "É a glomerulonefrite mais comumente associada à hipocomplementemia persistente.", correct: false, explain: "Incorreto. A nefropatia por IgA geralmente não apresenta hipocomplementemia persistente; depósitos de IgA mesangial são o achado específico." },
+      { text: "Apresenta depósitos de IgA no mesângio à imunofluorescência e frequentemente hematúria macroscópica após infecções respiratórias.", correct: true, explain: "Correto. Nefropatia por IgA caracteriza-se por depósitos de IgA no mesângio e hematúria macroscópica intermitente frequentemente desencadeada por infecções respiratórias." },
+      { text: "Tem início exclusivamente na infância e nunca progride para insuficiência renal crônica.", correct: false, explain: "Incorreto. Embora seja comum em jovens, pode ocorrer em qualquer idade e uma parcela progride para insuficiência renal crônica." },
+      { text: "Tratamento inicial padrão é sempre ciclofosfamida em todas as apresentações.", correct: false, explain: "Incorreto. Tratamento inicial inespecífico inclui bloqueio RAAS (IECA/ARA-II) para proteinúria; imunossupressão (ex.: corticosteroide) reservado para casos com indicação específica." }
+    ]
+  },
+  {
+    q: "6) Questão — Manejo geral: Em um paciente com nefropatia por IgA e proteinúria de 1,5 g/dia, qual a conduta inicial indicada conforme o material?",
+    choices: [
+      { text: "Iniciar imediatamente pulsos de metilprednisolona e ciclofosfamida.", correct: false, explain: "Incorreto. Imunossupressão agressiva não é a conduta inicial rotineira; inicialmente se otimiza tratamento inespecífico (IECA/ARA-II) para reduzir proteinúria." },
+      { text: "Tratamento inespecífico com IECA e/ou ARA-II visando reduzir proteinúria, com alvo pressórico mais estrito.", correct: true, explain: "Correto. Todo paciente com proteinúria >1 g/dia deve receber bloqueio RAAS; alvo pressórico sugerido é mais baixo (ex.: 125/75 mmHg quando >1 g/dia)." },
+      { text: "Suspender qualquer anti-hipertensor e manter só acompanhamento clínico.", correct: false, explain: "Incorreto. Suspender anti-hipertensores é errado; controle pressórico e bloqueio RAAS são fundamentais no manejo." },
+      { text: "Indicar diálise imediata independentemente da função renal.", correct: false, explain: "Incorreto. Diálise é indicada por insuficiência renal aguda grave/complicações urêmicas, não apenas por proteinúria elevada." }
+    ]
+  },
+  {
+    q: "7) Questão — Pressão arterial alvo: Segundo o conteúdo, qual objetivo pressórico é recomendado para pacientes com proteinúria menor que 1 g/dia?",
+    choices: [
+      { text: "140/90 mmHg.", correct: false, explain: "Incorreto. Esse é um alvo mais permissivo; o material recomenda metas pressóricas mais rigorosas para proteção renal." },
+      { text: "130/80 mmHg.", correct: true, explain: "Correto. Para proteinúria <1 g/dia, o alvo pressórico indicado é aproximadamente 130/80 mmHg." },
+      { text: "120/70 mmHg.", correct: false, explain: "Incorreto. Meta muito baixa e não a indicada rotineiramente; para proteinúria >1 g/dia o material cita alvo ainda mais estrito (125/75)." },
+      { text: "Não há recomendação de alvo pressórico.", correct: false, explain: "Incorreto. O material fornece alvos: 130/80 para proteinúria <1 g/dia e 125/75 para >1 g/dia." }
+    ]
+  },
+  {
+    q: "8) Questão — Glomerulonefrite rapidamente progressiva (GNRP): Qual definição melhor descreve a GNRP?",
+    choices: [
+      { text: "Declínio de >50% da TFG em até 3 meses e presença histológica de crescentes envolvendo grande parte dos glomérulos.", correct: true, explain: "Correto. GNRP define-se pelo declínio rápido da função renal (≥50% em ≤3 meses) e crescentes glomerulares típicos na biópsia." },
+      { text: "Evolução crônica e indolente da função renal ao longo de décadas com esclerose glomerular incremental.", correct: false, explain: "Incorreto. GNRP é aguda e grave, não uma evolução lenta e crônica." },
+      { text: "Doença tubular aguda sem mudanças glomerulares significativas.", correct: false, explain: "Incorreto. GNRP é uma lesão glomerular proliferativa com crescentes, não uma doença tubular." },
+      { text: "Proteinúria isolada sem alteração da função renal.", correct: false, explain: "Incorreto. GNRP cursa com rápida perda de função renal, não proteinúria isolada." }
+    ]
+  },
+  {
+    q: "9) Questão — Classificação da GNRP pela imunofluorescência: Quais são as três categorias e um exemplo de cada?",
+    choices: [
+      { text: "Linear (anti-MBG), granular por imunocomplexos (pós-infecciosa/IgA/lúpus), e pauci-imune (ANCA associada).", correct: true, explain: "Correto. Essas são as três categorias clássicas: depósitos lineares (anti-MBG/Goodpasture), depósitos granulares (imunocomplexos) e pauci-imune (vasculites ANCA)." },
+      { text: "Apenas duas categorias: imune e não-imune, sem subdivisões.", correct: false, explain: "Incorreto. A classificação em três padrões (lineares, granulares, pauci-imune) é importante para diagnóstico e abordagem." },
+      { text: "Depósitos de IgE, IgM e IgD com subtipos granulomatosos.", correct: false, explain: "Incorreto. IgE/IgD não são categorias usadas para classificar GNRP; isso está incorreto." },
+      { text: "Somente padrão granular é reconhecido em GNRP.", correct: false, explain: "Incorreto. GNRP pode ter padrões linear, granular ou pauci-imune; não é exclusivamente granular." }
+    ]
+  },
+  {
+    q: "10) Questão — Biópsia renal: Qual das seguintes é uma indicação razoável para realizar biópsia renal em paciente com síndrome nefrítica?",
+    choices: [
+      { text: "Quadro típico de GN pós-infecciosa em criança com recuperação esperada.", correct: false, explain: "Incorreto. Em quadros típicos de GN pós-infecciosa com provável resolução, biópsia nem sempre é necessária; é reservada para apresentações atípicas ou progressivas." },
+      { text: "Disfunção renal progressiva, especialmente se houver suspeita de GNRP.", correct: true, explain: "Correto. Biópsia é indicada quando há disfunção renal progressiva/rápida (suspeita de glomerulonefrite crescênticou quadro atípico." },
+      { text: "Hematúria isolada transitória logo após esforço físico.", correct: false, explain: "Incorreto. Hematúria transitória pós-esforço geralmente não exige biópsia; investigação menos invasiva é inicial." },
+      { text: "Hipertensão controlada sem alterações no sedimento urinário.", correct: false, explain: "Incorreto. Hipertensão isolada bem controlada sem sedimento ativo não é indicação de biópsia." }
+    ]
+  },
+  {
+    q: "11) Questão — Glomerulonefrite membranoproliferativa (GNMP): Qual afirmativa é verdadeira?",
+    choices: [
+      { text: "GNMP é rara em jovens e não se associa a infecções crônicas.", correct: false, explain: "Incorreto. GNMP acomete frequentemente indivíduos jovens e está frequentemente associada a infecções crônicas, gamopatias ou doenças sistêmicas." },
+      { text: "GNMP costuma evoluir para insuficiência renal crônica em muitos casos e a atividade pode não correlacionar com hipocomplementemia.", correct: true, explain: "Correto. GNMP tem tendência a progressão para IRC; atividade/evolução nem sempre é influenciada por hipocomplementemia." },
+      { text: "Tem excelente resposta a antibióticos isolados sem indicação de manejo de proteinúria.", correct: false, explain: "Incorreto. Embora se deva buscar causas secundárias infecciosas, o manejo inclui controle da proteinúria (IECA/ARA-II) e opções imunossupressoras controversas." },
+      { text: "É caracterizada por depósitos lineares de anticorpo na MBG.", correct: false, explain: "Incorreto. Depósitos lineares são típicos de doença anti-MBG (Goodpasture); GNMP tem padrão mesangiocapilar com dupla contorno da MBG." }
+    ]
+  },
+  {
+    q: "12) Questão — GN pós-infectiosa (GNPIA): Qual é o intervalo de latência típico entre a infecção estreptocócica e o início dos sintomas renais?",
+    choices: [
+      { text: "Imediato (mesmo dia da infecção).", correct: false, explain: "Incorreto. A GN pós-infectiosa tem período de latência — não costuma aparecer no mesmo dia." },
+      { text: "Entre 5 e 28 dias, média 10–21 dias.", correct: true, explain: "Correto. O intervalo latente relatado é geralmente entre 5 e 28 dias, com média em torno de 10–21 dias." },
+      { text: "Mais de 6 meses após a infecção.", correct: false, explain: "Incorreto. Latência tão longa (>6 meses) não é típica para GN pós-estreptocócica." },
+      { text: "Apenas após um ano da infecção respiratória.", correct: false, explain: "Incorreto. Novo evento renal tipicamente segue semanas, não anos, após infecção." }
+    ]
+  },
+  {
+    q: "13) Questão — Tratamento da GNRP não associada a infecção: Qual é a terapia de indução recomendada conforme o material?",
+    choices: [
+      { text: "Restrição hídrica e observação apenas.", correct: false, explain: "Incorreto. GNRP é emergência médica muitas vezes exigindo imunossupressão agressiva; observação isolada não é adequada." },
+      { text: "Pulsos de metilprednisolona seguidos de prednisona oral associados à ciclofosfamida (oral ou em pulsos).", correct: true, explain: "Correto. Terapia de indução habitualmente inclui pulsos de metilprednisolona (1 g/dia por 3–4 dias) seguidos por prednisona oral e ciclofosfamida." },
+      { text: "Antibióticos de amplo espectro por 6 semanas como única medida.", correct: false, explain: "Incorreto. Antibióticos são indicados se houver infecção; na GNRP imunomediada, o tratamento é imunossupressor." },
+      { text: "Somente IECA/ARA-II sem corticoterapia.", correct: false, explain: "Incorreto. Em GNRP grave, apenas manejo pressórico é insuficiente — exige imunossupressão." }
+    ]
+  },
+  {
+    q: "14) Questão — Epidemiologia clínica: Qual das seguintes afirmações sobre a distribuição etária da GNRP é mais correta?",
+    choices: [
+      { text: "A GNRP acomete mais frequentemente crianças menores de 10 anos.", correct: false, explain: "Incorreto. GNRP tem média de idade ao redor de 50–60 anos, com predomínio masculino (≈2:1)." },
+      { text: "Pacientes com GNRP têm em média 50–60 anos e predominância masculina.", correct: true, explain: "Correto. A GNRP costuma ocorrer em adultos com média entre 50–60 anos, com predominância masculina." },
+      { text: "A GNRP é exclusiva de gestantes.", correct: false, explain: "Incorreto. Não é exclusiva de gestantes; pode ocorrer em várias faixas etárias, sendo mais comum em adultos." },
+      { text: "Predomina em adolescentes do sexo feminino.", correct: false, explain: "Incorreto. Predomínio relatado é em homens adultos, não em adolescentes do sexo feminino." }
+    ]
+  },
+  {
+    q: "15) Questão — Exames de imagem e achados: Qual é a afirmação correta sobre ultrassonografia de rins em pacientes com síndrome nefrítica aguda?",
+    choices: [
+      { text: "Rins costumam estar marcadamente atrofiados na fase aguda.", correct: false, explain: "Incorreto. Na maioria das síndromes nefríticas agudas os rins aparecem de tamanho normal ao USG; atrofia é achado crônico." },
+      { text: "USG habitualmente mostra rins de tamanho normal e é útil para excluir obstrução urinária.", correct: true, explain: "Correto. USG renal geralmente mostra rins de tamanho normal em síndromes nefríticas agudas e é utilizado para avaliar tamanho e excluir obstrução." },
+      { text: "USG é diagnóstico definitivo de tipo de glomerulonefrite.", correct: false, explain: "Incorreto. USG não diferencia tipos histológicos de glomerulonefrite; a biópsia é necessária para diagnóstico definitivo." },
+      { text: "USG não tem qualquer papel na investigação renail e nunca deve ser solicitado.", correct: false, explain: "Incorreto. USG é útil e frequentemente solicitado para avaliar tamanho renal, obstrução e anomalias anatômicas." }
+    ]
+  },
+{
+    q: "16) Questão — Indicações de biópsia: Em um adulto com síndrome nefrítica de início subagudo e proteinúria de 1,8 g/24h, função renal estável (Cr 1,2 mg/dL), sem história de infecção recente ou LES, qual é a conduta mais apropriada quanto à biópsia renal?",
+    choices: [
+      { text: "Adiar biópsia e tratar empiricamente com IECA/ARA-II por 3 meses.", correct: false, explain: "Incorreto. Proteinúria >1 g/dia com quadro nefrítico justifica investigação histológica para determinar etiologia e guiar tratamento; adiar sem investigação pode atrasar terapêutica específica." },
+      { text: "Realizar biópsia renal para elucidar etiologia e orientar terapêutica, dado proteinúria significativa.", correct: true, explain: "Correto. Em adultos com proteinúria significativa e apresentação subaguda, biópsia é indicada para diagnóstico definitivo e decisão terapêutica (ex.: imunossupressão)." },
+      { text: "Iniciar ciclofosfamida empírica sem biópsia.", correct: false, explain: "Incorreto. Imunossupressão empírica sem biópsia não é recomendada; diferentes glomerulonefrites exigem abordagens específicas." },
+      { text: "Indicar hemodiálise profilática antes de biópsia.", correct: false, explain: "Incorreto. Hemodiálise não é indicada profilaticamente em função renal estável; biópsia pode ser realizada sem diálise." }
+    ]
+  },
+  {
+    q: "17) Questão — Marcadores sorológicos: Em qual situação a determinação de ANCA é mais útil na investigação de síndrome nefrítica?",
+    choices: [
+      { text: "Hematúria isolada com proteinúria mínima e história de faringite recente.", correct: false, explain: "Incorreto. História de faringite sugere GN pós-infecciosa ou IgA; ANCA é menos provável nesse contexto." },
+      { text: "Quadro de rápida progressão da função renal com sinais sistêmicos de vasculite (epistaxe, lesões pulmonares cavitárias).", correct: true, explain: "Correto. ANCA é útil quando se suspeita de vasculite sistêmica pauci-imune associada a GNRP, especialmente se houver sintomas pulmonares/ENT." },
+      { text: "Paciente com nefropatia por IgA confirmada por biópsia típica.", correct: false, explain: "Incorreto. Nefropatia por IgA tem diagnóstico por imunofluorescência (IgA mesangial); ANCA normalmente não é marcador de escolha." },
+      { text: "Hipocomplementemia isolada sem sinais sistêmicos.", correct: false, explain: "Incorreto. Hipocomplementemia sugere GN por imunocomplexos (ex.: pós-infecciosa, LES); ANCA é menos útil nesses casos." }
+    ]
+  },
+  {
+    q: "18) Questão — Proteinúria e prognóstico: Qual das afirmações sobre proteinúria como preditor de progressão para doença renal crônica é verdadeira?",
+    choices: [
+      { text: "A magnitude da proteinúria é um forte preditor independente de progressão; proteinúria persistentemente >1 g/dia associa-se a maior risco de progressão.", correct: true, explain: "Correto. Proteinúria persistente em níveis elevados é um importante preditor de progressão para IRC e guia intervenções terapêuticas." },
+      { text: "Proteinúria isolada não tem relação com prognóstico renal.", correct: false, explain: "Incorreto. Proteinúria é um marcador independente de pior prognóstico renal." },
+      { text: "Apenas a presença de hematúria determina risco de progressão; proteinúria não importa.", correct: false, explain: "Incorreto. Tanto hematúria quanto proteinúria importam, mas proteinúria é particularmente relevante prognosticamente." },
+      { text: "Proteinúria abaixo de 3,5 g/dia nunca é clinicamente relevante.", correct: false, explain: "Incorreto. Mesmo proteinúrias moderadas (1–3 g/disão clinicamente relevantes e associadas a risco aumentado." }
+    ]
+  },
+  {
+    q: "19) Questão — Tratamento antihipertensivo em glomerulonefrite: Além do bloqueio RAAS, qual outra classe farmacológica tem evidência para redução de proteinúria e proteção renal em pacientes com glomerulopatias?",
+    choices: [
+      { text: "Bloqueadores de canais de cálcio di-hidropiridínicos (ex.: amlodipino) como monoterapia têm maior efeito antiproteinúrico que IECA.", correct: false, explain: "Incorreto. Bloqueadores di-hidropiridínicos têm efeito modesto sobre proteinúria; não substituem IECA/ARA-II para redução de proteinúria." },
+      { text: "Antagonistas beta-adrenérgicos são a melhor opção para reduzir proteinúria.", correct: false, explain: "Incorreto. Betabloqueadores controlam pressão e risco cardiovascular, mas não são primariamente antiproteinúricos." },
+      { text: "Inibidores da SGLT2 têm demonstrado redução da progressão renal e redução adicional de proteinúria quando combinados com RAAS.", correct: true, explain: "Correto. Inibidores da SGLT2 mostram benefício renal e redução de proteinúria em várias patologias renais, sendo úteis como terapia adjuvante ao RAAS quando apropriado." },
+      { text: "Diuréticos tiazídicos são agentes antiproteinúricos de primeira linha.", correct: false, explain: "Incorreto. Diuréticos ajudam controle pressórico/edema, mas não são primariamente agentes antiproteinúricos." }
+    ]
+  },
+  {
+    q: "20) Questão — Infecção e GN: Em paciente adulto com história de infecção cutânea por Streptococcus há 2 semanas que apresenta edema, oligúria, hematúria e C3 baixo no sangue, qual é o diagnóstico mais provável?",
+    choices: [
+      { text: "Nefropatia por IgA aguda.", correct: false, explain: "Incorreto. Nefropatia por IgA tipicamente segue infecção respiratória e não costuma cursar com hipocomplementemia importante." },
+      { text: "Glomerulonefrite pós-estreptocócica (pós-infecciosa).", correct: true, explain: "Correto. História de infecção cutânea por Streptococcus seguida de edema, oligúria e C3 baixo é sugestiva de GN pós-infecciosa." },
+      { text: "Pielonefrite aguda.", correct: false, explain: "Incorreto. Pielonefrite causa febre e dor lombar com bacteriúria; não costuma causar hipocomplementemia significativa nem marcado sedimento glomerular com cilindros hemáticos." },
+      { text: "Nefrolitíase com obstrução ureteral.", correct: false, explain: "Incorreto. Cálculo ureteral causa dor lombar intensa e hematúria eumórfica, mas não hipocomplementemia nem sedimento glomerular típico." }
+    ]
+  },
+
+  /* Casos clínicos detalhados — 10 casos: 21–30 */
+  {
+    q: "21) Caso clínico — Homem 28 anos: Paciente masculino, 28 anos, refere início súbito há 7 dias de edema periorbitário e hematúria macroscópica (urina 'cor de coca-cola') que começou 10 dias após episódio de faringite febril. Traz exames: PA 150/95 mmHg, creatinina sérica 1,6 mg/dL (baseline desconhecida), proteinúria 1,2 g/24h, C3 reduzido, C4 normal. Sedimento urinário com hemácias dismórficas e cilindros hemáticos. Qual o diagnóstico mais provável e a conduta inicial apropriada?",
+    choices: [
+      { text: "Nefropatia por IgA; observar e indicar somente medidas de suporte (controle pressórico).", correct: false, explain: "Incorreto. Padrão temporal (10 dias após faringite) e hipocomplementemia favorecem GN pós-infecciosa mais que IgA; IgA tipicamente não cursa com C3 baixo e costuma ocorrer mais imediatamente após infecção." },
+      { text: "Glomerulonefrite pós-estreptocócica; manejo inicial com suporte (controle pressórico, restrição de sódio) e monitorização da função renal, considerar biópsia se piora.", correct: true, explain: "Correto. Quadro compatível com GN pós-infecciosa (latência compatível, C3 baixo, sedimento ativo). Manejo inicial é suporte, controle de PA e vigilância; biópsia se evolução atípica ou progressiva." },
+      { text: "GNRP por vasculite ANCA positiva; iniciar pulsos de metilprednisolona de imediato.", correct: false, explain: "Incorreto. Ausência de sinais sistêmicos de vasculite e hipocomplementemia com início pós-infecção tornam GNRP pauci-imune menos provável; terapia imunossupressora agressiva não é a primeira opção sem confirmação." },
+      { text: "Pielonefrite grave; iniciar antibiótico de amplo espectro e drenagem.", correct: false, explain: "Incorreto. Pielonefrite causa febre e dor lombar; quadro com hemácias dismórficas, cilindros e C3 baixo indica glomerulonefrite, não pielonefrite." }
+    ]
+  },
+  {
+    q: "22) Caso clínico — Mulher 45 anos: Mulher, 45 anos, hipertensa tratada, procura avaliação por fadiga progressiva, edema de membros inferiores e redução do débito urinário nas últimas 4 semanas. Exames: creatinina 3,8 mg/dL (era 0,9 há 6 meses), urina com hematúria e proteína 2,3 g/24h. Imunologia: ANCA c-positivo em título elevado, C3/C4 normais. Tomografia de tórax mostra nódulos cavitários. Qual a hipótese diagnóstica mais provável e o manejo inicial correto?",
+    choices: [
+      { text: "Nefropatia por IgA com acometimento pulmonar; iniciar IECA e aguardar.", correct: false, explain: "Incorreto. Nefropatia por IgA não costuma apresentar nódulos cavitários; achados pulmonares com ANCA positivo sugerem vasculite sistêmica (ex.: granulomatose com poliangiíte)." },
+      { text: "Vasculite ANCA-associada com glomerulonefrite rapidamente progressiva; iniciar pulsos de metilprednisolona e ciclofosfamida/imunomodulação após confirmação diagnóstica rápida (ou iniciar empiricamente se risco alto).", correct: true, explain: "Correto. Quadro de rápida perda da função renal, ANCA positivo e lesões pulmonares cavitárias são compatíveis com vasculite ANCA-associada; conduta inicial inclui imunossupressão agressiva (pulsos de corticóide + ciclofosfamida ou rituximabe) e suporte." },
+      { text: "GN pós-infecciosa; tratar com antibiótico e observar.", correct: false, explain: "Incorreto. Pérdida rápida da função renal associada a manifestações pulmonares e ANCA positivo aponta para vasculite, não GN pós-infecciosa." },
+      { text: "Pielonefrite com sépsis; procurar urologia.", correct: false, explain: "Incorreto. Ausência de febre e presença de ANCA e nódulos pulmonares não sugerem pielonefrite." }
+    ]
+  },
+  {
+    q: "23) Caso clínico — Homem 62 anos: Paciente com história de tabagismo, refere astenia e perda de peso. Laboratório: creatinina 2,4 mg/dL, proteinúria 4,2 g/24h, albumina sérica 2,6 g/dL, LDL elevado. Biópsia renal demonstra depósitos granulares subepiteliais difusos e espessamento da membrana basal glomerular com imunofluorescência granular de IgG e complemento. Qual o diagnóstico mais provável e a melhor opção terapêutica inicial?",
+    choices: [
+      { text: "Síndrome nefrótica por glomerulonefrite membranosa primária; avaliar presença de anti-PLA2R e tratar com inibidores RAAS, considerar imunossupressão (ex.: rituximabe) se proteinúria persistente.", correct: true, explain: "Correto. Achados histológicos são compatíveis com glomerulopatia membranosa; investigar anti-PLA2R/causa secundária e iniciar bloqueio RAAS; imunossupressão indicada em casos de proteinúria persistente/alto risco." },
+      { text: "Nefropatia por IgA; iniciar IECA.", correct: false, explain: "Incorreto. Padrão histológico (depósitos subepiteliais e membrana espessade proteinúria nefrótica orientam para membranosa, não IgA (que tem depósitos mesangiais de IgA)." },
+      { text: "GN rapidamente progressiva; iniciar pulso de metilprednisolona e ciclofosfamida.", correct: false, explain: "Incorreto. Histologia descrita é típica de glomerulopatia membranosa com síndrome nefrótica, não necessariamente GNRP com crescentes." },
+      { text: "Nefrite por drogas; suspender estatina e observar.", correct: false, explain: "Incorreto. Embora drogas possam causar lesões, padrão histológico e quadro nefrótico com deposição granular de IgG/compl. são típicos de membranosa primária/associada a anti-PLA2R ou causas secundárias (neoplasia, HBV, etc.)." }
+    ]
+  },
+  {
+    q: "24) Caso clínico — Mulher 33 anos: Paciente com LES em tratamento, apresenta edema facial, hipertensão, hematúria e creatinina que subiu de 0,8 para 2,0 mg/dL em 1 mês. Imunologia: anti-dsDNA elevado, C3 e C4 baixos. Biópsia renal mostra lesão proliferativa difusa com depósitos subendoteliais \"granulares\" em padrão 'bola de lã'. Qual é a classificação mais provável da nefrite lúpica e o enfoque terapêutico?",
+    choices: [
+      { text: "Nefrite lúpica classe I — manejo conservador.", correct: false, explain: "Incorreto. Classe I é mínimos depósitos sem atividade clínica significativa; quadro com função renal reduzida e lesão proliferativa difusa indica forma mais severa." },
+      { text: "Nefrite lúpica classe IV (proliferativa difus— indicar imunossupressão (pulsos de metilprednisolona seguido de ciclofosfamida ou micofenolato) e controle da pressão/proteinúria.", correct: true, explain: "Correto. Lesão proliferativa difusa e baixa do complemento, com atividade sistêmica, é compatível com classe IV e requer imunossupressão agressiva para preservar função renal." },
+      { text: "Nefrite lúpica classe V (membranos— apenas IECA.", correct: false, explain: "Incorreto. Classe V seria membranosa; descrição histológica e baixos complementos com atividade sistêmica apontam para classe IV, que requer tratamento imunossupressor." },
+      { text: "Tratamento apenas com antibióticos por possível infecção concomitante.", correct: false, explain: "Incorreto. Achados sugerem atividade lúpica renal; antibióticos não são tratamento para nefrite lúpica." }
+    ]
+  },
+  {
+    q: "25) Caso clínico — Homem 50 anos: Paciente diabético tipo 2 há 15 anos, relata edema crescente, pressão 160/100 mmHg, proteinúria 3,8 g/24h, creatinina 1,9 mg/dL. Sedimento com poucos eritrócitos, sem cilindros hemáticos. USG renal mostra rins pequenos e heterogêneos. Qual a hipótese diagnóstica mais provável e a conduta diagnóstica indicada?",
+    choices: [
+      { text: "Nefropatia diabética crônica com síndrome nefrótica — tratar com otimização glicêmica e bloqueio RAAS; biópsia renal só se apresentação atípica (sangue macroscópico, rápida piora).", correct: true, explain: "Correto. Em paciente diabético de longa data com proteinúria nefrótica e USG com rins pequenos, a nefropatia diabética é provável; biópsia reservada para apresentações atípicas." },
+      { text: "Glomerulonefrite pós-infecciosa — iniciar antibiótico.", correct: false, explain: "Incorreto. Ausência de sedimento ativo e contexto cronico de DM favorecem nefropatia diabética; GN pós-infecciosa geralmente cursa com sedimento ativo e história de infecção recente." },
+      { text: "GNRP — iniciar ciclos de metilprednisolona imediatamente.", correct: false, explain: "Incorreto. Quadro não é de rápida progressão e não há sedimento característico de GNRP; terapia imunossupressora não indicada sem evidência." },
+      { text: "Nefropatia por amiloidose — indicar quimioterapia de imediato.", correct: false, explain: "Incorreto. Amiloidose poderia causar proteinúria nefrótica, mas contexto de DM e USG sugerem nefropatia diabética; investigação adicional (imunofenótipo/biopsinecessária antes de terapia específica." }
+    ]
+  },
+  {
+    q: "26) Caso clínico — Mulher 19 anos: Jovem com história de hematúria recidivante que ocorre tipicamente dias após infecções respiratórias. Exame: proteinúria 0,6 g/24h, creatinina normal, sedimento com hemácias dismórficas. Biópsia renal (realizada anteriormente) mostrou depósito predominantemente mesangial de IgA. Discuta prognóstico e medidas terapêuticas iniciais adequadas.",
+    choices: [
+      { text: "Prognóstico sempre benigno; apenas tranquilizar e alta sem seguimento.", correct: false, explain: "Incorreto. Apesar de muitos terem curso benigno, alguns pacientes progridem lentamente; seguimento e medidas para reduzir proteinúria e pressão arterial são importantes." },
+      { text: "Diagnóstico compatível com nefropatia por IgA; manejo com observação ativa, controle pressórico (IECA/ARA-II se necessário), considerar imunossupressão se proteinúria aumentar ou função renal deteriorar.", correct: true, explain: "Correto. Nefropatia por IgA tem curso geralmente indolente; vigilância e terapia antiproteinúrica são primeiras medidas; imunossupressão reservada a apresentações com indicação." },
+      { text: "Iniciar imediata quimioterapia com ciclofosfamida.", correct: false, explain: "Incorreto. Imunossupressão agressiva não é indicada rotineiramente em nefropatia por IgA com proteinúria moderada e função renal preservada." },
+      { text: "Indicar hemodiálise preventiva devido ao risco de progressão.", correct: false, explain: "Incorreto. Hemodiálise é indicada para insuficiência renal avançada; não como profilaxia em nefropatia por IgA com função normal." }
+    ]
+  },
+  {
+    q: "27) Caso clínico — Homem 41 anos: Paciente apresenta hematúria macroscópica persistente, febrícula e perda de peso. Exames: creatinina 2,1 mg/dL, proteinúria 0,9 g/24h. Biópsia renal mostra proliferação endocapilar e imunofluorescência com depósitos IgG e C3 em padrão granular; sorologias para HBV e HCV positivas. Qual é a associação provável e abordagem terapêutica?",
+    choices: [
+      { text: "GN associada a hepatite C (crioglobulinemia/IM); tratar a causa viral (antivirais) e considerar terapia imunossupressora conforme indicação.", correct: true, explain: "Correto. GN por imunocomplexos pode ser secundária à hepatite C; tratamento etiológico com antivirais é central, com imunossupressão cuidadosamente avaliada." },
+      { text: "GN pós-estreptocócica; apenas suportar e antibiótico.", correct: false, explain: "Incorreto. Presença de sorologia positiva para HCV e padrão de depósitos imunocomplexos orienta para GN secundária a HCV; GN pós-estreptocócica normalmente segue infecção estreptocócica." },
+      { text: "Nefropatia por IgA; tratar com corticosteroides.", correct: false, explain: "Incorreto. Depósitos mesangiais de IgA seriam esperados na IgA; achados e sorologia para HCV apoiam GN por imunocomplexos relacionada à HCV." },
+      { text: "Doença policística renal; encaminhar para avaliação genética.", correct: false, explain: "Incorreto. Achados bioquímicos e histológicos não são compatíveis com doença policística renal." }
+    ]
+  },
+  {
+    q: "28) Caso clínico — Mulher 55 anos: Paciente com história de tosse hemoptóica intermitente e dispneia progressiva. Laboratório: creatinina 2,8 mg/dL, urina com hematúria acentuada e cilindros; biópsia pulmonar mostra hemorragia alveolar. Imunologia: anticorpos anti-MBG positivos. Qual é o diagnóstico e conduta imediata?",
+    choices: [
+      { text: "Síndrome de Goodpasture (anti-MBG) com envolvimento pulmão-rim; iniciar plasmaférese urgentemente associado a pulsos de corticosteroide e ciclofosfamida.", correct: true, explain: "Correto. Anti-MBG positivo com hemorragia alveolar e glomerulonefrite é diagnóstico típico; tratamento integrado com plasmaférese (remoção de autoanticorpos) + imunossupressão é indicado com urgência." },
+      { text: "Tuberculose pulmonar com glomerulonefrite secundária; iniciar tuberculostáticos.", correct: false, explain: "Incorreto. Hemorragia alveolar difusa com anti-MBG positivo caracteriza síndrome anti-MBG; TB não explica presença de anticorpos anti-MBG." },
+      { text: "Embolia pulmonar com insuficiência renal aguda; anticoagulação imediata.", correct: false, explain: "Incorreto. Embolia causa dispneia aguda e hipóxia, raramente hemorragia alveolar difusa; anticoagulação em hemorragia alveolar pode ser catastrófica." },
+      { text: "Pielonefrite com complicação pulmonar — iniciar antibiótico e diálise.", correct: false, explain: "Incorreto. Ausência de sinais localizados e positividade anti-MBG apontam para Goodpasture; antibiótico/diálise isolados não tratam a causa imunológica." }
+    ]
+  },
+  {
+    q: "29) Caso clínico — Homem 35 anos: Paciente com história de doença respiratória crônica, apresenta declínio gradual da função renal ao longo de meses, proteinúria 1,6 g/dia, e exames mostram baixa titer de C3 e C4 normais; biópsia renal com padrão 'mesangiocapilar' (dupla contorno da MBG). A pesquisa para crioglobulinas é negativa. Quais causas devem ser investigadas e qual abordagem terapêutica inicial é razoável?",
+    choices: [
+      { text: "Investigar infecções crônicas (HBV, HCV), gamopatias monoclonais e doenças autoimunes; manejo inicial inclui tratar causas secundárias e controlar proteinúria com RAAS.", correct: true, explain: "Correto. Padrão mesangiocapilar (GNMP) está associado a infecções crônicas, gamopatias e doenças autoimunes; abordagem inclui investigar causas secundárias e manejar a proteinúria/pressão antes de imunossupressão específica." },
+      { text: "Assumir diagnóstico idiopático e iniciar ciclos de quimioterapia imediatamente.", correct: false, explain: "Incorreto. Iniciar quimioterapia sem investigar causas secundárias (p.ex. HBV/HCV, gamopatinão é adequado." },
+      { text: "Diagnosticar como Nefrite lúpica e iniciar terapia com hidroxicloroquina apenas.", correct: false, explain: "Incorreto. Não há evidência suficiente para assumir LES; hidroxicloroquina isolada não trata GNMP associada a causas infecciosas/gamaglobulinêmicas." },
+      { text: "Indicar diálise imediata e interromper todas medicações.", correct: false, explain: "Incorreto. Diálise apenas se indicar por insuficiência renal avançada/urêmica; investigação e tratamento da causa subjacente são necessários." }
+    ]
+  },
+  {
+    q: "30) Caso clínico — Mulher 47 anos: Paciente refere início subagudo de oligúria, hipertensão refratária e creatinina que subiu de 1,0 para 4,5 mg/dL em 6 semanas. Urina com muitos cilindros hemáticos. Imunofluorescência renal: padrão pauci-imune (fracos/ausentes depósitos); ANCA negativo. Considerando achado de pauci-imune e ANCA negativo, qual a interpretação e conduta?",
+    choices: [
+      { text: "Pauci-imune ANCA-negativa pode ocorrer; ainda assim a GNRP é provável — considerar biópsia (se não feite iniciar imunossupressão agressiva (corticosteroide + ciclofosfamida ou rituximabe), avaliando outras causas de vasculite seronegativa.", correct: true, explain: "Correto. GNRP pauci-imune pode ser ANCA-negativa em parcela dos casos; devido ao rápido declínio renal e presença de crescentes, início de imunossupressão é geralmente indicado após confirmação/avaliação do risco." },
+      { text: "ANCA-negativo exclui vasculite; tratar apenas suporte e não imunossupressão.", correct: false, explain: "Incorreto. Ausência de ANCA não exclui vasculite pauci-imune; decisão clínica deve considerar histologia e quadro clínico." },
+      { text: "Tratar com antibiótico e aguardar recuperação espontânea.", correct: false, explain: "Incorreto. Quadro de GNRP exige avaliação e, muitas vezes, intervenção imunossupressora; antibiótico isolado não resolve o processo imune." },
+      { text: "Indicar transplante renal imediato sem tentativa de terapêutica imunossupressora.", correct: false, explain: "Incorreto. Transplante não é opção inicial; primeiro tratar e estabilizar a doença, considerando risco de recorrência e controle da doença ativa." }
+    ]
+  }
+];
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
