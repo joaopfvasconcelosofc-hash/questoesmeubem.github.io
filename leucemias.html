@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Leucemias</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Leucemias</h1>
+    <p class="lead">30 questões - Leucemias</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Fonte: Leucemias.pdf :contentReference[oaicite:0]{index=0}
+const questions = [
+  {
+    q: "1) Questão: O que caracteriza as leucemias no contexto das neoplasias hematológicas?",
+    choices: [
+      { text: "Proliferação maligna de células hematopoiéticas na medula óssea.", correct: true, explain: "Leucemias resultam da proliferação neoplásica de células progenitoras hematopoiéticas na medula óssea, levando à substituição do tecido normal." },
+      { text: "Aumento benigno de linfonodos periféricos sem acometimento medular.", correct: false, explain: "Linfadenomegalias isoladas são mais comuns em linfomas, não em leucemias." },
+      { text: "Acúmulo de eritrócitos maduros no sangue periférico.", correct: false, explain: "Leucemias envolvem células brancas (linfóides ou mieloides), não eritrócitos." },
+      { text: "Processo inflamatório agudo com hiperplasia reacional da medula óssea.", correct: false, explain: "Inflamações não configuram leucemia; é necessária uma proliferação clonal neoplásica." }
+    ]
+  },
+  {
+    q: "2) Questão: O que significa o termo 'neoplasia monoclonal' no contexto das leucemias?",
+    choices: [
+      { text: "As células malignas originam-se de um mesmo clone celular.", correct: true, explain: "Leucemias são neoplasias monoclonais, derivadas de uma única célula progenitora que adquire mutações transformadoras." },
+      { text: "Há proliferação de vários clones celulares diferentes.", correct: false, explain: "Isso descreveria um processo policlonal, não típico de leucemias." },
+      { text: "Refere-se à multiplicação de clones virais dentro dos leucócitos.", correct: false, explain: "Não há relação direta com multiplicação viral; o termo refere-se à origem celular comum." },
+      { text: "Caracteriza uma resposta imune policlonal normal.", correct: false, explain: "Resposta policlonal ocorre em imunidade normal; leucemias são monoclonais." }
+    ]
+  },
+  {
+    q: "3) Questão: Cite os principais tipos de genes envolvidos nas alterações genéticas das leucemias.",
+    choices: [
+      { text: "Proto-oncogenes e anti-oncogenes (genes supressores tumorais).", correct: true, explain: "As leucemias decorrem de mutações que ativam proto-oncogenes ou inativam genes supressores de tumor." },
+      { text: "Genes apenas mitocondriais e ribossômicos.", correct: false, explain: "As alterações ocorrem em genes nucleares, não mitocondriais." },
+      { text: "Genes exclusivamente ligados ao cromossomo X.", correct: false, explain: "Não há exclusividade de cromossomo X nas leucemias." },
+      { text: "Apenas genes que codificam imunoglobulinas.", correct: false, explain: "Esses genes são relevantes em linfomas B, mas não definem todas as leucemias." }
+    ]
+  },
+  {
+    q: "4) Questão: Qual o mecanismo patogênico básico responsável pela instalação do processo leucêmico?",
+    choices: [
+      { text: "Dominância clonal, insuficiência medular e infiltração tecidual por células neoplásicas.", correct: true, explain: "Esses mecanismos causam substituição da hematopoese normal, infiltração de órgãos e imunodeficiência." },
+      { text: "Ativação do sistema complemento e necrose de linfonodos.", correct: false, explain: "Complemento não é o principal mecanismo; leucemias envolvem proliferação clonal, não necrose." },
+      { text: "Hiperplasia compensatória de megacariócitos.", correct: false, explain: "Megacariocitose não explica o quadro leucêmico; ocorre anemia e trombocitopenia, não o oposto." },
+      { text: "Hipoplasia de medula óssea secundária à deficiência de ferro.", correct: false, explain: "Deficiência de ferro causa anemia, não leucemia." }
+    ]
+  },
+  {
+    q: "5) Questão: Quais fatores etiológicos estão associados ao desenvolvimento de leucemias segundo o material?",
+    choices: [
+      { text: "Radiação ionizante, vírus, drogas químicas e predisposição genética.", correct: true, explain: "Esses fatores ambientais e do hospedeiro estão claramente relacionados ao risco de leucemias." },
+      { text: "Exposição prolongada ao frio e à umidade.", correct: false, explain: "Esses fatores não têm relação comprovada com leucemias." },
+      { text: "Consumo excessivo de proteínas e lipídios.", correct: false, explain: "Não há evidência direta de relação com leucemias." },
+      { text: "Infecções bacterianas recorrentes.", correct: false, explain: "Infecções podem ocorrer como consequência, não como causa." }
+    ]
+  },
+  {
+    q: "6) Questão: Qual a principal diferença entre leucemias agudas e crônicas?",
+    choices: [
+      { text: "As agudas têm predominância de blastos e curso rápido; as crônicas têm células maduras e curso lento.", correct: true, explain: "As agudas evoluem rapidamente com ≥20% de blastos; as crônicas envolvem células diferenciadas e progressão lenta." },
+      { text: "As agudas apresentam apenas anemia e as crônicas não.", correct: false, explain: "Ambas podem cursar com anemia." },
+      { text: "As crônicas acometem exclusivamente crianças.", correct: false, explain: "Leucemias crônicas predominam em adultos e idosos." },
+      { text: "As agudas nunca infiltram tecidos.", correct: false, explain: "Leucemias agudas frequentemente infiltram órgãos e tecidos." }
+    ]
+  },
+  {
+    q: "7) Questão: Em leucemias agudas, qual é o critério diagnóstico relacionado à contagem de blastos?",
+    choices: [
+      { text: "Presença de ≥20% de blastos na medula óssea ou sangue periférico.", correct: true, explain: "Critério da OMS: ≥20% de blastos define leucemia aguda." },
+      { text: "Presença de ≥5% de blastos em linfonodo.", correct: false, explain: "A análise linfonodal não define leucemia, e 5% não é critério." },
+      { text: "Presença de 50% de neutrófilos maduros.", correct: false, explain: "Neutrófilos maduros não são considerados blastos." },
+      { text: "Qualquer número de blastos acima de 1%.", correct: false, explain: "Pequenas quantidades não caracterizam leucemia aguda." }
+    ]
+  },
+  {
+    q: "8) Questão: Qual o tipo celular predominante na leucemia linfoide aguda (LLA)?",
+    choices: [
+      { text: "Linfoblasto.", correct: true, explain: "LLA é caracterizada por proliferação de linfoblastos imaturos (tipo B em 80% dos casos)." },
+      { text: "Mieloblasto.", correct: false, explain: "Mieloblastos predominam na LMA, não na LLA." },
+      { text: "Eritroblasto.", correct: false, explain: "Eritroblastos pertencem à linhagem eritroide, não à linfoide." },
+      { text: "Megacariócito.", correct: false, explain: "Megacariócitos são células precursoras de plaquetas e não proliferam na LLA." }
+    ]
+  },
+  {
+    q: "9) Questão: Em qual faixa etária a LLA é mais comum e quais fatores indicam mau prognóstico?",
+    choices: [
+      { text: "Crianças de 2–10 anos têm melhor prognóstico; piora com sexo masculino, raça negra e leucocitose.", correct: true, explain: "O PDF destaca melhor evolução entre 2–10 anos e fatores de mau prognóstico como sexo masculino e leucocitose." },
+      { text: "Adultos jovens sempre têm prognóstico melhor que crianças.", correct: false, explain: "Adultos tendem a ter pior prognóstico que crianças na LLA." },
+      { text: "Idosos apresentam as maiores taxas de cura espontânea.", correct: false, explain: "Idosos têm piores desfechos; não há cura espontânea." },
+      { text: "Recém-nascidos apresentam sempre bom prognóstico.", correct: false, explain: "LLA neonatal é rara e geralmente agressiva." }
+    ]
+  },
+  {
+    q: "10) Questão: Quais são os principais sinais e sintomas relacionados à falência medular na LLA?",
+    choices: [
+      { text: "Anemia, infecções recorrentes e sangramentos.", correct: true, explain: "A supressão das linhagens normais causa anemia, neutropenia e trombocitopenia." },
+      { text: "Hipercalcemia e hipertensão.", correct: false, explain: "Esses achados não são típicos da LLA." },
+      { text: "Edema de membros e trombose venosa profunda.", correct: false, explain: "Não são sintomas diretos da falência medular." },
+      { text: "Diarreia e icterícia.", correct: false, explain: "Não são manifestações comuns de leucemias." }
+    ]
+  },
+  {
+    q: "11) Questão: Qual exame define o diagnóstico de leucemia aguda e qual é o limiar mínimo para confirmar?",
+    choices: [
+      { text: "Mielograma com ≥20% de blastos.", correct: true, explain: "O mielograma demonstra infiltração medular por blastos e é o exame confirmatório." },
+      { text: "Radiografia de tórax com linfonodomegalias.", correct: false, explain: "Radiografia não é usada para diagnóstico de leucemia." },
+      { text: "Hemograma isolado com anemia.", correct: false, explain: "Hemograma é indicativo, mas não confirmatório; mielograma é obrigatório." },
+      { text: "Biópsia hepática com infiltração focal.", correct: false, explain: "Infiltração hepática pode ocorrer, mas diagnóstico é medular." }
+    ]
+  },
+  {
+    q: "12) Questão: Qual é o marcador citoquímico positivo típico dos linfoblastos na LLA?",
+    choices: [
+      { text: "Positividade para TdT (terminal deoxinucleotidil transferase).", correct: true, explain: "Linfoblastos expressam TdT e PAS positivo; são negativos para mieloperoxidase." },
+      { text: "Positividade para mieloperoxidase.", correct: false, explain: "Mieloperoxidase marca mieloblastos (LMA), não linfoblastos." },
+      { text: "Negatividade para todas as provas enzimáticas.", correct: false, explain: "Linfoblastos têm TdT e PAS positivos." },
+      { text: "Positividade para fosfatase alcalina leucocitária.", correct: false, explain: "FAL é usada em LMC, não em LLA." }
+    ]
+  },
+  {
+    q: "13) Questão: Quais são os principais objetivos do tratamento da leucemia aguda segundo o PDF?",
+    choices: [
+      { text: "Eliminar o clone maligno e repopular a medula com células normais.", correct: true, explain: "O tratamento busca erradicar o clone e restaurar hematopoese normal, com quimioterapia, radioterapia e transplante." },
+      { text: "Aumentar os níveis de hemoglobina apenas com transfusão.", correct: false, explain: "Transfusão é suporte, não tratamento curativo." },
+      { text: "Estímulo de eritropoese com vitamina B12.", correct: false, explain: "A deficiência de B12 não é causa da leucemia." },
+      { text: "Antibioticoterapia prolongada até normalização do leucograma.", correct: false, explain: "Antibióticos tratam infecções, não a neoplasia." }
+    ]
+  },
+  {
+    q: "14) Questão: Como diferenciar laboratorialmente leucemias linfoides e mieloides agudas?",
+    choices: [
+      { text: "Por provas citoquímicas e imunofenotipagem.", correct: true, explain: "Linfoblastos: PAS e TdT positivos; Mieloblastos: peroxidase positiva; imunofenotipagem confirma linhagem." },
+      { text: "Apenas pelo número total de leucócitos.", correct: false, explain: "Leucocitose não define a linhagem; precisa de análise específica." },
+      { text: "Por presença de anemia microcítica.", correct: false, explain: "Não é parâmetro diferencial entre linhagens." },
+      { text: "Pela contagem plaquetária isolada.", correct: false, explain: "Plaquetas diminuem em ambas; não diferencia linhagens." }
+    ]
+  },
+  {
+    q: "15) Questão: Quais características definem a leucemia mieloide crônica (LMC)?",
+    choices: [
+      { text: "Presença do cromossomo Filadélfia (t(9;22) BCR-ABL1) e proliferação de granulócitos maduros e imaturos.", correct: true, explain: "A LMC é uma neoplasia mieloproliferativa com fusão BCR-ABL e predomínio granulocítico." },
+      { text: "Predomínio de linfócitos B maduros e trissomia 12.", correct: false, explain: "Esses achados são típicos de LLC, não de LMC." },
+      { text: "Ausência de mutações citogenéticas.", correct: false, explain: "A LMC é classicamente associada à t(9;22)." },
+      { text: "Infiltração exclusiva do sistema nervoso central.", correct: false, explain: "A LMC compromete medula e sangue, não é restrita ao SNC." }
+    ]
+  },
+  {
+    q: "16) Questão: Qual a diferença morfológica básica entre as leucemias agudas e as crônicas?",
+    choices: [
+      { text: "As agudas apresentam predominância de blastos imaturos; as crônicas têm células maduras ou diferenciadas.", correct: true, explain: "Essa é a diferença essencial: nas agudas há bloqueio de maturação e acúmulo de blastos; nas crônicas predominam células maduras com função parcial." },
+      { text: "As crônicas apresentam mais anemia e trombocitopenia que as agudas.", correct: false, explain: "Ambas podem apresentar anemia e plaquetopenia, mas não é o critério de distinção." },
+      { text: "As agudas nunca têm blastos na medula óssea.", correct: false, explain: "Nas agudas, os blastos são predominantes e definem o diagnóstico." },
+      { text: "As crônicas acometem somente o sangue periférico, sem alteração medular.", correct: false, explain: "As crônicas também envolvem a medula óssea, mas com células mais maduras." }
+    ]
+  },
+  {
+    q: "17) Questão: Na leucemia mieloide aguda (LMA), qual o tipo celular predominante e qual prova citoquímica o identifica?",
+    choices: [
+      { text: "Mieloblasto — prova da peroxidase positiva.", correct: true, explain: "Mieloblastos expressam peroxidase, sendo marcador citoquímico clássico de LMA." },
+      { text: "Linfoblasto — TdT positiva.", correct: false, explain: "Esse perfil é típico da LLA, não da LMA." },
+      { text: "Monócito maduro — PAS positiva.", correct: false, explain: "PAS pode ser positiva em linfoblastos, não em monócitos." },
+      { text: "Eritroblasto — peroxidase negativa.", correct: false, explain: "Eritroblastos não definem LMA; o marcador chave é a peroxidase." }
+    ]
+  },
+  {
+    q: "18) Questão: Quais são os principais achados hematológicos típicos da LMA segundo o material?",
+    choices: [
+      { text: "Anemia normocítica, neutropenia, trombocitopenia e presença de blastos mieloides.", correct: true, explain: "Esses achados refletem a substituição da hematopoese normal por blastos mieloides." },
+      { text: "Policitemia e leucocitose por neutrófilos maduros.", correct: false, explain: "Policitemia e neutrofilia ocorrem em outras doenças mieloproliferativas, não na LMA." },
+      { text: "Linfocitose absoluta com eosinofilia.", correct: false, explain: "A LMA é mieloide, não linfoide; eosinofilia não é achado constante." },
+      { text: "Aumento de plaquetas e ausência de blastos.", correct: false, explain: "LMA cursa com plaquetopenia e blastos presentes." }
+    ]
+  },
+  {
+    q: "19) Questão: Qual a principal alteração citogenética associada à leucemia mieloide crônica (LMC)?",
+    choices: [
+      { text: "Cromossomo Filadélfia — translocação t(9;22) gerando o gene de fusão BCR-ABL1.", correct: true, explain: "A LMC é classicamente associada ao cromossomo Filadélfia, que produz uma tirosina quinase constitutiva." },
+      { text: "Trissomia 12.", correct: false, explain: "Trissomia 12 é característica da LLC, não da LMC." },
+      { text: "Deleção 13q14.", correct: false, explain: "Deleção 13q14 é comum na LLC, não na LMC." },
+      { text: "Mutação JAK2 V617F.", correct: false, explain: "JAK2 ocorre em policitemia vera e trombocitemia essencial, não na LMC." }
+    ]
+  },
+  {
+    q: "20) Questão: Qual o tratamento de escolha para a leucemia mieloide crônica em fase crônica recém-diagnosticada?",
+    choices: [
+      { text: "Inibidores de tirosina quinase (ex.: imatinibe).", correct: true, explain: "Imatinibe e outros inibidores de tirosina quinase bloqueiam o produto BCR-ABL1 e são primeira linha no tratamento da LMC." },
+      { text: "Corticosteroides em monoterapia prolongada.", correct: false, explain: "Corticosteroides não controlam a LMC; terapia específica é necessária." },
+      { text: "Antibióticos e transfusão sanguínea.", correct: false, explain: "Esses são suportes, não tratamento específico." },
+      { text: "Transplante de medula óssea imediato em todos os casos.", correct: false, explain: "Transplante é reservado para refratários ou fases avançadas." }
+    ]
+  },
+
+  // 10 casos clínicos (21–30)
+  {
+    q: "21) Questão (Caso clínico): Criança de 6 anos apresenta febre, fadiga e palidez há 2 semanas. Ao exame, há petéquias em membros e linfonodos cervicais discretamente aumentados. Hemograma: Hb 8,5 g/dL, leucócitos 45.000/mm³ com 70% de blastos. Mielograma: 85% de linfoblastos, TdT positiva. Qual o diagnóstico mais provável e conduta terapêutica inicial?",
+    choices: [
+      { text: "Leucemia linfoide aguda (LLA) — iniciar quimioterapia combinada conforme protocolo pediátrico.", correct: true, explain: "LLA é a leucemia infantil mais comum; diagnóstico confirmado por linfoblastos e TdT positiva. Tratamento é quimioterapia combinada." },
+      { text: "Leucemia mieloide aguda (LMA) — transfusão e observação.", correct: false, explain: "LMA é menos comum em crianças e requer quimioterapia específica, não observação." },
+      { text: "Anemia aplásica — suporte transfusional isolado.", correct: false, explain: "A presença de blastos exclui anemia aplásica." },
+      { text: "Linfoma não Hodgkin com leucocitose secundária.", correct: false, explain: "O envolvimento primário medular e 85% de blastos definem leucemia, não linfoma." }
+    ]
+  },
+  {
+    q: "22) Questão (Caso clínico): Homem, 55 anos, apresenta febre e gengivorragia. Hemograma: Hb 7,2 g/dL, leucócitos 80.000/mm³, plaquetas 25.000/mm³, presença de bastonetes de Auer. Qual o diagnóstico provável e marcador citoquímico típico?",
+    choices: [
+      { text: "Leucemia mieloide aguda (LMA) — peroxidase positiva.", correct: true, explain: "Presença de bastonetes de Auer e peroxidase positiva definem LMA." },
+      { text: "LLA — PAS positiva.", correct: false, explain: "LLA apresenta TdT e PAS positivos, mas não bastonetes de Auer." },
+      { text: "Leucemia linfoide crônica — trissomia 12.", correct: false, explain: "LLC apresenta linfócitos maduros e evolução lenta, não quadro agudo." },
+      { text: "LMC em fase crônica — basofilia discreta.", correct: false, explain: "LMC não apresenta bastonetes de Auer nem curso tão agudo." }
+    ]
+  },
+  {
+    q: "23) Questão (Caso clínico): Homem, 68 anos, consulta por fraqueza e esplenomegalia. Hemograma: leucócitos 150.000/mm³, linfócitos maduros 85%, anemia leve. Mielograma: infiltração difusa por linfócitos. Imunofenotipagem: CD5+, CD23+. Qual o diagnóstico e conduta inicial mais adequada?",
+    choices: [
+      { text: "Leucemia linfoide crônica (LLC) — observação e acompanhamento clínico se assintomático.", correct: true, explain: "LLC cursa com linfocitose e esplenomegalia; tratamento depende do estágio clínico." },
+      { text: "Leucemia mieloide crônica — iniciar imatinibe.", correct: false, explain: "LMC é mieloide e CD5+/CD23+ não se aplicam." },
+      { text: "Leucemia aguda — tratamento de urgência com QT intensiva.", correct: false, explain: "Evolução lenta e linfócitos maduros afastam leucemia aguda." },
+      { text: "Linfoma de Burkitt — QT intensiva imediata.", correct: false, explain: "Burkitt é agressivo, mas não tem esse perfil laboratorial." }
+    ]
+  },
+  {
+    q: "24) Questão (Caso clínico): Homem, 40 anos, exposto ao benzeno, refere fadiga e plenitude abdominal. Ao exame: esplenomegalia acentuada. Hemograma: leucócitos 120.000/mm³, predominância granulocítica, basofilia e eosinofilia. Mielograma: hiperplasia granulocítica (90%). Qual o diagnóstico provável?",
+    choices: [
+      { text: "Leucemia mieloide crônica (LMC).", correct: true, explain: "LMC é associada a exposição ao benzeno, esplenomegalia e leucocitose granulocítica." },
+      { text: "LMA.", correct: false, explain: "LMA teria predominância de blastos e curso agudo." },
+      { text: "LLC.", correct: false, explain: "LLC apresenta linfocitose, não granulocitose." },
+      { text: "Anemia aplásica.", correct: false, explain: "A anemia aplásica cursa com pancitopenia, não leucocitose." }
+    ]
+  },
+  {
+    q: "25) Questão (Caso clínico): Paciente de 60 anos apresenta febre, perda de peso e plaquetopenia. Biópsia medular mostra 25% de blastos e citogenética revela t(15;17). Qual subtipo de LMA é esse e qual tratamento específico deve ser instituído?",
+    choices: [
+      { text: "LMA promielocítica (M3) — iniciar ATRA (ácido all-trans-retinoico).", correct: true, explain: "A t(15;17) define a LMA M3, que responde a ATRA, induzindo diferenciação celular." },
+      { text: "LLA — tratamento com imatinibe.", correct: false, explain: "Imatinibe é para LMC, não LLA." },
+      { text: "LMC em crise blástica — antibiótico e suporte.", correct: false, explain: "Crise blástica requer QT, não antibióticos isolados." },
+      { text: "LLC — prednisona isolada.", correct: false, explain: "LLC é crônica e não apresenta t(15;17)." }
+    ]
+  },
+  {
+    q: "26) Questão (Caso clínico): Mulher, 33 anos, com história de fadiga e infecções recorrentes. Hemograma: leucócitos 2.000/mm³, Hb 9 g/dL, plaquetas 40.000/mm³. Mielograma: 80% de blastos linfóides. Diagnóstico e principal complicação inicial esperada?",
+    choices: [
+      { text: "LLA — risco elevado de infecções graves por neutropenia.", correct: true, explain: "LLA causa falência medular e imunossupressão; infecções são principal risco." },
+      { text: "LMA — risco de policitemia.", correct: false, explain: "LMA causa pancitopenia, não policitemia." },
+      { text: "LLC — geralmente assintomática.", correct: false, explain: "LLC é indolente; essa é uma leucemia aguda." },
+      { text: "Anemia ferropriva — resposta a ferro oral.", correct: false, explain: "Ferro não corrige pancitopenia neoplásica." }
+    ]
+  },
+  {
+    q: "27) Questão (Caso clínico): Homem, 70 anos, apresenta fraqueza e sudorese noturna. Hemograma: leucócitos 220.000/mm³, plaquetas 80.000/mm³, basofilia. Medula com <10% de blastos. Gene BCR-ABL1 positivo. Qual fase da LMC o paciente apresenta?",
+    choices: [
+      { text: "Fase crônica.", correct: true, explain: "Menos de 10% de blastos caracteriza fase crônica; sintomas leves e esplenomegalia são típicos." },
+      { text: "Fase acelerada.", correct: false, explain: "Acelerada ocorre com 10–19% de blastos e refratariedade terapêutica." },
+      { text: "Crise blástica.", correct: false, explain: "Crise blástica ocorre com ≥30% de blastos." },
+      { text: "Remissão completa.", correct: false, explain: "A presença de sintomas e alterações hematológicas indica doença ativa." }
+    ]
+  },
+  {
+    q: "28) Questão (Caso clínico): Homem, 65 anos, com LMC em tratamento com imatinibe, apresenta piora clínica e aumento de blastos (35%). Qual o significado e conduta terapêutica recomendada?",
+    choices: [
+      { text: "Evolução para crise blástica — considerar quimioterapia intensiva e transplante de medula óssea.", correct: true, explain: "Crise blástica indica transformação aguda e refratariedade; TMO é indicado." },
+      { text: "Remissão completa — manter imatinibe isolado.", correct: false, explain: "Blastose define progressão, não remissão." },
+      { text: "Infecção bacteriana — iniciar antibiótico e suspender terapia.", correct: false, explain: "Não é infecção; é transformação leucêmica." },
+      { text: "Linfoma secundário — tratar com rituximabe isolado.", correct: false, explain: "É progressão da LMC, não linfoma." }
+    ]
+  },
+  {
+    q: "29) Questão (Caso clínico): Mulher, 48 anos, apresenta esplenomegalia e adenopatia cervical indolor. Hemograma: linfócitos 90.000/mm³, Hb 10 g/dL. Diagnóstico de LLC confirmado. Quais são critérios para início de tratamento ativo?",
+    choices: [
+      { text: "Presença de anemia sintomática, trombocitopenia e sintomas constitucionais.", correct: true, explain: "Na LLC, inicia-se tratamento quando há comprometimento hematológico ou sintomas B." },
+      { text: "Qualquer linfocitose isolada.", correct: false, explain: "Linfocitose isolada pode ser apenas observada." },
+      { text: "Apenas aumento de linfonodos cervicais pequenos.", correct: false, explain: "Sem sintomas ou alterações hematológicas, não há indicação imediata." },
+      { text: "Idade superior a 60 anos.", correct: false, explain: "A idade não é critério isolado para tratamento." }
+    ]
+  },
+  {
+    q: "30) Questão (Caso clínico): Homem, 45 anos, diagnosticado com LMA, inicia quimioterapia e evolui com pancitopenia profunda. Qual é a principal medida de suporte terapêutico nesta fase?",
+    choices: [
+      { text: "Transfusão de concentrado de hemácias e plaquetas, além de antibioticoterapia profilática.", correct: true, explain: "O suporte visa corrigir anemia e trombocitopenia, e prevenir infecções durante aplasia medular." },
+      { text: "Suspender quimioterapia e administrar ferro oral.", correct: false, explain: "Ferro não é útil e suspensão de QT deve ser avaliada com cautela." },
+      { text: "Anticoagulação profilática para trombose.", correct: false, explain: "Plaquetopenia contraindica anticoagulação." },
+      { text: "Alta hospitalar precoce para evitar infecções nosocomiais.", correct: false, explain: "Deve permanecer internado sob isolamento e suporte intensivo." }
+    ]
+  }
+];
+
+
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

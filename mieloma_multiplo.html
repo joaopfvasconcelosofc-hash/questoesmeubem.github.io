@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Mieloma Múltiplo</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Mieloma Múltiplo</h1>
+    <p class="lead">30 questões - Mieloma Múltiplo</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+const questions = [
+  {
+    q: "1) Questão: O que é o mieloma múltiplo dentro das neoplasias hematológicas?",
+    choices: [
+      { text: "Neoplasia maligna de plasmócitos produtores de imunoglobulina monoclonal.", correct: true, explain: "O mieloma múltiplo é caracterizado pela proliferação clonal de plasmócitos que secretam uma imunoglobulina monoclonal (proteína M)." },
+      { text: "Neoplasia mieloide com proliferação de mieloblastos.", correct: false, explain: "Essa descrição corresponde às leucemias mieloides, não ao mieloma múltiplo." },
+      { text: "Hiperplasia reacional de linfócitos T citotóxicos.", correct: false, explain: "Linfócitos T não são a linhagem neoplásica do mieloma múltiplo." },
+      { text: "Doença proliferativa de células-tronco eritroides.", correct: false, explain: "Essa seria uma eritroblastose; o mieloma é de origem plasmocitária." }
+    ]
+  },
+  {
+    q: "2) Questão: Qual é a célula de origem do mieloma múltiplo?",
+    choices: [
+      { text: "Plasmócito derivado de linfócito B.", correct: true, explain: "O mieloma surge a partir de plasmócitos neoplásicos, que são células B diferenciadas produtoras de imunoglobulinas." },
+      { text: "Linfócito T ativado.", correct: false, explain: "O mieloma múltiplo não deriva da linhagem T." },
+      { text: "Célula-tronco mieloide primitiva.", correct: false, explain: "A linhagem mieloide não origina plasmócitos." },
+      { text: "Macrófago maduro do sistema reticuloendotelial.", correct: false, explain: "Macrófagos não participam da proliferação neoplásica no mieloma." }
+    ]
+  },
+  {
+    q: "3) Questão: O que caracteriza a proteína monoclonal (proteína M) no mieloma múltiplo?",
+    choices: [
+      { text: "Imunoglobulina idêntica produzida por um clone de plasmócitos neoplásicos.", correct: true, explain: "A proteína M é um marcador característico da monoclonalidade do mieloma múltiplo." },
+      { text: "Mistura policlonal de imunoglobulinas.", correct: false, explain: "Policlonalidade ocorre em processos infecciosos e não em neoplasias." },
+      { text: "Fragmentos de complemento circulantes.", correct: false, explain: "Complemento não é produzido pelos plasmócitos." },
+      { text: "Proteína de fase aguda hepática.", correct: false, explain: "As proteínas de fase aguda são produzidas no fígado, não pelos plasmócitos." }
+    ]
+  },
+  {
+    q: "4) Questão: Qual é o papel da interleucina 6 (IL-6) na fisiopatologia do mieloma múltiplo?",
+    choices: [
+      { text: "Estimula o crescimento e a sobrevivência dos plasmócitos neoplásicos.", correct: true, explain: "A IL-6 é uma citocina fundamental para proliferação e resistência à apoptose dos plasmócitos do mieloma." },
+      { text: "Inibe a proliferação plasmocitária.", correct: false, explain: "O efeito da IL-6 é estimulador, não inibitório." },
+      { text: "Ativa neutrófilos e eosinófilos no microambiente medular.", correct: false, explain: "Esse não é o papel da IL-6 no mieloma." },
+      { text: "Promove diferenciação de linfócitos T CD8+ em plasmócitos.", correct: false, explain: "Plasmócitos derivam de células B, não de T." }
+    ]
+  },
+  {
+    q: "5) Questão: Quais são as principais manifestações clínicas clássicas do mieloma múltiplo?",
+    choices: [
+      { text: "Lesões ósseas líticas, anemia, insuficiência renal e hipercalcemia.", correct: true, explain: "Essas quatro manifestações são resumidas pelo mnemônico CRAB (Calcium, Renal, Anemia, Bone)." },
+      { text: "Leucocitose, esplenomegalia e febre.", correct: false, explain: "Esses achados são típicos de leucemias crônicas, não de mieloma múltiplo." },
+      { text: "Trombocitose e policitemia.", correct: false, explain: "Essas alterações são de doenças mieloproliferativas, não do mieloma." },
+      { text: "Hepatomegalia e hipoglicemia.", correct: false, explain: "Não são achados característicos do mieloma múltiplo." }
+    ]
+  },
+  {
+    q: "6) Questão: O que causa as lesões ósseas típicas do mieloma múltiplo?",
+    choices: [
+      { text: "Ativação osteoclástica mediada por citocinas produzidas pelos plasmócitos.", correct: true, explain: "Citocinas como IL-1 e TNF estimulam osteoclastos e inibem osteoblastos, levando a reabsorção óssea." },
+      { text: "Deposição de imunoglobulina nas trabéculas ósseas.", correct: false, explain: "A destruição óssea não ocorre por deposição direta de proteína." },
+      { text: "Infiltração de células T citotóxicas no osso.", correct: false, explain: "O dano ósseo é mediado por osteoclastos, não por linfócitos T." },
+      { text: "Deficiência de vitamina D.", correct: false, explain: "Hipovitaminose D causa osteomalácia, não as lesões líticas do mieloma." }
+    ]
+  },
+  {
+    q: "7) Questão: O que é a proteína de Bence Jones e qual sua importância clínica?",
+    choices: [
+      { text: "Cadeias leves de imunoglobulinas excretadas na urina.", correct: true, explain: "A proteína de Bence Jones é marcador clássico de mieloma múltiplo e pode causar lesão renal." },
+      { text: "Proteína de fase aguda hepática detectada no plasma.", correct: false, explain: "Ela é um produto de plasmócitos, não do fígado." },
+      { text: "Fragmento do colágeno ósseo em reabsorção.", correct: false, explain: "Não se trata de produto do metabolismo ósseo." },
+      { text: "Peptídeo secretado por macrófagos ativados.", correct: false, explain: "As proteínas de Bence Jones são cadeias leves de imunoglobulina, não citocinas." }
+    ]
+  },
+  {
+    q: "8) Questão: Qual é o exame laboratorial utilizado para detectar a proteína monoclonal no soro?",
+    choices: [
+      { text: "Eletroforese de proteínas séricas.", correct: true, explain: "A eletroforese mostra um pico monoclonal característico na região das gamaglobulinas." },
+      { text: "Hemograma completo.", correct: false, explain: "O hemograma pode indicar anemia, mas não detecta proteína monoclonal." },
+      { text: "Teste de Coombs direto.", correct: false, explain: "Esse teste identifica anticorpos aderidos a hemácias, não proteínas monoclonais." },
+      { text: "Dosagem de cálcio sérico.", correct: false, explain: "A hipercalcemia é uma consequência, não diagnóstico direto do pico monoclonal." }
+    ]
+  },
+  {
+    q: "9) Questão: Qual achado radiológico é característico do mieloma múltiplo?",
+    choices: [
+      { text: "Lesões ósseas líticas múltiplas, sem reação periosteal.", correct: true, explain: "O mieloma causa áreas de rarefação óssea bem delimitadas, principalmente em crânio, costelas e vértebras." },
+      { text: "Lesões osteoblásticas difusas.", correct: false, explain: "Lesões osteoblásticas são típicas de metástases prostáticas." },
+      { text: "Aumento da densidade cortical óssea.", correct: false, explain: "Isso ocorre em osteopetrose, não em mieloma." },
+      { text: "Fraturas patológicas com periostite intensa.", correct: false, explain: "Não há reação periosteal acentuada no mieloma múltiplo." }
+    ]
+  },
+  {
+    q: "10) Questão: Quais são os principais critérios diagnósticos laboratoriais para mieloma múltiplo sintomático?",
+    choices: [
+      { text: "Presença de plasmócitos clonais ≥10% na medula, proteína monoclonal sérica/urinária e manifestações CRAB.", correct: true, explain: "Esses critérios definem o mieloma ativo conforme a International Myeloma Working Group (IMWG)." },
+      { text: "Apenas anemia leve e hipercalcemia isolada.", correct: false, explain: "Esses achados isolados não confirmam o diagnóstico." },
+      { text: "Leucocitose e esplenomegalia.", correct: false, explain: "Esses sinais são de leucemias, não de mieloma múltiplo." },
+      { text: "Plasmocitose <1% e pico policlonal na eletroforese.", correct: false, explain: "Esses achados não caracterizam mieloma múltiplo." }
+    ]
+  },
+  {
+    q: "11) Questão: Qual é a principal causa da insuficiência renal no mieloma múltiplo?",
+    choices: [
+      { text: "Deposição de proteínas de Bence Jones nos túbulos renais.", correct: true, explain: "As cadeias leves causam lesão tubular e obstrução, levando à nefropatia do mieloma." },
+      { text: "Hipertensão arterial crônica.", correct: false, explain: "Pode coexistir, mas não é a causa principal da nefropatia mielomatosa." },
+      { text: "Desidratação prolongada.", correct: false, explain: "Pode agravar, mas não causa a lesão tubular específica." },
+      { text: "Infecção urinária recorrente.", correct: false, explain: "Infecção não explica a nefropatia específica do mieloma." }
+    ]
+  },
+  {
+    q: "12) Questão: Qual é o significado do termo 'plasmocitoma solitário'?",
+    choices: [
+      { text: "Proliferação localizada de plasmócitos sem evidência sistêmica de mieloma múltiplo.", correct: true, explain: "O plasmocitoma é uma forma localizada que pode evoluir para mieloma múltiplo ao longo do tempo." },
+      { text: "Deposição de proteína M em órgãos vitais.", correct: false, explain: "Isso descreve amiloidose, não plasmocitoma." },
+      { text: "Forma leucêmica de mieloma múltiplo.", correct: false, explain: "O mieloma leucêmico é disseminado, não localizado." },
+      { text: "Reação imunológica benigna da medula óssea.", correct: false, explain: "O plasmocitoma é neoplásico, não reacional." }
+    ]
+  },
+  {
+    q: "13) Questão: Qual é o papel do transplante autólogo de medula óssea no tratamento do mieloma múltiplo?",
+    choices: [
+      { text: "Prolongar a sobrevida e induzir remissão após quimioterapia de indução.", correct: true, explain: "O transplante autólogo é padrão em pacientes elegíveis, após resposta inicial à quimioterapia." },
+      { text: "Curar definitivamente a doença.", correct: false, explain: "O transplante melhora a sobrevida, mas não é curativo." },
+      { text: "Substituir o tratamento com corticoides.", correct: false, explain: "Os corticoides fazem parte do esquema, não são substituídos." },
+      { text: "Usar células de doador aparentado obrigatoriamente.", correct: false, explain: "No autólogo, o doador é o próprio paciente." }
+    ]
+  },
+  {
+    q: "14) Questão: Quais são os principais medicamentos usados no tratamento do mieloma múltiplo atualmente?",
+    choices: [
+      { text: "Bortezomibe, lenalidomida e dexametasona.", correct: true, explain: "Esses agentes formam esquemas modernos como VRD, com alta taxa de resposta." },
+      { text: "Imatinibe e interferon-alfa.", correct: false, explain: "Esses são usados na LMC, não no mieloma." },
+      { text: "Ciclofosfamida e azatioprina isoladas.", correct: false, explain: "Essas drogas podem ser adjuvantes, mas não compõem o tratamento de escolha." },
+      { text: "Metotrexato e mercaptopurina.", correct: false, explain: "Esses agentes são utilizados em LLA, não em mieloma múltiplo." }
+    ]
+  },
+  {
+    q: "15) Questão: Qual é o principal marcador utilizado no monitoramento da resposta terapêutica no mieloma múltiplo?",
+    choices: [
+      { text: "Dosagem seriada da proteína monoclonal (proteína M).", correct: true, explain: "A redução dos níveis séricos da proteína M reflete resposta ao tratamento." },
+      { text: "Número de leucócitos no sangue periférico.", correct: false, explain: "A contagem leucocitária não indica resposta no mieloma." },
+      { text: "Níveis de ferritina sérica.", correct: false, explain: "Ferritina não é marcador do mieloma múltiplo." },
+      { text: "Provas de função hepática.", correct: false, explain: "As funções hepáticas não monitoram diretamente a doença." }
+    ]
+  },
+  {
+    q: "16) Questão: Qual é a distribuição etária típica e a incidência aproximada do mieloma múltiplo?",
+    choices: [
+      { text: "Idade mediana ≈70 anos; incidência ~4 por 100.000/ano.", correct: true, explain: "O mieloma é mais frequente em idosos, com mediana de diagnóstico por volta de 70 anos e incidência em torno de 4/100.000." },
+      { text: "Predomina em crianças com pico aos 5 anos; incidência alta.", correct: false, explain: "Mieloma raro em jovens e crianças; portanto essa afirmação é incorreta." },
+      { text: "Idade mediana ≈40 anos; incidência ~50 por 100.000/ano.", correct: false, explain: "A idade mediana e a incidência estão superestimadas; o MM é doença de idosos." },
+      { text: "Distribuição uniforme por idades e incidência desconhecida.", correct: false, explain: "Há dados epidemiológicos claros mostrando predominância em idosos; não é uniforme nem desconhecida." }
+    ]
+  },
+  {
+    q: "17) Questão: Quais marcadores de superfície/imunofenotípicos são típicos dos plasmócitos malignos no mieloma?",
+    choices: [
+      { text: "CD38+, CD138+, CD56+; perda de CD19/CD20.", correct: true, explain: "Plasmócitos neoplásicos tipicamente expressam CD38 e CD138, frequentemente CD56, e costumam perder marcadores de célula B como CD19/CD20." },
+      { text: "CD3+, CD4+, CD8+ predominantes.", correct: false, explain: "Esses marcadores são de linhagem T, não de plasmócitos." },
+      { text: "CD34+ e CD117+ isolados, sem CD138.", correct: false, explain: "CD34 é marcador de progenitores; plasmócitos malignos expressam CD138 e CD38." },
+      { text: "Somente CD20+, com ausência de CD38.", correct: false, explain: "CD20 é raro em plasmócitos malignos; perda de CD20 é comum no mieloma." }
+    ]
+  },
+  {
+    q: "18) Questão: Quais translocações envolvendo IGH são frequentemente citadas como associadas a pior prognóstico no mieloma?",
+    choices: [
+      { text: "t(4;14) e t(14;16).", correct: true, explain: "Translocações envolvendo IGH com 4;14 e 14;16 estão associadas a pior prognóstico no MM." },
+      { text: "t(9;22) e t(8;14).", correct: false, explain: "t(9;22) é característica da LMC e t(8;14) do Burkitt; não são translocações típicas de MM." },
+      { text: "Deleção 13q exclusivamente, sem translocações.", correct: false, explain: "Deleção 13q pode ocorrer e ter significado prognóstico, mas as translocações t(4;14) e t(14;16) são clássicas para pior prognóstico." },
+      { text: "Inserção de JAK2 V617F.", correct: false, explain: "JAK2 está ligada a neoplasias mieloproliferativas, não ao mieloma." }
+    ]
+  },
+  {
+    q: "19) Questão: Qual mnemônico resume as principais complicações orgânicas do mieloma e o que cada letra representa?",
+    choices: [
+      { text: "CRAB — Calcium (hipercalcemia), Renal (insuficiência), Anemia, Bone (lesões ósseas).", correct: true, explain: "CRAB é o mnemônico amplamente usado para as principais manifestações que justificam tratamento no MM sintomático." },
+      { text: "SALT — Skin, Arrhythmia, Lymphadenopathy, Thrombocytosis.", correct: false, explain: "SALT não corresponde às manifestações clássicas do mieloma; linfadenopatia e trombocitose não são centrais." },
+      { text: "BONE — Braden, Osteopenia, Neutropenia, Edema.", correct: false, explain: "BONE aqui é inventado e não reflete o mnemônico clínico usado." },
+      { text: "RAIN — Renal, Anorexia, Infection, Neuropathy.", correct: false, explain: "Embora algumas sejam complicações possíveis, o mnemônico padrão é CRAB." }
+    ]
+  },
+  {
+    q: "20) Questão: Em pacientes assintomáticos com gamopatia monoclonal detectada, qual é a conduta recomendada conforme o material?",
+    choices: [
+      { text: "Observação clínica — tratar apenas se surgir critério de mieloma sintomático.", correct: true, explain: "No mieloma assintomático (ou MGUS/smoldering), a terapia é indicada apenas quando surgem sinais de dano orgânico (CRAB) ou critérios de progressão." },
+      { text: "Quimioterapia imediata em todos os casos.", correct: false, explain: "Tratamento imediato não é indicado para todos; pode causar dano sem benefício em pacientes assintomáticos." },
+      { text: "Transplante autólogo imediato para prevenção.", correct: false, explain: "TMO autólogo é reservado para pacientes elegíveis após resposta à indução, não profilático em assintomáticos." },
+      { text: "Radioterapia extensa de rotina em medula óssea.", correct: false, explain: "Radioterapia é dirigida a lesões locais sintomáticas, não indicada de rotina para todos os assintomáticos." }
+    ]
+  },
+
+  // 10 casos clínicos (21–30)
+  {
+    q: "21) Questão (Caso clínico): Homem, 72 anos, refere dor dorsal progressiva e perda de peso. Radiografia mostra múltiplas lesões líticas em vértebras e costelas; eletroforese sérica evidencia pico monoclonal na região gama; Hb 9,8 g/dL; creatinina 2,1 mg/dL. Pergunta: qual o diagnóstico provável e quais exames adicionais são importantes para confirmar e estadiar?",
+    choices: [
+      { text: "Mieloma múltiplo sintomático — confirmar com mielograma/biopsia medular (≥10% plasmócitos), eletroforese/imunofixação e avaliação de imagem (TC ou PET/ressonância) para extensão óssea.", correct: true, explain: "Achados CRAB (anemia, lesões ósseas, insuficiência renal) e pico monoclonal apontam para MM; mielograma/biopsia e exames de imagem e imunoeletr. confirmam e estadiam." },
+      { text: "Metástase óssea de carcinoma de próstata — iniciar terapia hormonal.", correct: false, explain: "Metástases prostáticas tipicamente produzem lesões osteoblásticas, não líticas generalizadas com pico monoclonal." },
+      { text: "Artrite reumatoide avançada — tratar com metotrexato.", correct: false, explain: "AR não cursa com pico monoclonal e lesões líticas difusas típicas do MM." },
+      { text: "Osteoporose senil isolada — iniciar bisfosfonato e alta hospitalar.", correct: false, explain: "Osteoporose não produz pico monoclonal nem insuficiência renal e anemia compatíveis com MM." }
+    ]
+  },
+  {
+    q: "22) Questão (Caso clínico): Mulher, 65 anos, com histórico de fadiga, náuseas e poliúria. Laboratório: cálcio sérico corrigido 13,2 mg/dL, creatinina 3,0 mg/dL; eletroforese mostra pico monoclonal IgG; urina positiva para cadeias leves (proteína de Bence Jones). Pergunta: quais medidas iniciais de urgência e suporte são apropriadas?",
+    choices: [
+      { text: "Hidratação vigorosa, correção da hipercalcemia, início rápido de terapia sistêmica antineoplásica e avaliação para suporte renal (diálise se necessário); considerar bisfosfonatos.", correct: true, explain: "Hipercalcemia e insuficiência renal são emergências; hidratação, bisfosfonatos, correção eletrolítica e início de tratamento antitumoral são essenciais; diálise pode ser necessária em lesão renal grave." },
+      { text: "Somente analgésicos e alta hospitalar com retorno ambulatorial em 1 mês.", correct: false, explain: "Essa conduta negligencia hipercalcemia e insuficiência renal aguda, que exigem manejo urgente." },
+      { text: "Transfusão de plaquetas e suspensão de todos os medicamentos.", correct: false, explain: "Transfusões não corrigem hipercalcemia ou causa primária; abordagem é sistêmica e de suporte renal." },
+      { text: "Iniciar antivirais empíricos e observar evolução.", correct: false, explain: "Não há indicação de manejo antiviral; a conduta deve focar na crise metabólica e no controle do mieloma." }
+    ]
+  },
+  {
+    q: "23) Questão (Caso clínico): Paciente, 58 anos, diagnosticado com mieloma com alto débito de cadeias leves e insuficiência renal por precipitação (nefropatia por cadeias leves). Pergunta: qual é o mecanismo da lesão renal e que intervenção específica evita progressão da insuficiência quando possível?",
+    choices: [
+      { text: "Deposição de cadeias leves nos túbulos com obstrução e inflamação → reduzir carga de cadeia leve com tratamento antitumoral rápido e suporte renal (hidratação, correção eletrólitos); considerar hemodiálise se indicado.", correct: true, explain: "As cadeias leves (proteína de Bence Jones) causam lesão tubular; controle rápido do clone e suporte renal (incluindo diálise) são medidas-chave." },
+      { text: "Formação de imunocomplexos glomerulares que respondem apenas a anticoagulação.", correct: false, explain: "A lesão por cadeias leves é tubular e não resolvida por anticoagulação." },
+      { text: "Hipertensão arterial mal controlada como causa exclusiva → intensificar anti-hipertensivos.", correct: false, explain: "HTA pode agravar função renal, mas a causa primária na nefropatia do mieloma são as cadeias leves." },
+      { text: "Deposição mesangial de lipoproteínas → iniciar estatina.", correct: false, explain: "Não é o mecanismo típico na nefropatia por cadeias leves." }
+    ]
+  },
+  {
+    q: "24) Questão (Caso clínico): Mulher, 59 anos, com dor óssea intensa e múltiplas fraturas patológicas. Biópsia de lesão óssea: infiltrado por plasmócitos. Pergunta: qual tratamento específico local e sistêmico contribui para reduzir risco de fraturas e controlar dor óssea no mieloma?",
+    choices: [
+      { text: "Uso de bisfosfonatos (ex.: ácido zoledrônico) para reduzir resorção óssea, associação com analgesia, radioterapia local para lesões sintomáticas e tratamento sistêmico do mieloma.", correct: true, explain: "Bisfosfonatos diminuem atividade osteoclástica e reduzem fraturas; radioterapia e terapia antitumoral controlam tumoralmente as lesões sintomáticas." },
+      { text: "Somente reposição de vitamina D e calma absoluta.", correct: false, explain: "Vitamina D pode ajudar, mas não substitui bisfosfonatos e tratamento tumoral em fraturas patológicas." },
+      { text: "Anticoagulação profilática apenas.", correct: false, explain: "Anticoagulação não trata fragilidade óssea ou dor tumoral." },
+      { text: "Imunossupressão crônica com azatioprina.", correct: false, explain: "Azatioprina não é tratamento do mieloma e não reduz reabsorção óssea." }
+    ]
+  },
+  {
+    q: "25) Questão (Caso clínico): Homem, 63 anos, com pico monoclonal IgA e plasmocitose medular 30%, mas sem CRAB; pergunta: como classificar esse quadro e qual estratégia inicial é indicada?",
+    choices: [
+      { text: "Mieloma assintomático (smoldering) — observação ativa com monitorização serial até surgirem critérios de tratamento.", correct: true, explain: "Na ausência de dano end-orgão (CRAB), pacientes com plasmocitose e pico monoclonal podem ser observados; tratamento só se progressão/sintomas." },
+      { text: "Mieloma sintomático — iniciar quimioterapia imediatamente.", correct: false, explain: "Sem CRAB não se justifica tratamento imediato convencional." },
+      { text: "MGUS — indicar transplante autólogo imediato.", correct: false, explain: "MGUS tem menor plasmocitose e risco; transplante não é indicado aqui e MGUS não é tratado assim." },
+      { text: "Infecção crônica por HBV — tratar com antivirais.", correct: false, explain: "Pico monoclonal e plasmocitose não correspondem a infecção viral isolada." }
+    ]
+  },
+  {
+    q: "26) Questão (Caso clínico): Paciente, 50 anos, elegível (<65 anos, bom performance status) com resposta parcial após esquema de indução para mieloma. Pergunta: qual estratégia consolidativa é recomendada para pacientes elegíveis e por quê?",
+    choices: [
+      { text: "Transplante autólogo de células-tronco após quimioterapia de indução para prolongar sobrevida e aprofundar resposta.", correct: true, explain: "Em pacientes elegíveis, o TMO autólogo após indução é estratégia padrão para melhorar resposta e sobrevida." },
+      { text: "Transplante alógeno imediato sem tentativa de indução.", correct: false, explain: "Transplante alógeno tem maior morbidade e é reservado a casos selecionados; autólogo é padrão consolidativo." },
+      { text: "Nenhuma intervenção — apenas radioterapia paliativa.", correct: false, explain: "Radioterapia é local; não substitui estratégia sistêmica consolidativa em pacientes elegíveis." },
+      { text: "Terapia hormonal por via oral.", correct: false, explain: "Sem relação com tratamento do mieloma." }
+    ]
+  },
+  {
+    q: "27) Questão (Caso clínico): Mulher, 68 anos, com mieloma, desenvolve infecções respiratórias recorrentes durante o curso da doença. Pergunta: por que os pacientes com mieloma têm maior risco de infecções e que medidas preventivas são recomendadas?",
+    choices: [
+      { text: "Hiperimunoglobulinemia monoclonal com disfunção de anticorpos normais → vacinação (influenza, pneumococo), profilaxia quando indicada e antibióticos conforme risco; atenção a imunossupressão por terapia.", correct: true, explain: "A produção monoclonal reduz a diversidade de anticorpos funcionais; vacinas e profilaxia (e manejo rápido de infecções) reduzem morbidade." },
+      { text: "Excesso de imunoglobulinas protetor total → nenhuma medida preventiva necessária.", correct: false, explain: "Apesar de excesso de Ig monoclonal, há defeito funcional imunológico; medidas preventivas são necessárias." },
+      { text: "Infecções são raras e geralmente virais sem prevenção.", correct: false, explain: "Infecções bacterianas são comuns e podem ser fatais; prevenção é importante." },
+      { text: "Risco de infecção se deve apenas à idade avançada; terapia não muda conduta.", correct: false, explain: "Idade contribui, mas a imunodeficiência específica do mieloma e o tratamento aumentam o risco e exigem medidas específicas." }
+    ]
+  },
+  {
+    q: "28) Questão (Caso clínico): Paciente, 61 anos, com mieloma e níveis muito elevados de proteína M, apresenta sinais de hiperviscosidade (visão borrada, cefaleia, epistaxe). Pergunta: qual é a emergência e qual intervenção imediata pode ser indicada?",
+    choices: [
+      { text: "Síndrome de hiperviscosidade — considerar plasmaférese de emergência para reduzir níveis de paraproteína, além de iniciar tratamento antineoplásico.", correct: true, explain: "Hiperviscosidade por paraproteínas pode causar sintomas neurológicos e sangramentos; plasmaférese reduz rapidamente a carga proteica enquanto terapia sistêmica é iniciada." },
+      { text: "Hipercoagulabilidade com indicação de alto risco para anticoagulação imediata.", correct: false, explain: "O quadro de hiperviscosidade não é tratado por anticoagulação e essa medida pode aumentar risco de sangramento." },
+      { text: "Crise hipertensiva — tratar apenas com anti-hipertensivos orais.", correct: false, explain: "Hiperviscosidade é a causa provável dos sintomas; tratar pressão isoladamente não resolve a etiologia." },
+      { text: "Infecção ocular aguda — iniciar colírios antibióticos locais.", correct: false, explain: "Visão borrada por hiperviscosidade não é infecção ocular e requer redução da paraproteína." }
+    ]
+  },
+  {
+    q: "29) Questão (Caso clínico): Homem, 57 anos, com mieloma e radiofrequência múltipla das costelas, apresenta alterações laboratoriais: VHS elevada, rouleaux ao esfregaço e creatinina limítrofe. Pergunta: quais desses achados combinados sustentam o diagnóstico e por que o rouleaux aparece?",
+    choices: [
+      { text: "Pico monoclonal + rouleaux + alterações renais/hipercalcemia sustentam MM; rouleaux decorre do aumento das proteínas plasmáticas que facilitam a agregação das hemácias.", correct: true, explain: "A combinação de achados laboratoriais e imagem e o fenômeno rouleaux (pilhas de moedas) está relacionado ao aumento da fração de proteínas globulínicas." },
+      { text: "Rouleaux indica hemólise intravascular primária e descarta mieloma.", correct: false, explain: "Rouleaux não é sinal de hemólise intravascular; é típico em gamopatias monoclonais." },
+      { text: "VHS elevada é específica apenas de artrite e não tem relação com MM.", correct: false, explain: "VHS é inespecífico, mas frequentemente elevado no MM devido à hipergamaglobulinemia." },
+      { text: "Alterações renais com rouleaux indicam infecção crônica por parasitas.", correct: false, explain: "Essa relação não é típica; os achados são mais sugestivos de MM." }
+    ]
+  },
+  {
+    q: "30) Questão (Caso clínico): Paciente, 60 anos, com mieloma e translocação t(4;14) detectada por citogenética. Pergunta: qual é a implicação prognóstica dessa alteração e como isso influencia a escolha terapêutica?",
+    choices: [
+      { text: "t(4;14) associada a pior prognóstico — pode justificar terapias mais intensivas ou inclusão em protocolos para doença de alto risco e acompanhamento rigoroso.", correct: true, explain: "Translocações como t(4;14) têm impacto prognóstico adverso e orientam para estratégias terapêuticas mais agressivas e monitorização estreita." },
+      { text: "t(4;14) indica cura espontânea sem necessidade de tratamento.", correct: false, explain: "Essa alteração confere pior prognóstico, não indicação de cura espontânea." },
+      { text: "Translocação não tem impacto clínico e pode ser ignorada.", correct: false, explain: "Alterações citogenéticas têm valor prognóstico e terapêutico relevante no MM." },
+      { text: "t(4;14) indica que o paciente responderá apenas a antibióticos.", correct: false, explain: "Não existe relação entre essa translocação e resposta a antibióticos." }
+    ]
+  }
+];
+
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

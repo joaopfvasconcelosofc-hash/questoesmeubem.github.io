@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Linfomas</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Linfomas</h1>
+    <p class="lead">30 questões - Linfomas</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão: Defina, de forma concisa, o que são linfomas.",
+    choices: [
+      {
+        text: "Neoplasias do sistema linforreticular que envolvem proliferações clonais de linfócitos ou histiócitos, geralmente em gânglios linfáticos.",
+        correct: true,
+        explain: "Linfomas são processos neoplásicos do sistema linforreticular, envolvendo linfócitos (B, T) ou histiócitos, frequentemente apresentando-se como aumento ganglionar (linfonodal)."
+      },
+      {
+        text: "Tumores primários do tecido epitelial que metastatizam para linfonodos.",
+        correct: false,
+        explain: "Incorreto — linfomas originam-se nas células linfoides, não no epitélio; tumores epiteliais são carcinomas."
+      },
+      {
+        text: "Infecções crônicas dos linfonodos causadas por vírus como EBV.",
+        correct: false,
+        explain: "Incorreto — infecções (ex.: EBV) são fatores de risco associadas a alguns linfomas, mas linfoma é uma neoplasia, não uma infecção."
+      },
+      {
+        text: "Formas de leucemias agudas com predominância de blastos circulantes.",
+        correct: false,
+        explain: "Incorreto — embora existam áreas de sobreposição (alguns linfomas podem 'leucemizar'), linfoma e leucemia têm características e locais de origem distintos."
+      }
+  ]},
+  {
+    q: "2) Questão: Qual zona do linfonodo é a principal localização dos linfócitos B foliculares?",
+    choices: [
+      {
+        text: "Zona cortical (folicular).",
+        correct: true,
+        explain: "A zona cortical ou folicular é onde predominam os linfócitos B; importante para entender linhagens celulares envolvidas nos linfomas B."
+      },
+      {
+        text: "Zona paracortical.",
+        correct: false,
+        explain: "A zona paracortical contém principalmente linfócitos T, não B foliculares."
+      },
+      {
+        text: "Zona medular.",
+        correct: false,
+        explain: "A zona medular tem plasmócitos e linfócitos B maduros, mas os folículos B estão na cortical."
+      },
+      {
+        text: "Seio subcapsular.",
+        correct: false,
+        explain: "O seio subcapsular não é a principal área de folículos B; a resposta correta é a zona cortical (folicular)."
+      }
+  ]},
+  {
+    q: "3) Questão: Cite três fatores de risco para desenvolvimento de linfomas mencionados no material.",
+    choices: [
+      {
+        text: "Infecções virais (EBV, HIV, HTLV), doenças autoimunes e exposição a radiação/ agentes tóxicos.",
+        correct: true,
+        explain: "O material lista infecções virais (EBV, HIV, HTLV-I/II), doenças autoimunes, exposição à radiação ionizante e agentes tóxicos como fatores de risco."
+      },
+      {
+        text: "Tabagismo, alcoolismo e sedentarismo.",
+        correct: false,
+        explain: "Não listados como fatores principais no texto; embora estilo de vida influencie saúde, o PDF enfatiza infecções virais, autoimunidade e exposições tóxicas."
+      },
+      {
+        text: "Hipertensão, diabetes e hipercolesterolemia.",
+        correct: false,
+        explain: "Incorreto — essas comorbidades não foram descritas como fatores de risco para linfomas no material."
+      },
+      {
+        text: "Vacinação rotineira e uso de anti-hipertensivos.",
+        correct: false,
+        explain: "Incorreto — vacinações e anti-hipertensivos não constam como fatores de risco no PDF."
+      }
+  ]},
+  {
+    q: "4) Questão: Qual é a característica histológica típica que define o linfoma de Hodgkin?",
+    choices: [
+      {
+        text: "Presença de células de Reed–Sternberg (grandes, binucleadas) em meio a infiltrado inflamatório.",
+        correct: true,
+        explain: "A célula de Reed–Sternberg (grande, às vezes binucleada, nucléolos proeminentes) é característica e essencial para o diagnóstico de doença de Hodgkin."
+      },
+      {
+        text: "Arquitetura folicular preservada com centro germinativo hiperplásico.",
+        correct: false,
+        explain: "Isso é mais típico de processos foliculares/reativos; linfoma de Hodgkin tem pleomorfismo celular e células de Reed–Sternberg."
+      },
+      {
+        text: "Infiltrado difuso de pequenas células monomórficas sem células gigantes.",
+        correct: false,
+        explain: "Incorreto — linfoma de Hodgkin tem um infiltrado misto com poucas RS, não um infiltrado monomórfico de pequenas células."
+      },
+      {
+        text: "Predominância de blastos mieloides na medula.",
+        correct: false,
+        explain: "Incorreto — isso remete a leucemias mieloides, não ao linfoma de Hodgkin."
+      }
+  ]},
+  {
+    q: "5) Questão: Sobre linfomas não-Hodgkin (LNH), afirma-se que a maioria origina-se de qual linhagem celular?",
+    choices: [
+      {
+        text: "Células B (≈80%).",
+        correct: true,
+        explain: "O material indica que cerca de 80% dos LNH são de origem em células B; o restante envolve células T ou NK."
+      },
+      {
+        text: "Células T (≈80%).",
+        correct: false,
+        explain: "Incorreto — a maioria dos LNH são de células B, não T."
+      },
+      {
+        text: "Células mieloides.",
+        correct: false,
+        explain: "Incorreto — linfomas derivam de linhagens linfoides (B/T/NK), não mieloides."
+      },
+      {
+        text: "Células endoteliais.",
+        correct: false,
+        explain: "Incorreto — células endoteliais não são fonte comum de linfomas."
+      }
+  ]},
+  {
+    q: "6) Questão: Qual linfoma está fortemente associado à infecção crônica por Helicobacter pylori quando acomete o estômago?",
+    choices: [
+      {
+        text: "Linfoma MALT (zona marginal extranodal).",
+        correct: true,
+        explain: "Linfoma MALT gástrico está fortemente associado à infecção por H. pylori; erradicação pode levar a regressão em estágios iniciais."
+      },
+      {
+        text: "Linfoma de Burkitt.",
+        correct: false,
+        explain: "Linfoma de Burkitt associa-se mais a EBV e apresentações abdominais/massas rápidas, não especificamente a H. pylori."
+      },
+      {
+        text: "Linfoma difuso de grandes células B (DLBCL).",
+        correct: false,
+        explain: "DLBCL pode surgir por transformação, mas a associação direta com H. pylori é típica do MALT gástrico."
+      },
+      {
+        text: "Micose fungoide.",
+        correct: false,
+        explain: "Micose fungoide é linfoma cutâneo T e não tem relação com H. pylori gástrico."
+      }
+  ]},
+  {
+    q: "7) Questão: Qual alteração genética clássica está associada ao linfoma folicular?",
+    choices: [
+      {
+        text: "Translocação t(14;18) envolvendo IGH e BCL2, com superexpressão de BCL2.",
+        correct: true,
+        explain: "A t(14;18)(q32;q21) promove superexpressão de BCL2, inibindo apoptose e sendo característica do linfoma folicular."
+      },
+      {
+        text: "Deleção 17p com perda de TP53.",
+        correct: false,
+        explain: "Embora perda de TP53 seja relevante em várias neoplasias, a alteração clássica do linfoma folicular é t(14;18) com BCL2."
+      },
+      {
+        text: "Translocação (8;14) envolvendo MYC.",
+        correct: false,
+        explain: "Translocação (8;14) com MYC é típica do linfoma de Burkitt, não do folicular."
+      },
+      {
+        text: "Mutação JAK2 V617F.",
+        correct: false,
+        explain: "JAK2 V617F está associada a neoplasias mieloproliferativas, não ao linfoma folicular."
+      }
+  ]},
+  {
+    q: "8) Questão: Como se graduam os linfomas foliculares segundo o número de centroblastos por HPF (campo de alta potência)?",
+    choices: [
+      {
+        text: "Grau 1: 0–5; Grau 2: 6–15; Grau 3: >15 centroblastos/HPF.",
+        correct: true,
+        explain: "A graduação histológica do LF é baseada no número de centroblastos por HPF: 0–5 (Grau1), 6–15 (Grau2) e >15 (Grau3)."
+      },
+      {
+        text: "Grau 1: >15; Grau 2: 6–15; Grau 3: 0–5 centroblastos/HPF.",
+        correct: false,
+        explain: "Incorreto — a ordem dos números foi invertida; o correto é 0–5 para grau 1, etc."
+      },
+      {
+        text: "Grau único sem subdivisão por centroblastos.",
+        correct: false,
+        explain: "Incorreto — o PDF descreve gradação baseada no número de centroblastos."
+      },
+      {
+        text: "Graduação baseada apenas em imunofenótipo, não no número de centroblastos.",
+        correct: false,
+        explain: "Incorreto — a graduação histológica do LF utiliza centroblastos por HPF, não só imunofenótipo."
+      }
+  ]},
+  {
+    q: "9) Questão: Quais características clínicas são mais típicas de linfoma difuso de grandes células B (DLBCL)?",
+    choices: [
+      {
+        text: "Linfonodomegalias de crescimento rápido, sintomas B em ~30% e acometimento extranodal em ~40%.",
+        correct: true,
+        explain: "DLBCL apresenta linfonodomegalias de crescimento rápido, frequência de sintomas B (~30%) e acometimento extranodal (~40%), frequentemente trato GI."
+      },
+      {
+        text: "Curso crônico indolente com raras recaídas e sem sintomas B.",
+        correct: false,
+        explain: "Incorreto — essa descrição se aproxima mais do linfoma folicular (indolente), não do DLBCL agressivo."
+      },
+      {
+        text: "Localização exclusiva em pele e ausência de linfonodos.",
+        correct: false,
+        explain: "Incorreto — embora existam linfomas cutâneos, DLBCL tipicamente envolve linfonodos e frequentemente sítios extranodais variados."
+      },
+      {
+        text: "Presença obrigatória de translocação t(14;18).",
+        correct: false,
+        explain: "A t(14;18) é clássica do linfoma folicular; DLBCL é heterogêneo geneticamente e pode envolver BCL2, BCL6, MYC, mas não obrigatoriamente t(14;18)."
+      }
+  ]},
+  {
+    q: "10) Questão: Assinale a afirmação correta sobre o linfoma de Burkitt.",
+    choices: [
+      {
+        text: "É um linfoma altamente agressivo com duplicação tumoral muito rápida e associações com EBV (variantes dependentes).",
+        correct: true,
+        explain: "Linfoma de Burkitt tem crescimento muito rápido; variantes endêmica e imunodeficiência associam-se fortemente a EBV; variante esporádica tem menor associação."
+      },
+      {
+        text: "É um linfoma indolente que raramente afeta crianças.",
+        correct: false,
+        explain: "Incorreto — Burkitt é altamente agressivo e comum em crianças/adolescentes, especialmente na forma endêmica."
+      },
+      {
+        text: "Sempre apresenta acometimento cutâneo primário.",
+        correct: false,
+        explain: "Incorreto — Burkitt frequentemente acomete abdome, mandíbula (endêmica) e outras localizações, não a pele como padrão."
+      },
+      {
+        text: "Não tem associação com infecções virais.",
+        correct: false,
+        explain: "Incorreto — EBV é historicamente associado ao Burkitt, especialmente na variante endêmica."
+      }
+  ]},
+  {
+    q: "11) Questão: Quais são os sinais constitucionais conhecidos como 'sintomas B' mencionados no material?",
+    choices: [
+      {
+        text: "Febre, sudorese noturna e perda ponderal (perda de peso).",
+        correct: true,
+        explain: "Os sintomas B clássicos são febre, sudorese noturna e perda de peso, e sua presença é importante no prognóstico e estadiamento."
+      },
+      {
+        text: "Prurido, náuseas e tontura.",
+        correct: false,
+        explain: "Prurido pode ocorrer em linfoma de Hodgkin, mas náuseas e tontura não compõem o conjunto 'sintomas B'."
+      },
+      {
+        text: "Dor local intensa, eritema e calor.",
+        correct: false,
+        explain: "Esses são sinais inflamatórios locais; os 'sintomas B' são sistêmicos (febre, sudorese noturna, perda de peso)."
+      },
+      {
+        text: "Hemorragias, equimoses e púrpura.",
+        correct: false,
+        explain: "Sinais hemorrágicos não fazem parte dos 'sintomas B'; podem ocorrer em disfunção da medula, mas não são os sintomas B clássicos."
+      }
+  ]},
+  {
+    q: "12) Questão: Para biópsia diagnóstica de linfoma, qual a recomendação prática citada no material sobre escolha do linfonodo?",
+    choices: [
+      {
+        text: "Excisar o maior linfonodo palpável sempre que possível; evitar biopsiar linfonodos inguinais se houver outras cadeias periféricas acometidas.",
+        correct: true,
+        explain: "O texto recomenda escolher o maior gânglio palpável e tentar excisão completa; evitar biopsiar inguinais quando outras cadeias estão acessíveis."
+      },
+      {
+        text: "Preferir punção aspirativa por agulha fina (PAAF) a excisão em todos os casos.",
+        correct: false,
+        explain: "PAAF não é ideal para diagnóstico definitivo de linfoma; excisão do linfonodo é preferível para avaliação histológica completa."
+      },
+      {
+        text: "Biopsiar múltiplos linfonodos pequenos em vez de excisão do maior disponível.",
+        correct: false,
+        explain: "A recomendação é excisão do maior linfonodo palpável quando possível, pois fornece material adequado para histologia e imuno-histoquímica."
+      },
+      {
+        text: "Sempre realizar biópsia inguinal por ser de fácil acesso e representativa.",
+        correct: false,
+        explain: "O material aconselha evitar inguinal se há outras cadeias periféricas acometidas; inguinal pode ser contaminado ou não representativo."
+      }
+  ]},
+  {
+    q: "13) Questão: Qual exame laboratorial bioquímico costuma estar aumentado em 30–40% dos casos de linfoma de Hodgkin, segundo o PDF?",
+    choices: [
+      {
+        text: "Desidrogenase láctica (DHL).",
+        correct: true,
+        explain: "O aumento da DHL é observado em 30–40% dos casos de doença de Hodgkin, indicando atividade tumoral/lesão celular."
+      },
+      {
+        text: "Função hepática (TGO/TGP) com hiperbilirrubinemia intensa.",
+        correct: false,
+        explain: "Transaminases alteradas não são destacadas como achado característico; o PDF menciona DHL especificamente."
+      },
+      {
+        text: "Glicemia de jejum consistentemente elevada.",
+        correct: false,
+        explain: "Glicemia não é descrita como marcador típico para linfoma de Hodgkin no material."
+      },
+      {
+        text: "Marcador tumoral PSA.",
+        correct: false,
+        explain: "PSA é específico para próstata e não relevante para linfomas."
+      }
+  ]},
+  {
+    q: "14) Questão: Em relação ao tratamento geral dos linfomas, qual combinação terapêutica é frequentemente utilizada?",
+    choices: [
+      {
+        text: "Quimioterapia combinada, às vezes associada à radioterapia; imunoterapia com anticorpos (ex.: anti-CD20) conforme o tipo.",
+        correct: true,
+        explain: "O PDF descreve tratamento com quimioterapia de combinação, radioterapia quando o tumor é localizado e imunoterapia (anticorpos monoclonais anti-CD20) em linfomas B adequados."
+      },
+      {
+        text: "Apenas antibioticoterapia por longos períodos.",
+        correct: false,
+        explain: "Antibióticos podem ser usados em MALT gástrico com H. pylori, mas a terapêutica principal para linfomas é quimioterapia/imunoterapia, não apenas antibiótico."
+      },
+      {
+        text: "Observação clínica sem tratamento em todos os casos.",
+        correct: false,
+        explain: "Alguns linfomas indolentes podem ser inicialmente observados, mas não é a estratégia geral para todos os linfomas; muitos requerem tratamento ativo."
+      },
+      {
+        text: "Radioterapia exclusiva em linfomas disseminados.",
+        correct: false,
+        explain: "Radioterapia é recomendada quando o tumor é localizado; linfomas disseminados geralmente necessitam de quimioterapia sistêmica."
+      }
+  ]},
+  {
+    q: "15) Questão: Quais fatores prognósticos gerais, citados no material, influenciam pior prognóstico nos linfomas?",
+    choices: [
+      {
+        text: "Idade >60 anos, níveis elevados de DHL e estadiamento avançado; linfomas de células T tendem a ter pior prognóstico que os de células B.",
+        correct: true,
+        explain: "O PDF lista idade acima de 60 anos, DHL elevada e estadiamento como fatores que interferem no prognóstico; linfomas T geralmente têm prognóstico pior que B."
+      },
+      {
+        text: "Sexo masculino exclusivamente determina pior prognóstico.",
+        correct: false,
+        explain: "Sexo pode influenciar epidemiologia, mas o PDF não aponta sexo como fator prognóstico primário; os fatores chave incluem idade, DHL e estadiamento."
+      },
+      {
+        text: "Vacinação prévia e índice de massa corporal.",
+        correct: false,
+        explain: "Vacinação e IMC não foram citados como fatores prognósticos no material."
+      },
+      {
+        text: "Presença de comorbidades cardiovasculares que sempre melhoram o prognóstico.",
+        correct: false,
+        explain: "Comorbidades cardiovasculares não melhoram o prognóstico — a afirmação é incorreta e contrária às evidências."
+      }
+  ]},
+    {
+    q: "16) Questão: Qual a tríade de apresentação clássica denominada 'sintomas B' em linfomas?",
+    choices: [
+      { text: "Febre, sudorese noturna e perda de peso.", correct: true, explain: "São os sintomas B clássicos e sua presença influencia estadiamento e prognóstico." },
+      { text: "Dor localizada, eritema e calor.", correct: false, explain: "Sinais inflamatórios locais; não compõem os 'sintomas B'." },
+      { text: "Prurido, petéquias e hipertensão.", correct: false, explain: "Prurido pode ocorrer em LH, mas petéquias/hipertensão não fazem parte da tríade B." },
+      { text: "Tosse, hemoptise e cianose.", correct: false, explain: "Sintomas respiratórios podem aparecer se houver massa mediastinal, mas não são os 'sintomas B'." }
+  ]},
+  {
+    q: "17) Questão: Em linfoma folicular, qual o marcador genético/evento citogenético clássico e seu efeito funcional?",
+    choices: [
+      { text: "t(14;18) envolvendo IGH e BCL2 → superexpressão de BCL2 com inibição da apoptose.", correct: true, explain: "A translocação t(14;18) leva à superexpressão de BCL2, conferindo aumento da sobrevivência celular neoplásica." },
+      { text: "t(8;14) envolvendo MYC → aumento da apoptose celular.", correct: false, explain: "t(8;14) com MYC é típica do Burkitt e está associada a proliferação, não aumento da apoptose." },
+      { text: "Deleção 13q → ativação de p53.", correct: false, explain: "13q não é a alteração clássica do linfoma folicular; p53 é inativado por deleções/imutação em outros contextos." },
+      { text: "Mutação JAK2 V617F → ativação da via JAK/STAT típica do linfoma folicular.", correct: false, explain: "JAK2 V617F está ligada a neoplasias mieloproliferativas, não ao LF." }
+  ]},
+  {
+    q: "18) Questão: Qual das opções descreve melhor o comportamento clínico típico do linfoma difuso de grandes células B (DLBCL)?",
+    choices: [
+      { text: "Agressivo, crescimento rápido de massas ganglionares ou extranodais; sintomas B em ~30% dos casos.", correct: true, explain: "DLBCL é um linfoma agressivo com apresentação rápida e frequência significativa de acometimento extranodal." },
+      { text: "Indolente, com evolução muito lenta e raras manifestações sistêmicas.", correct: false, explain: "Descrição compatível com linfoma folicular, não com DLBCL." },
+      { text: "Sempre limitado ao estômago e regressão espontânea.", correct: false, explain: "Alguns linfomas MALT gástricos podem regrredir com erradicação de H. pylori, mas DLBCL não tem esse padrão." },
+      { text: "Exclusivamente cutâneo e sem risco de transformação.", correct: false, explain: "Existem linfomas primários cutâneos, mas DLBCL é mais frequentemente nodal/extranodal variado." }
+  ]},
+  {
+    q: "19) Questão: Em relação ao linfoma MALT gástrico, qual é a intervenção terapêutica inicial frequentemente capaz de induzir regressão em casos iniciais?",
+    choices: [
+      { text: "Erradicação do Helicobacter pylori (terapia antibiótica) em estágios iniciais.", correct: true, explain: "MALT gástrico tem forte associação com H. pylori; erradicação pode provocar regressão tumoral em casos de baixo grau/localizados." },
+      { text: "Quimioterapia paliativa imediata em todas as fases.", correct: false, explain: "Quimioterapia é usada se doença estiver avançada ou não responder à erradicação, não sempre como primeira medida." },
+      { text: "Radioterapia de rotina em todas as lesões gástricas.", correct: false, explain: "Radioterapia pode ser usada em doença localizada, mas erradicação de H. pylori é frequentemente tentativa inicial." },
+      { text: "Imunoterapia anti-CD20 como único tratamento inicial.", correct: false, explain: "Rituximabe pode ser utilizado, porém não é a primeira linha em todos os MALT iniciais sensíveis à erradicação do H. pylori." }
+  ]},
+  {
+    q: "20) Questão: Qual das seguintes afirmações sobre linfoma de Burkitt é verdadeira?",
+    choices: [
+      { text: "Caracteriza-se por duplicação tumoral extremamente rápida e forte associação com EBV em sua variante endêmica.", correct: true, explain: "Burkitt é conhecido por crescimento muito rápido (curva de duplicação curta) e associação elevada com EBV na forma endêmica." },
+      { text: "É um linfoma indolente com evolução crônica em idosos.", correct: false, explain: "Incorreto — Burkitt é altamente agressivo e afeta frequentemente crianças e jovens." },
+      { text: "Tem evolução exclusivamente nodal, sem acometimento extranodal.", correct: false, explain: "Burkitt frequentemente é extranodal (abdome, mandíbula, etc.) dependendo da variante." },
+      { text: "É habitualmente tratado apenas com anticoagulação.", correct: false, explain: "Tratamento é quimioterápico intensivo; anticoagulação não é terapia para linfoma." }
+  ]},
+
+  // 10 casos clínicos (21–30)
+  {
+    q: "21) Questão (Caso clínico): Paciente M, 62 anos, refere que notou aumento indolor de volume no pescoço há 3 meses. Sem febre; perda de 6 kg em 2 meses; sudorese noturna ocasional. Ao exame: múltiplos linfonodos cervicais conglomerados, indolores, consistência elástica. Hemograma: normocítico; DHL ligeiramente elevada. Biópsia excisional: infiltração difusa por células grandes com nucléolos evidentes; imunofenótipo CD20+. Pergunta: qual o diagnóstico mais provável e qual a conduta terapêutica inicial mais apropriada?",
+    choices: [
+      { text: "DLBCL — iniciar quimioterapia combinada (regime contendo rituximabe se CD20+), avaliar estadiamento e considerar radioterapia conforme resposta.", correct: true, explain: "Quadro clínico e histologia são compatíveis com DLGC (DLBCL). Tratamento padrão inclui quimioterapia combinada; em linfomas B CD20+, incluir anti-CD20 (rituximabe) é recomendável." },
+      { text: "Linfoma folicular — observação por ser indolente, sem necessidade de tratamento imediato.", correct: false, explain: "A histologia de células grandes e apresentação rápida sugerem DLBCL, não linfoma folicular indolente." },
+      { text: "Infecção bactéria crônica — iniciar antibióticoterapia e aguardar regressão.", correct: false, explain: "Biopsia mostrou neoplasia (células grandes CD20+), portanto não é apenas infecção e antibiótico não é tratamento adequado." },
+      { text: "Leucemia mieloide aguda — iniciar QT para LMA imediatamente.", correct: false, explain: "Achados não são compatíveis com LMA; é linfoma nodal de células B (CD20+)." }
+  ]},
+  {
+    q: "22) Questão (Caso clínico): Mulher, 48 anos, queixa-se de desconforto epigástrico e perda de apetite. Endoscopia evidencia lesão ulcerada no corpo gástrico; biópsia revela infiltrado linfomonocitário de pequenos linfócitos com centro germinativo e padrão MALT; teste para H. pylori positivo. Pergunta: qual a melhor conduta inicial e por que?",
+    choices: [
+      { text: "Erradicação de H. pylori com esquema antibiótico — potencial regressão do MALT gástrico de baixo grau.", correct: true, explain: "MALT gástrico está fortemente associado a H. pylori; erradicação pode levar à regressão em doença localizada de baixo grau." },
+      { text: "Ressecação gástrica total imediata.", correct: false, explain: "Cirurgia extensa não é a primeira escolha; terapia conservadora com erradicação de H. pylori costuma ser tentativa inicial." },
+      { text: "Quimioterapia sistêmica intensiva imediatamente.", correct: false, explain: "Quimioterapia é reservada para doença transformada/avançada ou não responsiva à erradicação." },
+      { text: "Radioterapia abdominal profilática sem tratar H. pylori.", correct: false, explain: "Radioterapia pode ser usada em doença localizada refratária, mas primeiro tratar H. pylori é apropriado." }
+  ]},
+  {
+    q: "23) Questão (Caso clínico): Criança de 9 anos, procedente de região endêmica, apresenta aumento rápido de volume na mandíbula, com massas faciais progressivas em semanas; febre e perda de peso. Exame: massa facial não dolorosa; hemograma mostra leucocitose; biópsia com padrão de 'starry sky' e alta taxa mitótica. Pergunta: diagnóstico mais provável e característica citogenética esperada?",
+    choices: [
+      { text: "Linfoma de Burkitt (variante endêmica) — translocação MYC t(8;14) frequentemente encontrada.", correct: true, explain: "Quadro clínico e histologia (padrão 'starry sky') são clássicos de Burkitt; t(8;14) envolvendo MYC é alteração típica." },
+      { text: "Linfoma folicular — associado à t(14;18) e apresentação indolente.", correct: false, explain: "Linfoma folicular é mais indolente e não costuma apresentar padrão 'starry sky' ou massa mandibular rápida." },
+      { text: "Leucemia linfoblástica aguda de células T — tratamento com esteroides apenas.", correct: false, explain: "LLA pode ocorrer em crianças, mas apresentação e histologia here point to Burkitt; manejo não é apenas esteroides." },
+      { text: "Abscesso dentário — tratar com drenagem e ATB.", correct: false, explain: "A velocidade e aparência histológica neoplásica (starry sky) afastam abscesso dentário." }
+  ]},
+  {
+    q: "24) Questão (Caso clínico): Homem, 35 anos, com história de insuficiência renal crônica em hemodiálise e transplante renal prévio há 5 anos, em uso de imunossupressores. Apresenta linfonodomegalia generalizada e febre baixa. Biópsia: infiltração por células linfoides atípicas; EBV positivo por ISH. Pergunta: qual o cenário mais provável e qual a implicação causal/terapêutica?",
+    choices: [
+      { text: "Linfoma associado à imunossupressão/EBV (PTLD-like) — reduzir imunossupressão quando possível e avaliar terapias específicas.", correct: true, explain: "Pacientes imunossuprimidos (transplante/imunossupressão) têm risco aumentado de linfomas associados ao EBV; manejo inclui redução de imunossupressão e tratamentos dirigidos conforme caso." },
+      { text: "Linfoma folicular esporádico sem relação com EBV — tratar com antibióticos.", correct: false, explain: "Achado de EBV positivo em paciente imunossuprimido sugere papel causal; antibióticos não são terapia oncológica." },
+      { text: "Reação reumática autoimune — aumentar imunossupressor.", correct: false, explain: "Uso maior de imunossupressão pode agravar linfoma associado; a conduta não é simplesmente aumentar imunossupressão." },
+      { text: "Infeção por micobactéria — iniciar tuberculostático cura a lesão linfonodal.", correct: false, explain: "Biópsia mostra linfoma EBV+, não característico de tuberculose; TB requer achados histo/AFB específicos." }
+  ]},
+  {
+    q: "25) Questão (Caso clínico): Paciente, 58 anos, refere há meses fadiga e esplenomegalia progressiva; exames mostram anemia normocítica, linfocitose leve e medula com infiltração linfocítica. Imunofenotipagem: CD5+, CD23+ em células B. Pergunta: qual o diagnóstico diferencial mais provável e quais implicações prognósticas?",
+    choices: [
+      { text: "Leucemia linfocítica crônica (LLC) / linfoma linfocítico de pequenas células — curso frequentemente indolente, pode necessitar apenas observação inicial.", correct: true, explain: "CD5+ CD23+ em células B é típico de LLC; quadro clínico de esplenomegalia e linfocitose sustenta o diagnóstico; frequentemente tem curso indolente." },
+      { text: "Linfoma de Burkitt — tratamento com QT intensiva e rápido.", correct: false, explain: "Perfil immunofenotípico e apresentação crônica não sustentam Burkitt, que é agressivo e CD10+/MYC+ com padrão 'starry sky'." },
+      { text: "Linfoma de Hodgkin clássico — presença de células de Reed-Sternberg esperada.", correct: false, explain: "LH tem células de Reed-Sternberg e padrão histológico distinto; não corresponde ao imuno perfil citado." },
+      { text: "Mieloma múltiplo — esperado pico monoclonal sérico e lesões líticas ósseas.", correct: false, explain: "Mieloma envolve plasmócitos e achados laboratoriais diferentes (pico monoclonal, hipercalcemia, lesões líticas), não CD5+/CD23+." }
+  ]},
+  {
+    q: "26) Questão (Caso clínico): Mulher, 45 anos, história de tireoidite de Hashimoto, evolui com nódulo indolor na glândula salivar direita. Biópsia incisional mostra infiltrado linfocitário de pequenos linfócitos na parótida com padrão de zona marginal (MALT). Pergunta: que associação patogênica e evolução clínica são esperadas e qual acompanhamento terapêutico inicial é razoável?",
+    choices: [
+      { text: "Associação com doenças autoimunes (Hashimoto/Sjögren); MALT extranodal pode ser associado a autoimunidade; manejo depende de extensão — observação ou tratamento local se sintomático.", correct: true, explain: "MALT está associado a processos autoimunes; a conduta varia com extensão: doença localizada pode ser observada ou tratada localmente; avaliar para transformação." },
+      { text: "Diagnóstico de carcinoma mucoepidermoide — tratamento com quimioterapia paliativa.", correct: false, explain: "Carcinoma mucoepidermoide é tumor epitelial; biópsia com infiltrado linfoide em padrão MALT orienta para linfoma extranodal." },
+      { text: "Infecção por Borrelia burgdorferi exclusivamente responsável — começar doxiciclina e encerrar seguimento.", correct: false, explain: "Borrelia está associada a alguns MALT cutâneos, mas não é a única causa e tratamento nem sempre resolve MALT salivar; além disso, associação com autoimunidade é mais provável neste contexto." },
+      { text: "Linfoma de células T agressivo — iniciar QT intensiva imediatamente.", correct: false, explain: "Padrão histológico de zona marginal com pequenos linfócitos sugere MALT B; linfoma T é menos provável." }
+  ]},
+  {
+    q: "27) Questão (Caso clínico): Homem, 28 anos, HIV positivo com carga viral descontrolada e contagem de CD4 baixa, apresenta linfonodomegalia generalizada, febre e perda de peso; biópsia mostra grandes células B com positividade para EBV. Pergunta: que entidade deve ser considerada e quais são as implicações terapêuticas iniciais?",
+    choices: [
+      { text: "Linfoma relacionado ao HIV/EBV (LNH associado à imunodeficiência) — otimizar terapia antirretroviral e iniciar tratamento oncológico conforme tipo histológico.", correct: true, explain: "Pacientes HIV+ têm maior risco de LNH, frequentemente associado a EBV; manejo inclui controle da infecção (TARV) e terapia oncológica específica." },
+      { text: "Tuberculose ganglionar — tratar com esquema antituberculoso e suspender TARV.", correct: false, explain: "Embora TB deva ser considerada, biópsia compatível com linfoma EBV+ direciona para neoplasia; suspender TARV não é indicado de rotina." },
+      { text: "Infecção fúngica oportunista — tratar com antifúngico tópico.", correct: false, explain: "Achados histológicos de grandes células B EBV+ indicam neoplasia, não infecção fúngica superficial." },
+      { text: "Linfoma folicular de baixo grau sem necessidade de TARV ajuste.", correct: false, explain: "LNH relacionados ao HIV costumam ser mais agressivos; otimizar TARV é parte do manejo global." }
+  ]},
+  {
+    q: "28) Questão (Caso clínico): Paciente, 50 anos, queixa de prurido difuso e placas cutâneas crônicas que progressivamente formaram tufos infiltrativos; histologia de lesão cutânea sugere infiltração por linfócitos T atípicos com células cerebriformes. Pergunta: qual diagnóstico cutâneo é mais compatível e qual é a conduta diagnóstica complementar importante?",
+    choices: [
+      { text: "Micose fungoide (linfoma cutâneo de células T) — realizar imunofenotipagem e avaliar para síndrome de Sézary (exame de sangue para células cerebriformes).", correct: true, explain: "Micose fungoide tem apresentação cutânea progressiva; investigar Síndrome de Sézary (forma leucêmica) com avaliação do sangue e imunofenotipagem é essencial." },
+      { text: "Psoríase vulgar — iniciar terapia tópica com corticosteroide de alta potência e encerrar investigação.", correct: false, explain: "Psoríase pode causar placas, mas histologia com células T atípicas e cerebriformes aponta para linfoma cutâneo, não psoríase simples." },
+      { text: "Dermatite de contato crônica — evitar alérgenos e usar emolientes.", correct: false, explain: "Histologia citológica atípica não é consistente com dermatite de contato; requer investigação oncológica." },
+      { text: "Linfoma B primário cutâneo — tratar com rituximabe.", correct: false, explain: "Linfoma primário cutâneo pode ser de linhagem B, mas achados descritos (células T atípicas cerebriformes) são compatíveis com linfoma cutâneo T (micose fungoide)." }
+  ]},
+  {
+    q: "29) Questão (Caso clínico): Mulher, 70 anos, relata massa abdominal de rápido crescimento, perda de peso e febre. Tomografia mostra massa mesentérica volumosa; biópsia revela grande célula B com rearranjo MYC e BCL2 (duplo hit). Pergunta: que implicação prognóstica tem o achado 'double-hit' e qual abordagem terapêutica é geralmente considerada?",
+    choices: [
+      { text: "Rearranjos MYC + BCL2 (double-hit) indicam linfoma agressivo com mau prognóstico — considerar esquema quimioterápico intensivo e avaliação para transplante de células-tronco em respondentes.", correct: true, explain: "Double-hit (MYC e BCL2/BCL6 rearranjos) associa-se a comportamento agressivo e pior prognóstico; terapias mais intensivas e avaliação de transplante são consideradas." },
+      { text: "Double-hit indica ótima resposta à monoterapia com corticosteroide e prognóstico favorável.", correct: false, explain: "Double-hit confere pior prognóstico; corticosteroide isolado não é tratamento curativo." },
+      { text: "Achado irrelevante prognosticamente — tratar como linfoma folicular indolente.", correct: false, explain: "Double-hit altera o risco e não é compatível com linfoma folicular indolente." },
+      { text: "Sugere apenas infecção viral transitória sem impacto terapêutico.", correct: false, explain: "Rearranjos genéticos indicam instabilidade tumoral e têm impacto prognóstico e terapêutico significativo." }
+  ]},
+  {
+    q: "30) Questão (Caso clínico): Homem, 66 anos, com massa mediastinal voluminosa diagnosticada por RX de tórax; biópsia de linfonodo mostra células de Reed–Sternberg e padrão de esclerose nodular. Paciente relata leves sintomas B e ingere álcool sem associar dor. Pergunta: qual subtipo de doença de Hodgkin é mais provável e qual a expectativa de cura com tratamento padrão?",
+    choices: [
+      { text: "Doença de Hodgkin — subtipo esclerose nodular é provável; alta taxa de cura com quimioterapia combinada com ou sem radioterapia (70–80% ou mais dependendo do estádio).", correct: true, explain: "Esclerose nodular é o subtipo mais comum; LH responde bem a quimioradioterapia, com altas taxas de cura conforme estágio e fatores prognósticos." },
+      { text: "Linfoma primário mediastinal de células T — prognóstico excelente apenas com observação.", correct: false, explain: "Achados histológicos de Reed–Sternberg e esclerose nodular caracterizam LH, não linfoma T mediastinal; observação não é suficiente." },
+      { text: "Carcinoma primário de pulmão — tratar com cirurgia paliativa.", correct: false, explain: "Biópsia nodal com células de Reed–Sternberg aponta para LH; não é carcinoma pulmonar primário." },
+      { text: "Linfoma de Burkitt com envolvimento mediastinal e cura esperada sem QT.", correct: false, explain: "Burkitt tem apresentação e histologia diferentes; cura requer QT intensiva e não é comparável ao padrão de LH esclerose nodular." }
+  ]}
+];
+
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
