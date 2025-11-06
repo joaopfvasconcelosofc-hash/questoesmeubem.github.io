@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Arboviroses</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Arboviroses</h1>
+    <p class="lead">30 questões - Arboviroses</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão — Qual é o principal vetor responsável pela transmissão das arboviroses urbanas no Brasil, incluindo dengue, zika e chikungunya?",
+    choices: [
+      { text: "Anopheles darlingi", correct: false, explain: "O Anopheles darlingi é o vetor da malária, não das arboviroses urbanas." },
+      { text: "Culex quinquefasciatus", correct: false, explain: "O Culex pode transmitir outras viroses, mas não é o principal vetor urbano dessas doenças." },
+      { text: "Aedes aegypti", correct: true, explain: "O Aedes aegypti é o principal vetor urbano das arboviroses dengue, zika e chikungunya, com hábito diurno e criadouros domésticos." },
+      { text: "Lutzomyia longipalpis", correct: false, explain: "A Lutzomyia é o vetor da leishmaniose, não das arboviroses urbanas." }
+    ]
+  },
+  {
+    q: "2) Questão — Sobre a fisiopatologia da dengue, qual alternativa descreve corretamente as fases evolutivas da doença?",
+    choices: [
+      { text: "Fase febril, crítica e de recuperação.", correct: true, explain: "A dengue evolui em três fases: febril (com febre alta e mialgia), crítica (quando pode ocorrer extravasamento plasmático) e recuperação (com melhora progressiva clínica e laboratorial)." },
+      { text: "Fase única, autolimitada, sem risco de complicações.", correct: false, explain: "A dengue tem evolução trifásica, podendo haver complicações graves, especialmente na fase crítica." },
+      { text: "Fase febril e fase de convalescença apenas.", correct: false, explain: "A forma clássica envolve três fases distintas; omitir a fase crítica ignora o período de maior risco de choque." },
+      { text: "Fases exantemática e neurológica.", correct: false, explain: "Essa classificação não se aplica à dengue; refere-se a outras infecções virais." }
+    ]
+  },
+  {
+    q: "3) Questão — Na dengue, o extravasamento plasmático é responsável por qual complicação potencialmente fatal?",
+    choices: [
+      { text: "Choque hipovolêmico", correct: true, explain: "O extravasamento plasmático causa redução do volume intravascular, levando ao choque hipovolêmico — a principal causa de morte na dengue grave." },
+      { text: "Insuficiência renal aguda por necrose tubular direta.", correct: false, explain: "A lesão renal é consequência secundária do choque, não efeito direto do vírus." },
+      { text: "Hemorragia digestiva alta primária.", correct: false, explain: "As hemorragias são manifestações secundárias ao extravasamento e coagulopatia, não a complicação primária." },
+      { text: "Encefalopatia viral direta.", correct: false, explain: "Complicações neurológicas são raras; o principal risco é o choque por extravasamento plasmático." }
+    ]
+  },
+  {
+    q: "4) Questão — A prova do laço é um exame semiológico útil na dengue por avaliar:",
+    choices: [
+      { text: "A função renal comprometida.", correct: false, explain: "A prova do laço não tem relação com função renal." },
+      { text: "A fragilidade capilar e tendência hemorrágica.", correct: true, explain: "A prova do laço positiva indica fragilidade capilar aumentada, sendo um sinal de alerta para dengue." },
+      { text: "A função hepática alterada.", correct: false, explain: "A prova do laço não avalia função hepática; ele é um teste de fragilidade vascular." },
+      { text: "O nível de plaquetas no sangue.", correct: false, explain: "Embora plaquetopenia possa acompanhar, o teste não mede contagem de plaquetas." }
+    ]
+  },
+  {
+    q: "5) Questão — Na classificação de risco da dengue (A, B, C, D), qual grupo indica necessidade de internação hospitalar imediata?",
+    choices: [
+      { text: "Grupo A", correct: false, explain: "O grupo A corresponde a casos leves, sem sinais de alarme, que podem ser acompanhados ambulatorialmente." },
+      { text: "Grupo B", correct: false, explain: "O grupo B possui sinais de alerta, mas pode iniciar tratamento em unidade básica com hidratação supervisionada." },
+      { text: "Grupo C", correct: true, explain: "O grupo C representa casos com sinais de alarme importantes, requerendo internação e hidratação venosa sob vigilância." },
+      { text: "Grupo D", correct: false, explain: "O grupo D é o de choque estabelecido; requer UTI, mas o pedido diz 'internação hospitalar imediata', aplicando-se ao grupo C." }
+    ]
+  },
+  {
+    q: "6) Questão — Qual é o principal exame laboratorial confirmatório na fase inicial (até o 5º dida dengue?",
+    choices: [
+      { text: "Sorologia IgM.", correct: false, explain: "A sorologia IgM só se torna positiva a partir do 6º dia de sintomas." },
+      { text: "Teste de antígeno NS1 ou RT-PCR.", correct: true, explain: "O teste NS1 e o RT-PCR são positivos precocemente, entre o 1º e 5º dia, sendo úteis para diagnóstico inicial." },
+      { text: "Hemograma completo.", correct: false, explain: "O hemograma é importante para acompanhamento, mas não é confirmatório." },
+      { text: "Prova do laço.", correct: false, explain: "A prova do laço é semiológica, não confirmatória laboratorial." }
+    ]
+  },
+  {
+    q: "7) Questão — Em um paciente com dengue, qual é o achado laboratorial de alerta para evolução grave?",
+    choices: [
+      { text: "Leucocitose acentuada.", correct: false, explain: "A dengue geralmente cursa com leucopenia, não leucocitose." },
+      { text: "Hemoconcentração (aumento do hematócrito).", correct: true, explain: "A elevação do hematócrito indica extravasamento plasmático e risco de choque." },
+      { text: "Trombocitose.", correct: false, explain: "A trombocitopenia é esperada; trombocitose não é sinal de alerta." },
+      { text: "Aumento do TTPa isolado.", correct: false, explain: "Alterações de coagulação podem ocorrer, mas o principal sinal laboratorial de gravidade é a hemoconcentração." }
+    ]
+  },
+  {
+    q: "8) Questão — Qual medida está contraindicada no manejo da dengue?",
+    choices: [
+      { text: "Uso de anti-inflamatórios não esteroides (AINEs).", correct: true, explain: "Os AINEs aumentam o risco de sangramento e estão contraindicados; o tratamento deve usar analgésicos simples e paracetamol." },
+      { text: "Hidratação oral e repouso.", correct: false, explain: "São medidas recomendadas." },
+      { text: "Controle diário do hematócrito.", correct: false, explain: "Monitorar o hematócrito é fundamental no acompanhamento." },
+      { text: "Evitar injeções intramusculares.", correct: false, explain: "A via intramuscular aumenta o risco de hematomas, portanto deve ser evitada, não é medida errada." }
+    ]
+  },
+  {
+    q: "9) Questão — Qual é a principal manifestação articular da chikungunya e o padrão evolutivo habitual?",
+    choices: [
+      { text: "Dor migratória leve, autolimitada em 24h.", correct: false, explain: "A dor na chikungunya é intensa e pode persistir semanas a meses." },
+      { text: "Artralgia intensa, simétrica, de caráter incapacitante, podendo cronificar.", correct: true, explain: "A dor articular é intensa, simétrica e incapacitante, com possibilidade de cronificação e artrite pós-viral." },
+      { text: "Poliartrite supurativa com secreção articular purulenta.", correct: false, explain: "A artrite é inflamatória, não supurativa." },
+      { text: "Artralgia intermitente, sempre associada a exantema generalizado.", correct: false, explain: "O exantema pode ocorrer, mas nem sempre acompanha a dor articular." }
+    ]
+  },
+  {
+    q: "10) Questão — Qual fármaco está contraindicado na fase aguda da chikungunya?",
+    choices: [
+      { text: "Paracetamol.", correct: false, explain: "O paracetamol é seguro e indicado para controle sintomático." },
+      { text: "AAS e AINEs.", correct: true, explain: "AAS e AINEs estão contraindicados pela possibilidade de confusão diagnóstica com dengue e risco de sangramento." },
+      { text: "Analgésicos opioides leves.", correct: false, explain: "Podem ser usados em casos selecionados." },
+      { text: "Antidepressivos tricíclicos.", correct: false, explain: "Não têm relação com o manejo da fase aguda." }
+    ]
+  },
+  {
+    q: "11) Questão — Na fase crônica da chikungunya, qual é a principal conduta terapêutica?",
+    choices: [
+      { text: "Uso de corticosteroides sistêmicos em altas doses prolongadas.", correct: false, explain: "O uso prolongado de corticoides sistêmicos é desaconselhado; o manejo deve priorizar analgésicos e fisioterapia." },
+      { text: "Analgésicos, fisioterapia e, se necessário, drogas antirreumáticas.", correct: true, explain: "Em casos persistentes, pode-se usar medicamentos antirreumáticos e fisioterapia para dor articular residual." },
+      { text: "Antibióticos profiláticos.", correct: false, explain: "Não há indicação de antibióticos em infecção viral." },
+      { text: "Interrupção do tratamento após 7 dias.", correct: false, explain: "Os sintomas crônicos exigem acompanhamento prolongado e reabilitação." }
+    ]
+  },
+  {
+    q: "12) Questão — Em relação à transmissão vertical do vírus zika, assinale a correta:",
+    choices: [
+      { text: "Não há evidência de transmissão vertical.", correct: false, explain: "A transmissão vertical está bem documentada e é a principal causa da síndrome congênita do zika vírus." },
+      { text: "O zika pode atravessar a placenta e causar microcefalia fetal.", correct: true, explain: "O vírus atravessa a barreira placentária e pode afetar o neurodesenvolvimento, causando microcefalia e outras anomalias." },
+      { text: "A infecção gestacional é sempre assintomática.", correct: false, explain: "Gestantes podem apresentar sintomas leves, mas com risco significativo para o feto." },
+      { text: "O risco existe apenas no terceiro trimestre.", correct: false, explain: "A infecção em qualquer trimestre pode causar malformações, especialmente no primeiro." }
+    ]
+  },
+  {
+    q: "13) Questão — Qual exame é mais indicado para confirmar infecção por zika vírus na fase aguda?",
+    choices: [
+      { text: "Sorologia IgM.", correct: false, explain: "A sorologia pode cruzar com outros flavivírus e só se torna positiva após alguns dias." },
+      { text: "RT-PCR para zika.", correct: true, explain: "O RT-PCR detecta o RNA viral nos primeiros dias da infecção, sendo o exame confirmatório de escolha na fase aguda." },
+      { text: "Teste rápido de NS1.", correct: false, explain: "O NS1 é específico da dengue, não do zika." },
+      { text: "Cultura viral convencional.", correct: false, explain: "Não é utilizada na prática clínica devido à baixa sensibilidade e risco biológico." }
+    ]
+  },
+  {
+    q: "14) Questão — Sobre o diagnóstico diferencial das arboviroses, assinale a alternativa correta:",
+    choices: [
+      { text: "Leptospirose pode simular dengue grave na fase precoce.", correct: true, explain: "A leptospirose pode causar febre, mialgia e plaquetopenia, confundindo-se com dengue; o histórico epidemiológico ajuda no diagnóstico diferencial." },
+      { text: "Influenza é distinguida de dengue pela ausência de febre.", correct: false, explain: "Ambas cursam com febre; a diferença está nas manifestações respiratórias predominantes na influenza." },
+      { text: "Sarampo nunca apresenta exantema.", correct: false, explain: "O sarampo cursa com exantema e sintomas respiratórios, sendo um diferencial de zika e dengue." },
+      { text: "COVID-19 e dengue não compartilham sintomas.", correct: false, explain: "Ambas podem cursar com febre e mialgia; a COVID-19 tem maior comprometimento respiratório." }
+    ]
+  },
+  {
+    q: "15) Questão — Em termos de prevenção, qual medida é mais efetiva no controle das arboviroses urbanas?",
+    choices: [
+      { text: "Uso de antibióticos profiláticos.", correct: false, explain: "As arboviroses são virais, antibióticos não têm efeito preventivo." },
+      { text: "Controle do vetor e eliminação de criadouros do Aedes aegypti.", correct: true, explain: "A principal medida preventiva é eliminar criadouros e controlar o vetor, já que não há vacinas amplamente disponíveis para todas as arboviroses." },
+      { text: "Isolamento respiratório dos pacientes.", correct: false, explain: "A transmissão é vetorial, não respiratória." },
+      { text: "Vacinação universal para zika e chikungunya.", correct: false, explain: "Ainda não há vacinas universalmente disponíveis para essas doenças." }
+    ]
+  },
+  {
+    q: "16) Questão — Qual manifestação clínica diferencia mais claramente a chikungunya das demais arboviroses?",
+    choices: [
+      { text: "Exantema pruriginoso e conjuntivite discreta.", correct: false, explain: "Essas manifestações são mais típicas do zika vírus, não da chikungunya." },
+      { text: "Artralgia intensa, simétrica e incapacitante.", correct: true, explain: "A dor articular intensa e simétrica, muitas vezes incapacitante, é a característica mais marcante da chikungunya, podendo persistir por meses." },
+      { text: "Hepatomegalia dolorosa e icterícia discreta.", correct: false, explain: "Hepatomegalia pode ocorrer em dengue, não é manifestação típica da chikungunya." },
+      { text: "Cefaleia retro-orbitária e mialgia difusa.", correct: false, explain: "Esses sintomas são mais característicos da dengue clássica." }
+    ]
+  },
+  {
+    q: "17) Questão — Em relação à imunidade cruzada entre os sorotipos da dengue, assinale a afirmativa correta:",
+    choices: [
+      { text: "A infecção por um sorotipo confere imunidade duradoura a todos os outros.", correct: false, explain: "A imunidade é duradoura apenas para o sorotipo infectante; para os demais, é temporária e incompleta." },
+      { text: "A infecção por sorotipo diferente pode aumentar o risco de dengue grave.", correct: true, explain: "A resposta imune heteróloga pode desencadear o fenômeno de amplificação dependente de anticorpos, aumentando o risco de dengue grave em reinfecções por outro sorotipo." },
+      { text: "A segunda infecção geralmente é mais leve que a primeira.", correct: false, explain: "O oposto é verdadeiro — a segunda infecção pode ser mais grave devido à resposta imune cruzada." },
+      { text: "Não há relação entre sorotipo e gravidade clínica.", correct: false, explain: "Os diferentes sorotipos influenciam na resposta imune e na gravidade da doença." }
+    ]
+  },
+  {
+    q: "18) Questão — Qual é o principal critério laboratorial de gravidade na dengue, indicando risco iminente de choque?",
+    choices: [
+      { text: "Hematócrito elevado associado a queda de plaquetas.", correct: true, explain: "O aumento do hematócrito com plaquetopenia indica extravasamento plasmático e risco de choque hipovolêmico." },
+      { text: "Leucocitose e desvio à esquerda.", correct: false, explain: "Leucocitose é incomum na dengue e sugere infecção bacteriana associada." },
+      { text: "Hiponatremia isolada.", correct: false, explain: "Pode ocorrer, mas não é marcador específico de gravidade." },
+      { text: "Bilirrubinas elevadas isoladamente.", correct: false, explain: "Elevação de bilirrubinas pode ocorrer, mas não define gravidade." }
+    ]
+  },
+  {
+    q: "19) Questão — Na infecção por zika vírus, qual manifestação neurológica pode ocorrer em adultos?",
+    choices: [
+      { text: "Meningite bacteriana aguda.", correct: false, explain: "A zika pode causar complicações neurológicas, mas meningite bacteriana não está entre elas." },
+      { text: "Síndrome de Guillain-Barré.", correct: true, explain: "O zika vírus tem sido associado à síndrome de Guillain-Barré em adultos, por mecanismo autoimune pós-infeccioso." },
+      { text: "Paralisia facial periférica bilateral reversível.", correct: false, explain: "Pode ocorrer, mas como parte da Guillain-Barré; o termo correto é polirradiculoneuropatia." },
+      { text: "Encefalopatia hepática.", correct: false, explain: "Não é manifestação típica do zika vírus." }
+    ]
+  },
+  {
+    q: "20) Questão — Qual medida de saúde pública é mais eficaz para reduzir surtos de arboviroses em áreas urbanas?",
+    choices: [
+      { text: "Pulverização aérea rotineira de inseticidas em todos os bairros.", correct: false, explain: "A pulverização tem efeito limitado e deve ser usada de forma focal e controlada." },
+      { text: "Educação comunitária e eliminação de criadouros domésticos.", correct: true, explain: "A medida mais eficaz é a eliminação de criadouros e envolvimento comunitário, reduzindo o ciclo do Aedes aegypti." },
+      { text: "Isolamento respiratório dos pacientes.", correct: false, explain: "As arboviroses têm transmissão vetorial, não respiratória." },
+      { text: "Vacinação em massa para todas as arboviroses.", correct: false, explain: "Não há vacinas amplamente disponíveis para zika e chikungunya." }
+    ]
+  },
+  {
+    q: "21) Caso clínico — Mulher de 26 anos, gestante de 12 semanas, apresenta exantema pruriginoso e febre baixa há 2 dias. Nega artralgia intensa. Refere contato com pessoas com sintomas semelhantes. Qual hipótese deve ser priorizada e conduta?",
+    choices: [
+      { text: "Chikungunya — iniciar corticoide.", correct: false, explain: "A chikungunya cursa com dor articular intensa, o que não ocorre aqui; além disso, corticoides não são indicados." },
+      { text: "Zika vírus — solicitar RT-PCR e orientar repouso.", correct: true, explain: "O quadro é típico de zika na gestante. É fundamental confirmar com RT-PCR e realizar acompanhamento pré-natal específico para avaliação fetal." },
+      { text: "Dengue — administrar dipirona e liberar.", correct: false, explain: "A dengue cursa com febre mais alta e não costuma apresentar prurido intenso ou conjuntivite discreta." },
+      { text: "Escarlatina — iniciar penicilina benzatina.", correct: false, explain: "A escarlatina é bacteriana e cursa com exantema áspero e língua em framboesa, o que não foi descrito." }
+    ]
+  },
+  {
+    q: "22) Caso clínico — Homem de 30 anos, previamente hígido, apresenta febre alta há 3 dias, cefaleia intensa, dor retro-orbitária e mialgia. Hemograma: plaquetas 95.000/mm³, hematócrito 48% (anterior: 40%). Qual é a conduta adequada?",
+    choices: [
+      { text: "Alta com hidratação oral e analgésicos.", correct: false, explain: "Há sinais laboratoriais de extravasamento plasmático; o paciente requer observação e hidratação venosa." },
+      { text: "Internar para hidratação venosa e monitorização.", correct: true, explain: "O aumento de hematócrito indica risco de dengue com sinais de alarme; deve-se internar para monitorização e hidratação controlada." },
+      { text: "Prescrever antibiótico empírico.", correct: false, explain: "Não há evidência de infecção bacteriana." },
+      { text: "Realizar transfusão plaquetária imediata.", correct: false, explain: "Plaquetopenia leve não é indicação de transfusão sem sangramento ativo." }
+    ]
+  },
+  {
+    q: "23) Caso clínico — Paciente de 42 anos apresenta febre, artralgia intensa e rigidez matinal. Exame físico: edema articular em punhos e tornozelos. Diagnóstico provável: chikungunya. Qual abordagem é recomendada após 15 dias de sintomas persistentes?",
+    choices: [
+      { text: "Corticoide oral em curto prazo e fisioterapia.", correct: true, explain: "Na fase subaguda, o uso breve de corticoides pode ser indicado para aliviar inflamação, associado à reabilitação física." },
+      { text: "Antibiótico de largo espectro.", correct: false, explain: "A chikungunya é viral, antibióticos não têm papel." },
+      { text: "Suspender toda medicação e aguardar resolução espontânea.", correct: false, explain: "Sem controle adequado da inflamação, pode evoluir para fase crônica incapacitante." },
+      { text: "Aspirina em dose anti-inflamatória.", correct: false, explain: "O AAS é contraindicado devido ao risco hemorrágico e confusão com dengue." }
+    ]
+  },
+  {
+    q: "24) Caso clínico — Menino de 8 anos é levado ao pronto atendimento com febre alta há 4 dias, dor abdominal e sonolência. Hematócrito elevado e plaquetopenia acentuada. Qual a suspeita e medida inicial?",
+    choices: [
+      { text: "Dengue grave — iniciar hidratação venosa rápida.", correct: true, explain: "O quadro clínico e laboratorial é típico de dengue grave com extravasamento plasmático; a prioridade é reposição volêmica guiada por sinais vitais." },
+      { text: "Leptospirose — iniciar antibiótico.", correct: false, explain: "A leptospirose é um diferencial, mas o conjunto de sinais favorece dengue." },
+      { text: "Zika vírus — acompanhamento ambulatorial.", correct: false, explain: "O zika cursa com febre baixa e não costuma causar extravasamento plasmático." },
+      { text: "Influenza — prescrever antiviral.", correct: false, explain: "O quadro não é respiratório." }
+    ]
+  },
+  {
+    q: "25) Caso clínico — Mulher de 55 anos apresenta febre, exantema e dores articulares há 5 dias. Relata artralgia persistente em mãos e tornozelos há 3 semanas. Sorologia positiva para chikungunya. Qual é o manejo adequado na fase crônica?",
+    choices: [
+      { text: "Iniciar drogas antirreumáticas e fisioterapia.", correct: true, explain: "Na fase crônica, pode ser necessário tratamento reumatológico com antirreumáticos e fisioterapia para controle da dor persistente." },
+      { text: "Corticoide em altas doses contínuas.", correct: false, explain: "O uso prolongado de corticoides não é recomendado." },
+      { text: "Alta sem necessidade de seguimento.", correct: false, explain: "A dor crônica exige acompanhamento prolongado." },
+      { text: "Antibioticoterapia profilática.", correct: false, explain: "A chikungunya é viral e não há papel para antibióticos." }
+    ]
+  },
+  {
+    q: "26) Caso clínico — Mulher de 40 anos retorna após dengue recente com queixa de sangramento gengival leve e petéquias, mas está hemodinamicamente estável. Hematócrito normal e plaquetas 60.000. Qual conduta?",
+    choices: [
+      { text: "Internar para transfusão plaquetária imediata.", correct: false, explain: "Plaquetas acima de 50.000 e estabilidade hemodinâmica não indicam transfusão." },
+      { text: "Manter observação ambulatorial e hidratação oral.", correct: true, explain: "Sem sinais de alarme, pode ser acompanhada com hidratação e vigilância clínica." },
+      { text: "Prescrever AAS para evitar trombose.", correct: false, explain: "O AAS é contraindicado por risco hemorrágico." },
+      { text: "Encaminhar para biópsia de medula óssea.", correct: false, explain: "Desnecessário na dengue clássica sem complicações." }
+    ]
+  },
+  {
+    q: "27) Caso clínico — Paciente de 60 anos apresenta febre, cefaleia intensa e icterícia discreta. Relata trabalho em zona rural. Hemograma mostra leucocitose e creatinina elevada. Qual diagnóstico diferencial deve ser considerado?",
+    choices: [
+      { text: "Dengue com sinais de alarme.", correct: false, explain: "O padrão laboratorial sugere infecção bacteriana sistêmica." },
+      { text: "Leptospirose.", correct: true, explain: "A associação de febre, icterícia e insuficiência renal em zona rural sugere leptospirose, diagnóstico diferencial importante de dengue." },
+      { text: "Chikungunya.", correct: false, explain: "A chikungunya não causa icterícia nem insuficiência renal significativa." },
+      { text: "Zika vírus.", correct: false, explain: "O zika raramente causa manifestações sistêmicas graves." }
+    ]
+  },
+  {
+    q: "28) Caso clínico — Homem de 32 anos retorna de área endêmica com febre e mialgia. No 5º dia, febre cede e ele relata fraqueza e tontura. PA 90/60 mmHg, extremidades frias. Diagnóstico e conduta?",
+    choices: [
+      { text: "Dengue em fase crítica — iniciar hidratação venosa imediata.", correct: true, explain: "O desaparecimento da febre com hipotensão e sinais de hipoperfusão indica início da fase crítica da dengue, exigindo reposição volêmica cuidadosa." },
+      { text: "Chikungunya subaguda — analgesia simples.", correct: false, explain: "O quadro é de instabilidade hemodinâmica, não de dor articular isolada." },
+      { text: "Zika autolimitado — observação.", correct: false, explain: "O zika raramente causa instabilidade hemodinâmica." },
+      { text: "Hepatite viral aguda.", correct: false, explain: "Não há icterícia nem alterações hepáticas descritas." }
+    ]
+  },
+  {
+    q: "29) Caso clínico — Mulher de 23 anos, puérpera, apresenta febre baixa e exantema. Teste rápido para dengue negativo, RT-PCR positivo para zika. Qual é a principal recomendação de saúde pública?",
+    choices: [
+      { text: "Iniciar tratamento antiviral específico.", correct: false, explain: "Não há antiviral específico para zika." },
+      { text: "Orientar evitar nova gestação até liberação médica.", correct: true, explain: "Deve-se orientar evitar nova gestação por período determinado, devido à persistência viral e risco fetal." },
+      { text: "Notificar apenas se houver sintomas neurológicos.", correct: false, explain: "Todo caso confirmado de zika deve ser notificado, especialmente em gestantes e puérperas." },
+      { text: "Alta imediata sem orientações.", correct: false, explain: "O aconselhamento reprodutivo e notificação são fundamentais." }
+    ]
+  },
+  {
+    q: "30) Caso clínico — Paciente de 35 anos, agente de campo, apresenta febre, dor articular e exantema. Está em área com surto de dengue e zika. Qual exame laboratorial é mais útil para definir o diagnóstico na fase aguda?",
+    choices: [
+      { text: "Sorologia IgM.", correct: false, explain: "A sorologia pode ter reação cruzada entre flavivírus e não diferencia infecção aguda precoce." },
+      { text: "RT-PCR para os três vírus.", correct: true, explain: "O RT-PCR é o exame mais específico e sensível na fase inicial, permitindo diferenciar dengue, zika e chikungunya." },
+      { text: "Teste de NS1 e prova do laço.", correct: false, explain: "NS1 é específico para dengue; a prova do laço é apenas semiológica." },
+      { text: "Hemograma simples.", correct: false, explain: "Útil no acompanhamento, mas não diferencia os vírus." }
+    ]
+  }
+];
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

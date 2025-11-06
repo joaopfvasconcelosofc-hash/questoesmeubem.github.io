@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Intoicações exógenas</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Intoxicações exógenas</h1>
+    <p class="lead">30 questões - Intoxicações exógenas</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão — Na avaliação inicial de um paciente com suspeita de intoxicação exógena, qual é a melhor sequência de prioridades na abordagem imediata?",
+    choices: [
+      { text: "História detalhada → Exame físico completo da cabeça aos pés → Notificar CEATOX.", correct: false, explain: "Embora história e identificação do tóxico sejam importantes, a prioridade na emergência é estabilizar o paciente seguindo ABCDE (vias aéreas, respiração, circulação, déficit neurológico e exposição) antes de aprofundar a anamnese e notificar o serviço toxicológico." },
+      { text: "ABCDE → medidas de descontaminação adequadas → solicitação de exames complementares e notificação ao serviço toxicológico.", correct: true, explain: "A sequência correta é estabilizar (ABCDE), avaliar a necessidade de descontaminação ou antídoto, requisitar exames e contatar suporte toxicológico para orientação específica." },
+      { text: "Lavagem gástrica em todos os casos → carvão ativado → observação em ambulatório.", correct: false, explain: "Lavagem e carvão não são indicados indiscriminadamente; dependem de via, tempo decorrido, agente e risco de broncoaspiração. Procedimentos invasivos sem indicação podem causar danos." },
+      { text: "Administração empírica de antídoto padrão (naloxone + atropina) → exames laboratoriais.", correct: false, explain: "Antídotos devem ser direcionados conforme a síndrome clínica suspeita. Administrar antídotos empíricos sem justificativa pode piorar o quadro; estabilização é prioritária." }
+    ]
+  },
+  {
+    q: "2) Questão — Em relação às medidas de descontaminação gastrointestinal, qual é a afirmativa correta?",
+    choices: [
+      { text: "Lavagem gástrica tem benefício claro se realizada mais de 6 horas após ingestão na maioria dos tóxicos.", correct: false, explain: "A eficácia da lavagem gástrica reduz-se significativamente após as primeiras 1–2 horas; após esse período o benefício é limitado e os riscos podem superar ganhos." },
+      { text: "Carvão ativado é efetivo para álcoois como metanol e etilenoglicol.", correct: false, explain: "Metanol e etilenoglicol não são bem adsorvidos pelo carvão ativado; alternativas específicas (como fomepizol, etanol, ou medidas de suporte/hemodiálise) são necessárias." },
+      { text: "Quando indicados, realizar lavagem gástrica primeiro e depois carvão ativado é a sequência recomendada.", correct: true, explain: "Se ambos são apropriados (ingestão recente e sem contraindicações), faz-se primeiro a lavagem para remover volume grosso e depois o carvão ativado para adsorção do remanescente." },
+      { text: "Irrigação intestinal com polietilenoglicol é a primeira escolha para intoxicação por paracetamol.", correct: false, explain: "Irrigação intestinal não é tratamento de rotina para paracetamol; o antídoto específico é acetilcisteína. A irrigação tem indicação para certas substâncias não adsorvíveis." }
+    ]
+  },
+  {
+    q: "3) Questão — Sobre o uso de carvão ativado na intoxicação, qual item é verdadeiro?",
+    choices: [
+      { text: "Deve ser administrado por via oral apenas e nunca por sonda nasogástrica.", correct: false, explain: "O carvão pode ser administrado por via oral ou por sonda nasogástrica quando o paciente não consegue engolir; a via depende do estado do paciente e do risco de aspiração." },
+      { text: "Dose usual via sonda: 1 g/kg diluído adequadamente; não se aspira o carvão após administração.", correct: true, explain: "A prática comum é 1 g/kg (com teto) diluído em líquido para administração; o carvão não é aspirado de volta, sai nas fezes. Atenção às contraindicações (risco de aspiração, perfuração, corrosivos)." },
+      { text: "É eficaz quando a substância ingerida foi ferro ou lítio.", correct: false, explain: "Ferro e lítio não são bem adsorvidos pelo carvão ativado; nesses casos outras medidas (quelantes, diálise, irrigação intestinal) podem ser consideradas conforme o agente." },
+      { text: "Carvão ativado em doses múltiplas (a cada 4 horas) é rotina na maioria dos serviços.", correct: false, explain: "Doses múltiplas de carvão têm indicação restrita a certos toxícos e protocolos; não é prática universal para todos os serviços e casos." }
+    ]
+  },
+  {
+    q: "4) Questão — Um paciente apresenta sialorreia, miose, broncoespasmo e bradicardia. Qual é a sequência terapêutica correta?",
+    choices: [
+      { text: "Atropina para manifestações muscarínicas e considerar pralidoxima se organofosforado for suspeito.", correct: true, explain: "Atropina antagoniza receptores muscarínicos e alivia as manifestações muscarínicas; se organofosforado for provável, pralidoxima (reativador de acetilcolinesterase) deve ser considerada." },
+      { text: "Naloxone IV de bolus para reverter a síndrome colinérgica.", correct: false, explain: "Naloxone é antídoto para opióides, não tem efeito sobre colinérgicos; portanto não é apropriado nesse cenário." },
+      { text: "Flumazenil para antagonizar os efeitos e restabelecer a respiração.", correct: false, explain: "Flumazenil antagoniza benzodiazepínicos; não trata síndrome colinérgica e pode ser perigoso em coingestões convulsivantes." },
+      { text: "Diurese alcalina imediata para eliminar o tóxico.", correct: false, explain: "Diurese alcalina é indicada para certas substâncias fracamente ácidas (ex.: salicilatos), não é tratamento primário para síndrome colinérgica." }
+    ]
+  },
+  {
+    q: "5) Questão — Sobre intoxicação por opióides, assinale a alternativa correta:",
+    choices: [
+      { text: "Tríade clássica: midríase, taquipneia e insônia.", correct: false, explain: "A tríade clássica do envenenamento por opióides é miose, depressão respiratória (bradipneia) e rebaixamento do nível de consciência — não midríase nem taquipneia." },
+      { text: "Naloxone é antídoto que reverte rapidamente depressão respiratória e rebaixamento de consciência.", correct: true, explain: "Naloxone é antagonista competitivo dos receptores opioides e reverte rapidamente os efeitos centrais e respiratórios, sendo indicado em suspeita de intoxicação opióide com depressão respiratória." },
+      { text: "Carvão ativado é contra-indicado em todas as intoxicações por opióides.", correct: false, explain: "Carvão pode ser utilizado se a ingestão foi oral e o paciente não tem risco de aspiração; em pacientes com depressão respiratória grave, a via aérea deve ser protegida antes." },
+      { text: "Flumazenil é o tratamento de escolha concomitante para intoxicação por opióides.", correct: false, explain: "Flumazenil antagoniza benzodiazepínicos e não é indicado para intoxicação por opióides a menos que haja suspeita de coingestão e indicação específica." }
+    ]
+  },
+  {
+    q: "6) Questão — A respeito do paracetamol (acetaminofeno) e seu manejo na intoxicação aguda, qual alternativa é verdadeira?",
+    choices: [
+      { text: "A dose hepatotóxica é muito distante da dose terapêutica; apenas ingestas massivas (>20 g) causam risco clínico.", correct: false, explain: "Doses tóxicas podem ser relativamente próximas de doses terapêuticas, principalmente em uso crônico supratherapêutico ou ingestão única elevada; não é necessário chegar a 20 g para risco em todos os casos." },
+      { text: "Antídoto específico é a acetilcisteína; protocolo clássico inclui dose de ataque seguida de doses de manutenção.", correct: true, explain: "Acetilcisteína (oral ou IV) restaura reservas de glutationa e evita lesão hepática quando administrada dentro de intervalos adequados; os esquemas padronizados devem ser seguidos conforme peso e via." },
+      { text: "Hemodiálise é a primeira linha de tratamento em todas as intoxicações por paracetamol.", correct: false, explain: "Hemodiálise não é tratamento de primeira linha para paracetamol; acetilcisteína é o antídoto principal; diálise pode ser considerada em casos específicos e raros." },
+      { text: "Carvão ativado e lavagem gástrica nunca são indicados no paracetamol.", correct: false, explain: "Se a ingestão foi recente e não houver contraindicação, carvão ativado pode ser considerado para reduzir absorção; a decisão depende do tempo e do quadro clínico." }
+    ]
+  },
+  {
+    q: "7) Questão — Sobre indicação de hemodiálise em intoxicações, qual alternativa descreve corretamente as indicações clássicas?",
+    choices: [
+      { text: "Substâncias com alto volume de distribuição e alta ligação proteica são bem removidas por hemodiálise.", correct: false, explain: "Hemodiálise é mais eficaz para toxinas com baixo volume de distribuição e baixa ligação às proteínas plasmáticas; substâncias com alto Vd e alta ligação proteica não são removidas eficientemente." },
+      { text: "Lítio e ácido valproico são exemplos de toxícos classicamente indicados para hemodiálise em intoxicações graves.", correct: true, explain: "Lítio e alguns casos de intoxicação por ácido valpróico podem se beneficiar de remoção extracorpórea devido às características farmacocinéticas e gravidade clínica." },
+      { text: "Hemodiálise é contra-indicada em intoxicações por metais pesados (por exemplo, ferro) em todas as circunstâncias.", correct: false, explain: "A indicação de remoção extracorpórea em metais depende do agente, da forma e da disponibilidade de quelantes; não é uma contraindicação absoluta em todos os metais." },
+      { text: "Hemodiálise não causa instabilidade hemodinâmica e não tem riscos relacionados ao acesso.", correct: false, explain: "Hemodiálise pode provocar instabilidade hemodinâmica e complicações de acesso; por isso risco/benefício devem ser avaliados." }
+    ]
+  },
+  {
+    q: "8) Questão — Sobre intoxicações por corrosivos (ácidos e bases), assinale a alternativa correta:",
+    choices: [
+      { text: "Carvão ativado e lavagem gástrica são rotineiramente indicados.", correct: false, explain: "Para corrosivos, lavagem gástrica e carvão podem agravar as lesões; a conduta é suporte, irrigação de pele/olhos, avaliação endoscópica quando indicada e evitar indução de vômito." },
+      { text: "Bases provocam coagulação tecidual e, portanto, lesionam menos que os ácidos.", correct: false, explain: "Ácidos tendem a causar necrose por coagulação, enquanto bases causam necrose por liquefação e frequentemente penetram mais profundamente, causando lesões extensas." },
+      { text: "Principal conduta inclui lavagem abundante de pele/olhos, evitar indução de vômito e manejo baseado em suporte e avaliação endoscópica conforme quadro.", correct: true, explain: "Manejo envolve limpeza imediata, suporte clínico, analgesia, evitar procedimentos que possam reexpor tecidos ou provocar aspiração; avaliação endoscópica pode ser necessária para estratificar gravidade." },
+      { text: "Ingestão de base forte tipicamente protege contra perfuração esofágica.", correct: false, explain: "Bases fortes frequentemente penetram profundamente e aumentam o risco de perfuração e lesão extensa; não protegem contra perfuração." }
+    ]
+  },
+  {
+    q: "9) Questão — Em relação ao uso de flumazenil no contexto de intoxicação por benzodiazepínicos, qual afirmação é verdadeira?",
+    choices: [
+      { text: "Deve ser usado rotineiramente em todos os pacientes com depressão de consciência por benzodiazepínicos.", correct: false, explain: "Flumazenil tem indicação restrita; seu uso rotineiro é desaconselhado, especialmente se houver risco de convulsões ou coingestão convulsivante." },
+      { text: "Dose inicial típica é 0,1 mg, podendo repetir conforme resposta até limites seguros.", correct: true, explain: "O esquema usual inicia com 0,1 mg intravenoso e repete-se gradualmente conforme resposta, com atenção a contraindicações e risco de convulsões." },
+      { text: "Flumazenil é seguro em pacientes com história de crise convulsiva e polifarmácia anticonvulsivante.", correct: false, explain: "Em pacientes com epilepsia ou coingestão de substâncias convulsivantes, flumazenil pode precipitar convulsões e deve ser evitado ou usado com extrema cautela." },
+      { text: "Flumazenil acelera a eliminação renal dos benzodiazepínicos.", correct: false, explain: "Flumazenil antagoniza farmacodinamicamente os efeitos benzodiazepínicos; não altera a depuração renal das benzodiazepinas." }
+    ]
+  },
+  {
+    q: "10) Questão — Sobre síndromes toxicológicas (toxidromes), qual padrão corresponde corretamente à síndrome colinérgica?",
+    choices: [
+      { text: "A) Midríase, taquicardia, pele seca e hipertermia.", correct: false, explain: "Esses achados são típicos da síndrome anticolinérgica ou simpaticomimética, não colinérgica." },
+      { text: "Miose, sialorreia, lacrimejamento, broncoconstrição e aumento de secreções.", correct: true, explain: "A síndrome colinérgica manifesta-se por excesso de atividade muscarínica: miose, sialorreia, lacrimejamento, broncoconstrição e aumento de secreções, típico em organofosforados/carbamatos." },
+      { text: "Hipertermia, pele quente e úmida, agitação psicomotora, midríase.", correct: false, explain: "Achados mais compatíveis com síndrome simpaticomimética; colinérgico cursa com secreções aumentadas e miose." },
+      { text: "Bradicardia extrema sem alterações pupilares nem secreções.", correct: false, explain: "Bradicardia isolada sem o conjunto de sinais não caracteriza a síndrome colinérgica completa; o diagnóstico baseia-se no conjunto clínico." }
+    ]
+  },
+  {
+    q: "11) Questão — Acerca da diurese alcalina como medida de eliminação de tóxicos, marque a alternativa correta:",
+    choices: [
+      { text: "É utilizada para aumentar a eliminação de substâncias ácidas fracas que se ionizam em urina alcalina.", correct: true, explain: "Alcalinização urinária favorece a ionização de ácidos fracos (reduz reabsorção tubular) e aumenta a excreção renal de toxinas como salicilatos em situações selecionadas." },
+      { text: "Tem baixo risco e não necessita de monitorização laboratorial.", correct: false, explain: "A diurese alcalina pode provocar alterações hidroeletrolíticas e acidobase; exige monitorização de eletrólitos, pH e função renal." },
+      { text: "É eficaz para remoção de lítio independentemente do estado renal.", correct: false, explain: "Lítio é classicamente tratado com hemodiálise em intoxicações graves; diurese alcalina não é estratégia primária para lítio." },
+      { text: "Não se usa bicarbonato IV — apenas soluções alcalinas orais são eficazes.", correct: false, explain: "Alcalinização urinária em ambiente hospitalar é feita com bicarbonato IV associado a hidratação volumosa, sob monitorização." }
+    ]
+  },
+  {
+    q: "12) Questão — Em um paciente com intoxicação aguda de etiologia desconhecida e rebaixamento do nível de consciência, qual das ações é mais segura antes de realizar descontaminação gástrica?",
+    choices: [
+      { text: "Realizar lavagem gástrica sem proteção de via aérea para acelerar remoção.", correct: false, explain: "Realizar lavagem sem proteção de via aérea em paciente com consciência rebaixada expõe a alto risco de broncoaspiração; a via deve ser protegida primeiro." },
+      { text: "Administrar carvão ativado imediatamente por via oral, mesmo com alteração do nível de consciência.", correct: false, explain: "Pacientes com nível de consciência alterado não devem receber carvão por via oral sem proteção da via aérea (risco de aspiração); intubação prévia é necessária se indicado." },
+      { text: "Garantir proteção da via aérea (intubação) se necessária antes de procedimentos que possam induzir vômito ou passagem de sonda.", correct: true, explain: "Proteger a via aérea por intubação antes de procedimentos que aumentem risco de aspiração é a abordagem mais segura em pacientes rebaixados." },
+      { text: "Nunca solicitar exames laboratoriais em emergência — só após alta.", correct: false, explain: "Exames iniciais (glicemia, eletrólitos, gasometria, função hepática/rins quando indicado) são fundamentais na avaliação do paciente intoxicado e não devem ser adiados sem justificativa." }
+    ]
+  },
+  {
+    q: "13) Questão — Sobre notificação e suporte especializado, assinale a alternativa correta:",
+    choices: [
+      { text: "O serviço toxicológico (centro de referência) não é útil no manejo e não deve ser contatado.", correct: false, explain: "O serviço toxicológico fornece orientação especializada em doses, antídotos e condutas; contactar o centro de referência é recomendável em muitas situações complexas." },
+      { text: "Todo caso de intoxicação exógena deve ser notificado e, quando necessário, a equipe de plantão pode receber protocolos e doses via suporte toxicológico.", correct: true, explain: "Notificar o serviço toxicológico facilita a condução adequada, especialmente em casos raros ou quando a equipe precisa de orientação sobre antídotos e medidas específicas." },
+      { text: "Notificar o serviço toxicológico é obrigatório apenas em acidentes por animais peçonhentos.", correct: false, explain: "A atuação do serviço toxicológico abrange intoxicações por fármacos, produtos químicos e animais; sua consulta é útil em ampla gama de casos, não apenas peçonhentos." },
+      { text: "A consulta ao serviço toxicológico substitui a necessidade de exames laboratoriais.", correct: false, explain: "A consulta orienta, mas não elimina a necessidade de exames quando indicados para monitorização e decisões terapêuticas." }
+    ]
+  },
+  {
+    q: "14) Questão — Em relação à abstinência alcoólica grave (delirium tremens), qual é a conduta terapêutica inicial mais indicada?",
+    choices: [
+      { text: "Benzodiazepínicos para controle do delirium e prevenção de convulsões, com reposição de tiamina.", correct: true, explain: "Benzodiazepínicos são a principal intervenção para controlar delirium tremens e prevenir convulsões; reposição de tiamina é essencial em pacientes etilistas para prevenir complicações neurológicas." },
+      { text: "Uso rotineiro de flumazenil para reverter dependência prévia de benzodiazepínicos.", correct: false, explain: "Flumazenil não é indicado para tratar delírio por abstinência alcoólica e pode provocar convulsões em pacientes com histórico convulsivo ou coingestões." },
+      { text: "Diurético de alça em bolus para reduzir edema cerebral.", correct: false, explain: "Diuréticos de alça não são medida padrão para delirium tremens; o foco é sedação controlada, suporte clínico e correção eletrolítica." },
+      { text: "Antipsicóticos isolados sem benzodiazepínicos são terapia de escolha.", correct: false, explain: "Antipsicóticos podem ser usados como adjuvantes para sintomas psicóticos, mas benzodiazepínicos são essenciais para o controle e prevenção de convulsões; não devem ser substituídos." }
+    ]
+  },
+  {
+    q: "15) Questão — Sobre intoxicações por simpaticomiméticos (anfetaminas, cocaína), qual conduta é considerada adequada no manejo agudo?",
+    choices: [
+      { text: "Antagonistas colinérgicos (atropina) são a medida de escolha para acalmar o paciente.", correct: false, explain: "Atropina não é eficaz para intoxicação simpaticomimética; a estratégia é sedação com benzodiazepínicos e controle hemodinâmico." },
+      { text: "Benzodiazepínicos para sedação e controle da hiperatividade simpática, além de manejo das complicações cardiovasculares.", correct: true, explain: "Benzodiazepínicos reduzem a descarga adrenérgica, ajudando a controlar agitação, hipertensão e taquicardia; outras medidas podem incluir manejo de arritmias e hipertensão com fármacos apropriados." },
+      { text: "Diurese alcalina para acelerar eliminação da cocaína.", correct: false, explain: "Diurese alcalina não é usada para cocaína; manejo é principalmente suporte hemodinâmico, sedação e tratamento das complicações." },
+      { text: "Uso rotineiro de betabloqueadores não seletivos para controle cardiovascular.", correct: false, explain: "Betabloqueadores não seletivos podem agravar vasoconstrição alfa não controlada; seu uso deve ser criterioso e preferem-se alternativas ou betabloqueadores com ação combinada quando estritamente indicado." }
+    ]
+  },
+  // Continuação do array
+  {
+    q: "16) Questão — Sobre intoxicações por antidepressivos tricíclicos, qual achado clínico é mais característico e preocupante?",
+    choices: [
+      { text: "Bradicardia sinusal isolada.", correct: false, explain: "Bradicardia não é o achado típico; o padrão mais característico é taquicardia e alterações de condução cardíaca (QRS alargado) devido ao bloqueio dos canais de sódio." },
+      { text: "Taquicardia e alargamento do QRS no ECG, com risco de arritmias ventriculares.", correct: true, explain: "Os tricíclicos bloqueiam canais de sódio, prolongando QRS e predispondo a arritmias graves; também podem causar hipotensão e depressão de consciência." },
+      { text: "Hipotermia e bradipneia discretas.", correct: false, explain: "Hipotermia não é típica dessa intoxicação; ao contrário, pode haver febre por hiperatividade central ou convulsões." },
+      { text: "Hiperreflexia e clônus bilateral.", correct: false, explain: "Esses sinais são mais característicos da síndrome serotoninérgica, não da intoxicação por tricíclicos." }
+    ]
+  },
+  {
+    q: "17) Questão — Em uma intoxicação por organofosforado, qual mecanismo fisiopatológico explica os sintomas muscarínicos e nicotínicos observados?",
+    choices: [
+      { text: "Bloqueio competitivo dos receptores colinérgicos.", correct: false, explain: "Na verdade, ocorre inibição da acetilcolinesterase e acúmulo de acetilcolina, não bloqueio competitivo." },
+      { text: "Inibição da acetilcolinesterase, levando ao acúmulo de acetilcolina nas sinapses.", correct: true, explain: "Os organofosforados inibem a enzima que degrada acetilcolina, levando ao acúmulo desse neurotransmissor e hiperestimulação de receptores muscarínicos e nicotínicos." },
+      { text: "Aumento da dopamina sináptica com inibição de recaptação neuronal.", correct: false, explain: "Esse mecanismo é típico de drogas estimulantes, como cocaína e anfetaminas, não de organofosforados." },
+      { text: "Inibição da liberação de acetilcolina nas terminações nervosas.", correct: false, explain: "Ocorre o oposto — há excesso de acetilcolina disponível nas sinapses." }
+    ]
+  },
+  {
+    q: "18) Questão — Um trabalhador rural foi exposto a solventes orgânicos por via inalatória. Qual complicação respiratória é mais provável em casos severos?",
+    choices: [
+      { text: "Broncoespasmo leve e autolimitado.", correct: false, explain: "Solventes voláteis podem causar broncoespasmo, mas a complicação mais grave é a pneumonite química aspirativa." },
+      { text: "Pneumonite química aspirativa devido à aspiração e efeito irritativo direto.", correct: true, explain: "Os hidrocarbonetos e solventes irritam o epitélio alveolar e podem causar pneumonite química com hipoxemia e infiltrado pulmonar difuso." },
+      { text: "Enfisema pulmonar crônico.", correct: false, explain: "O enfisema é uma condição crônica e não resultado direto de intoxicação aguda por solventes." },
+      { text: "Tromboembolismo pulmonar secundário ao uso de solventes.", correct: false, explain: "Não há relação direta entre solventes e tromboembolismo pulmonar; o risco é químico, não trombótico." }
+    ]
+  },
+  {
+    q: "19) Questão — Em intoxicação por monóxido de carbono (CO), qual parâmetro é mais confiável para diagnóstico?",
+    choices: [
+      { text: "Saturação de oxigênio na oximetria de pulso.", correct: false, explain: "A oximetria de pulso não diferencia oxi-hemoglobina de carboxi-hemoglobina, podendo ser falsamente normal." },
+      { text: "Dosagem de carboxi-hemoglobina em sangue arterial.", correct: true, explain: "A dosagem de carboxi-hemoglobina é o método diagnóstico padrão; valores acima de 10–15% são sugestivos de intoxicação significativa." },
+      { text: "Nível de bicarbonato plasmático.", correct: false, explain: "O bicarbonato pode estar reduzido por acidose láctica, mas não é específico para CO." },
+      { text: "Gasometria com pH normal exclui intoxicação.", correct: false, explain: "O pH pode estar normal em exposições leves; o diagnóstico depende do nível de carboxi-hemoglobina, não apenas do pH." }
+    ]
+  },
+  {
+    q: "20) Questão — Qual é o principal mecanismo da meta-hemoglobinemia causada por nitratos ou anilinas?",
+    choices: [
+      { text: "Ligação irreversível do ferro da hemoglobina ao oxigênio.", correct: false, explain: "A meta-hemoglobinemia não resulta de ligação irreversível, mas de oxidação do ferro ferroso (Fe2+) para férrico (Fe3+)." },
+      { text: "Oxidação do ferro da hemoglobina para forma férrica (Fe3+), incapaz de transportar oxigênio.", correct: true, explain: "A oxidação do ferro impede a ligação de oxigênio, levando à hipóxia tecidual apesar de oxigenação normal aparente." },
+      { text: "Aumento da afinidade da hemoglobina pelo oxigênio, melhorando a saturação.", correct: false, explain: "A meta-hemoglobina reduz, e não aumenta, a afinidade útil pelo oxigênio; a saturação funcional cai." },
+      { text: "Produção excessiva de CO2 pela oxidação de nitratos.", correct: false, explain: "Não há relação direta entre meta-hemoglobinemia e aumento de CO2; a lesão é hemática, não respiratória direta." }
+    ]
+  },
+  {
+    q: "21) Caso clínico — Homem de 28 anos, encontrado inconsciente após ser visto ingerindo comprimidos desconhecidos. Apresenta bradicardia, miose e secreções abundantes. Qual é o diagnóstico mais provável e a conduta inicial?",
+    choices: [
+      { text: "Intoxicação por benzodiazepínicos — administrar flumazenil.", correct: false, explain: "Flumazenil não é indicado nesse quadro, pois o padrão é colinérgico (miose + secreções + bradicardia), não depressão isolada de consciência." },
+      { text: "Intoxicação colinérgica — administrar atropina e suporte ventilatório.", correct: true, explain: "O quadro é típico de intoxicação colinérgica (ex.: organofosforados), e o tratamento imediato é atropina em doses repetidas até reversão dos sintomas, além de suporte de vias aéreas." },
+      { text: "Intoxicação por opióides — administrar naloxone.", correct: false, explain: "Opióides causam miose e rebaixamento de consciência, mas não hipersecreções nem broncoespasmo; o conjunto indica quadro colinérgico." },
+      { text: "Intoxicação anticolinérgica — administrar fisostigmina.", correct: false, explain: "O oposto ocorre: o paciente tem hiperatividade colinérgica, e não bloqueio colinérgico." }
+    ]
+  },
+  {
+    q: "22) Caso clínico — Paciente de 45 anos, hipertenso, trazido com taquicardia, midríase, agitação intensa, hipertensão e dor torácica após uso recreativo de substância em festa. ECG mostra supradesnivelamento discreto de ST. Qual substância e conduta são mais prováveis?",
+    choices: [
+      { text: "Cocaína — benzodiazepínico para sedação e nitrato para controle da dor/PA.", correct: true, explain: "O quadro é típico de intoxicação por cocaína. Benzodiazepínicos controlam a hiperatividade simpática e nitratos reduzem dor e hipertensão; betabloqueadores não seletivos são contraindicados." },
+      { text: "Anfetamina — diurese alcalina imediata.", correct: false, explain: "Diurese alcalina não é indicada; o manejo é sedação e controle cardiovascular semelhante ao da cocaína." },
+      { text: "LSD — administração de haloperidol.", correct: false, explain: "LSD pode causar alucinações, mas não cursa com hipertensão e dor torácica típica de vasoespasmo coronariano." },
+      { text: "Heroína — naloxone e carvão ativado.", correct: false, explain: "Heroína causa depressão respiratória e miose, não hipertensão e agitação." }
+    ]
+  },
+  {
+    q: "23) Caso clínico — Mulher de 50 anos encontrada sonolenta, com respiração lenta, pupilas puntiformes e saturação de 85%. Após administração de naloxone IV, desperta e melhora da ventilação. Qual o diagnóstico e próxima conduta?",
+    choices: [
+      { text: "Intoxicação por benzodiazepínicos — iniciar flumazenil em infusão contínua.", correct: false, explain: "O quadro e resposta ao naloxone confirmam intoxicação opióide, não benzodiazepínica." },
+      { text: "Intoxicação por opióides — manter observação e considerar infusão contínua de naloxone se reaparecer depressão.", correct: true, explain: "A resposta ao naloxone confirma o diagnóstico; como alguns opióides têm meia-vida longa, pode ser necessário infusão contínua e suporte ventilatório até estabilização." },
+      { text: "Intoxicação por barbitúricos — administrar carvão ativado e intubar.", correct: false, explain: "Não há evidência de barbitúricos; a reversão com naloxone exclui essa hipótese." },
+      { text: "Intoxicação por CO — oxigênio hiperbárico.", correct: false, explain: "CO não causa miose e responde a naloxone; hipóxia tem outro mecanismo." }
+    ]
+  },
+  {
+    q: "24) Caso clínico — Homem de 35 anos apresenta confusão, taquipneia e hálito adocicado após tentativa de suicídio com líquido anticongelante (etilenoglicol). Qual complicação metabólica e tratamento específico são esperados?",
+    choices: [
+      { text: "Alcalose metabólica — diurese forçada.", correct: false, explain: "A intoxicação por etilenoglicol causa acidose metabólica, não alcalose." },
+      { text: "Acidose metabólica com hiato aniônico elevado — fomepizol ou etanol.", correct: true, explain: "O etilenoglicol é metabolizado a ácidos tóxicos; o tratamento é inibir a álcool-desidrogenase com fomepizol ou etanol, além de corrigir acidose e considerar hemodiálise." },
+      { text: "Hipocalemia e alcalose respiratória — oxigênio hiperbárico.", correct: false, explain: "Não há relação direta com CO ou hipoxemia; o distúrbio principal é acidose metabólica." },
+      { text: "Hiponatremia — restrição hídrica.", correct: false, explain: "A hiponatremia não é característica principal; o problema é metabólico e tóxico, não hídrico." }
+    ]
+  },
+  {
+    q: "25) Caso clínico — Mulher de 30 anos ingeriu acidentalmente produto de limpeza alcalino. Relata dor retroesternal intensa e sialorreia. Qual é a conduta inicial mais apropriada?",
+    choices: [
+      { text: "Induzir vômito para eliminar o produto.", correct: false, explain: "Induzir vômito é contraindicado, pois pode causar nova lesão esofágica e aspiração." },
+      { text: "Lavar a boca com água e encaminhar para endoscopia precoce.", correct: true, explain: "A lavagem oral para remoção residual e endoscopia precoce (em até 24h) ajudam a avaliar extensão da lesão e planejar conduta; o suporte clínico é fundamental." },
+      { text: "Administração imediata de carvão ativado.", correct: false, explain: "Carvão ativado não tem utilidade em corrosivos e pode dificultar endoscopia." },
+      { text: "Neutralizar o agente com ácido diluído.", correct: false, explain: "Neutralizações químicas são contraindicadas — podem gerar reações exotérmicas e agravar a lesão." }
+    ]
+  },
+  {
+    q: "26) Caso clínico — Paciente com tentativa de suicídio por antidepressivo tricíclico apresenta QRS alargado, hipotensão e convulsão. Qual é o tratamento específico de escolha?",
+    choices: [
+      { text: "Bicarbonato de sódio IV.", correct: true, explain: "O bicarbonato de sódio reduz a cardiotoxicidade (estreitamento do QRS e melhora da pressão) neutralizando o bloqueio de canais de sódio promovido pelos tricíclicos." },
+      { text: "Gluconato de cálcio.", correct: false, explain: "Não há papel do cálcio nessa situação; é útil em intoxicação por bloqueadores de canal de cálcio." },
+      { text: "Adrenalina em bolus repetidos.", correct: false, explain: "A adrenalina pode piorar arritmias; o bicarbonato é o tratamento de escolha." },
+      { text: "Hemodiálise imediata.", correct: false, explain: "Os tricíclicos têm alto volume de distribuição e não são eficientemente removidos por diálise." }
+    ]
+  },
+  {
+    q: "27) Caso clínico — Criança de 4 anos foi encontrada comendo comprimidos de ferro. Apresenta vômitos, dor abdominal e sonolência. Qual é o tratamento específico?",
+    choices: [
+      { text: "Carvão ativado em doses múltiplas.", correct: false, explain: "O ferro não é adsorvido pelo carvão ativado, logo não é útil." },
+      { text: "Deferoxamina intravenosa.", correct: true, explain: "Deferoxamina é o quelante específico para intoxicação por ferro; deve ser usada conforme gravidade clínica e níveis séricos." },
+      { text: "Hemodiálise.", correct: false, explain: "Hemodiálise não remove ferro eficazmente, pois ele se liga a proteínas plasmáticas." },
+      { text: "Lavagem gástrica e alta imediata.", correct: false, explain: "Lavagem gástrica pode ser considerada se ingestão recente, mas o tratamento definitivo é a deferoxamina; alta imediata é inadequada." }
+    ]
+  },
+  {
+    q: "28) Caso clínico — Homem de 60 anos usa betabloqueador e ingere acidentalmente dose dez vezes maior. Apresenta bradicardia grave e hipotensão. Qual o antídoto específico?",
+    choices: [
+      { text: "Glucagon.", correct: true, explain: "O glucagon aumenta o AMPc e bypassa o bloqueio beta-adrenérgico, melhorando a contratilidade e a frequência cardíaca." },
+      { text: "Bicarbonato de sódio.", correct: false, explain: "O bicarbonato é útil em intoxicações por tricíclicos, não para betabloqueadores." },
+      { text: "Fisostigmina.", correct: false, explain: "Fisostigmina é usada para reversão de anticolinérgicos, não betabloqueadores." },
+      { text: "Flumazenil.", correct: false, explain: "Flumazenil é antídoto de benzodiazepínicos, não de betabloqueadores." }
+    ]
+  },
+  {
+    q: "29) Caso clínico — Adolescente de 17 anos é trazido por familiares com confusão mental e vômitos. Informa ter tomado várias cápsulas de paracetamol há 6 horas. Qual é a conduta mais adequada?",
+    choices: [
+      { text: "Induzir vômito e observar.", correct: false, explain: "Induzir vômito não é recomendado; deve-se iniciar tratamento específico o quanto antes." },
+      { text: "Iniciar acetilcisteína imediatamente e dosar níveis de paracetamol.", correct: true, explain: "A acetilcisteína deve ser iniciada o quanto antes; a dosagem de paracetamol no sangue orienta a continuidade, mas não deve atrasar o início da terapia." },
+      { text: "Administrar flumazenil.", correct: false, explain: "Flumazenil não tem papel algum nesse tipo de intoxicação." },
+      { text: "Alta após observação de 2 horas.", correct: false, explain: "A intoxicação por paracetamol pode evoluir com hepatotoxicidade tardia; alta precoce é contraindicada." }
+    ]
+  },
+  {
+    q: "30) Caso clínico — Homem de 40 anos, alcoolista, chega com confusão, alucinações visuais e tremores intensos. Há 48h interrompeu o uso de álcool. Qual é o diagnóstico e conduta inicial?",
+    choices: [
+      { text: "Síndrome serotoninérgica — usar cipro-heptadina.", correct: false, explain: "O quadro é típico de abstinência alcoólica (delirium tremens), não síndrome serotoninérgica." },
+      { text: "Delirium tremens — benzodiazepínico e reposição de tiamina.", correct: true, explain: "Delirium tremens requer benzodiazepínicos para controlar hiperatividade autonômica e convulsões, além de tiamina para prevenir encefalopatia de Wernicke." },
+      { text: "Psicose por cocaína — haloperidol.", correct: false, explain: "Não há uso recente de estimulantes; quadro temporal após abstinência confirma delirium tremens." },
+      { text: "Encefalopatia hepática — lactulose e neomicina.", correct: false, explain: "Embora alcoolistas possam ter hepatopatia, o quadro clínico agudo é de abstinência e não encefalopatia hepática." }
+    ]
+  }
+];
+
+
+  
+
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
