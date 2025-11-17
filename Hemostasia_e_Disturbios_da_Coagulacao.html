@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Hemostasia e Disturbios da Coagulacao</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Hemostasia e Disturbios da Coagulacao</h1>
+    <p class="lead">30 questões - Hemostasia e Disturbios da Coagulacao</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão — Na hemostasia primária, qual dos seguintes pares receptor-ligante é essencial para a adesão plaquetária ao colágeno subendotelial exposto?",
+    choices: [
+      { text: "GPIb-IX — fator von Willebrand (vWF)", correct: true, explain: "GPIb-IX liga-se ao vWF que media a adesão inicial das plaquetas ao colágeno exposto, sendo crucial no estágio inicial da hemostasia primária." },
+      { text: "GPIIb-IIIa — fibrinogênio", correct: false, explain: "GPIIb-IIIa liga fibrinogênio e é essencial para agregação plaquetária (tampão), mas a adesão inicial ao colágeno depende de GPIb-IX/vWF." },
+      { text: "GPVI — tromboxano A2", correct: false, explain: "GPVI é receptor de colágeno que participa da ativação plaquetária, mas o par-chave para adesão mediada por fluxo é GPIb-IX/vWF." },
+      { text: "P2Y12 — ADP", correct: false, explain: "P2Y12 é receptor para ADP que amplifica a ativação/ agregação, não o principal mediador da adesão ao colágeno." }
+  ]},
+  {
+    q: "2) Questão — Qual teste laboratorial é mais apropriado para avaliar a via intrínseca da coagulação e para monitorar heparina não fracionada?",
+    choices: [
+      { text: "Tempo de Tromboplastina Parcial Ativado (TTPa)", correct: true, explain: "O TTPa avalia a via intrínseca e é usado no acompanhamento da heparina não fracionada, conforme indicado no material." },
+      { text: "Tempo de Protrombina (TP)", correct: false, explain: "O TP avalia a via extrínseca (fatores II, V, VII e X) e é usado para monitorar anticoagulação oral (AVK), não heparina UFH." },
+      { text: "Tempo de Trombina (TT)", correct: false, explain: "TT avalia a conversão final do fibrinogênio em fibrina e é usado para detectar hipofibrinogenemia ou inibidores; não é o principal para heparina UFH." },
+      { text: "Tempo de Sangramento (TS)", correct: false, explain: "TS avalia função plaquetária/adesão, não a via intrínseca da cascata de fatores." }
+  ]},
+  {
+    q: "3) Questão — A razão normalizada internacional (INR) é utilizada primariamente para:",
+    choices: [
+      { text: "Padronizar o Tempo de Protrombina (TP) para monitoramento de antagonistas da vitamina K", correct: true, explain: "INR padroniza o TP entre reagentes e é usado para monitorar warfarina/antagonistas da vitamina K, com alvos clínicos específicos." },
+      { text: "Monitorar heparina de baixo peso molecular", correct: false, explain: "Heparinas (especialmente HBPM) não são monitoradas rotineiramente por INR; TTPa ou anti-Xa são usados para heparina não fracionada." },
+      { text: "Substituir o TTPa na avaliação da via intrínseca", correct: false, explain: "INR/TP avaliam via extrínseca/comum; não substituem TTPa para via intrínseca." },
+      { text: "Avaliar função plaquetária", correct: false, explain: "INR não informa sobre plaquetas; testes como agregometria ou tempo de sangramento são usados para função plaquetária." }
+  ]},
+  {
+    q: "4) Questão — Em que situação o Tempo de Reptilase (TR) é preferível ao Tempo de Trombina (TT) para avaliar o fibrinogênio?",
+    choices: [
+      { text: "Quando há suspeita de presença de heparina na amostra", correct: true, explain: "TR não é afetado pela heparina enquanto o TT é prolongado pela presença de heparina; assim TR ajuda a diferenciar hipofibrinogenemia de presença de heparina." },
+      { text: "Em todas as coagulopatias congênitas", correct: false, explain: "TR tem uso específico em avaliar fibrinogênio independentemente de heparina; não é exame universal para todas as coagulopatias congênitas." },
+      { text: "Para mensurar produtos de degradação da fibrina (PDF)", correct: false, explain: "PDFs são mensurados por testes específicos (D-dímero, produtos de degradação), não pelo TR." },
+      { text: "Substituir o TTPa no monitoramento da heparina", correct: false, explain: "TR não substitui TTPa; possui indicação específica relativa ao fibrinogênio e interferência por heparina." }
+  ]},
+  {
+    q: "5) Questão — Qual das afirmações sobre o fator XII (Hageman) e seu papel clínico é correta?",
+    choices: [
+      { text: "Deficiência de fator XII prolonga TTPa mas não costuma causar sangramento clínico significativo", correct: true, explain: "O material destaca que deficiência de fator XII prolonga TTPa, porém não se associa a sangramentos significativos na hemostasia fisiológica." },
+      { text: "Deficiência de fator XII é a causa clássica de hemorragia pós-operatória", correct: false, explain: "Ao contrário, a deficiência de XII prolonga testes de laboratório sem correlação direta com sangramento clínico significativo." },
+      { text: "Fator XII é essencial para a via extrínseca", correct: false, explain: "Fator XII pertence à via intrínseca; a via extrínseca envolve fator tecidual e VII." },
+      { text: "Deficiência de fator XII aumenta o risco trombótico clinicamente", correct: false, explain: "Embora algumas associações tenham sido estudadas, o material enfatiza a dissociação entre TTPa prolongado e sangramento, não aumento claro de trombose." }
+  ]},
+  {
+    q: "6) Questão — Sobre a proteína C e proteína S, assinale a alternativa correta:",
+    choices: [
+      { text: "A proteína C ativada (com proteína S como cofator) degrada os fatores Va e VIIIa, regulando a coagulação", correct: true, explain: "O material descreve o sistema proteína C/proteína S ativado pela trombina/trombomodulina, degradando Va e VIIIa para inibir produção excessiva de trombina." },
+      { text: "A proteína C é um inibidor direto da trombina independente de cofatores", correct: false, explain: "A proteína C necessita de ativação pela trombina trombomodulina e proteína S atua como cofator para degradar Va/VIIIa; não é inibidor direto da trombina sem esse sistema." },
+      { text: "Deficiências de proteína C/S prolongam o TTPa", correct: false, explain: "Deficiências de proteína C/S tendem a predispor a trombose; os exames de rotina (TTPa/TP) podem estar normais." },
+      { text: "Proteína S ativa proteína C através de fosforilação", correct: false, explain: "Proteína S atua como cofator não catalítico para APC; não 'ativa' proteína C por fosforilação." }
+  ]},
+  {
+    q: "7) Questão — Qual é a principal ação fisiológica da plasmina no sistema fibrinolítico?",
+    choices: [
+      { text: "Degradar fibrina e fibrinogênio, gerando produtos de degradação (PDF)", correct: true, explain: "Plasmina cliva fibrina/fibrinogênio produzindo PDFs; o material enfatiza esse papel central na fibrinólise." },
+      { text: "Ativar o fibrinogênio para formar redes de fibrina", correct: false, explain: "Ativação do fibrinogênio em fibrina é função da trombina; plasmina é fibrinolítica, não procoagulante." },
+      { text: "Inibir tPA e uPA para reduzir fibrinólise", correct: false, explain: "Antiplasmina e inibidores de ativadores do plasminogênio limitam a fibrinólise; a plasmina realiza degradação." },
+      { text: "Promover agregação plaquetária via liberação de ADP", correct: false, explain: "A plasmina não promove agregação plaquetária; atua na degradação da malha de fibrina." }
+  ]},
+  {
+    q: "8) Questão — Em relação ao Tromboelastograma (TEG), qual interpretação está de acordo com o material?",
+    choices: [
+      { text: "Amplitude maior indica maior firmeza do coágulo e possível hipercoagulabilidade", correct: true, explain: "O material descreve que amplitude do traçado correlaciona com firmeza do coágulo — amplitudes maiores associadas a maior tendência à hipercoagulabilidade." },
+      { text: "Amplitude menor indica excesso de fibrinogênio", correct: false, explain: "Amplitude menor sugere menor firmeza/coagulação ou fibrinólise aumentada; excesso de fibrinogênio tenderia a aumentar amplitude." },
+      { text: "TEG não fornece informação sobre fibrinólise", correct: false, explain: "TEG permite identificar fibrinólise pela redução da amplitude/tempo de lise — o material destaca utilidade para fibrinólise." },
+      { text: "TEG substitui completamente TP e TTPa em todos os cenários laboratoriais", correct: false, explain: "TEG é complementar — especialmente útil no choque hemorrágico — mas não substitui integralmente testes tradicionais em todos os cenários." }
+  ]},
+  {
+    q: "9) Questão — Qual valor de contagem de plaquetas descrito no material costuma ser limite abaixo do qual raramente ocorre sangramento espontâneo?",
+    choices: [
+      { text: "150.000/mm³", correct: false, explain: "150–400 mil/mm³ é o intervalo normal; sangramento espontâneo raramente ocorre até valores muito menores." },
+      { text: "50.000–70.000/mm³", correct: true, explain: "O material menciona que raramente há sangramento até que a diminuição atinja 50–70.000/mm³." },
+      { text: "20.000/mm³", correct: false, explain: "20.000/mm³ é um nível associado a risco elevado de sangramento espontâneo, não ao limiar 'raramente sangra'." },
+      { text: "300.000/mm³", correct: false, explain: "300.000/mm³ está dentro do normal; não é limite para sangramento espontâneo." }
+  ]},
+  {
+    q: "10) Questão — A dosagem de fibrinogênio aumenta em quais condições, de acordo com o PDF?",
+    choices: [
+      { text: "Processos inflamatórios, neoplasias, infecções, gravidez e pós-operatório", correct: true, explain: "O material lista especificamente essas condições como associadas ao aumento dos níveis de fibrinogênio." },
+      { text: "Deficiência hereditária de fibrinogênio", correct: false, explain: "Deficiência hereditária levaria redução, não aumento, dos níveis de fibrinogênio." },
+      { text: "Hemorragia massiva aguda", correct: false, explain: "Hemorragia maciça tende a reduzir fibrinogênio por consumo; o material indica aumento em estados inflamatórios/crônicos." },
+      { text: "Tratamento com alteplase (tPA)", correct: false, explain: "tPA ativa fibrinólise, não aumenta fibrinogênio. Pode reduzir os níveis funcionalmente." }
+  ]},
+  {
+    q: "11) Questão — Na avaliação clínica da hemostasia, qual item do interrogatório o material destaca como indispensável?",
+    choices: [
+      { text: "História de sangramentos (epistaxe, hematomas espontâneos, sangramento gengival, sangramento pós-extração dentária, menorragia)", correct: true, explain: "O PDF enfatiza que um interrogatório dirigido buscando esses sinais é imprescindível na avaliação da hemostasia." },
+      { text: "Exclusivamente histórico familiar de trombose", correct: false, explain: "Histórico de trombose é relevante, mas o material destaca o amplo conjunto de perguntas sobre sangramentos e uso de medicamentos." },
+      { text: "Somente exame físico sem perguntas sobre medicamentos", correct: false, explain: "Registro de uso de anticoagulantes/antiagregantes é essencial e deve ser perguntado." },
+      { text: "Somente exames laboratoriais, sem necessidade de história clínica", correct: false, explain: "O documento ressalta que interpretação clínica + laboratorial é fundamental; não basta apenas exames." }
+  ]},
+  {
+    q: "12) Questão — Qual mecanismo explica a amplificação da coagulação na fase inicial segundo o modelo celular da coagulação descrito?",
+    choices: [
+      { text: "A pequena quantidade de trombina gerada na iniciação ativa plaquetas e fatores V, VIII e XI, promovendo amplificação", correct: true, explain: "O modelo celular descreve que a trombina inicial ativa fatores e plaquetas, levando à amplificação que sustenta a propagação." },
+      { text: "Ativação de fator XII por superfícies negativas desencadeia a via extrínseca", correct: false, explain: "Ativação de XII refere-se ao modelo clássico/intrínseco; a via extrínseca envolve fator tecidual/ VII." },
+      { text: "TFPI aumenta a atividade do complexo FT/FVIIa", correct: false, explain: "TFPI é inibidor do complexo FT/FVIIa, limitando a iniciação, não amplificando." },
+      { text: "A antitrombina III potencializa a formação de trombina", correct: false, explain: "Antitrombina III inibe trombina e fatores; não potencia formação de trombina." }
+  ]},
+  {
+    q: "13) Questão — Sobre a doença de von Willebrand (DvW), qual das alternativas está de acordo com o que consta no material?",
+    choices: [
+      { text: "É o defeito congênito mais comum que causa alterações quantitativas ou qualitativas de multímeros de vWF e pode prolongar o tempo de sangramento", correct: true, explain: "O PDF afirma que DvW é o defeito congênito mais comum e afeta adesão/ função do vWF, prolongando tempo de sangramento." },
+      { text: "É primariamente uma deficiência de fibrinogênio", correct: false, explain: "DvW envolve vWF; fibrinogênio é distinto e relacionado a outros transtornos." },
+      { text: "Não responde à desmopressina (DDAVP)", correct: false, explain: "Material indica que tratamento pode incluir desmopressina ou concentrados de vWF dependendo do tipo." },
+      { text: "Sempre cursa com trombocitose", correct: false, explain: "DvW não cursa tipicamente com trombocitose; apresenta problemas de função/quantidade de vWF." }
+  ]},
+  {
+    q: "14) Questão — Qual é o papel da antitrombina III (ATIII) conforme descrito no PDF?",
+    choices: [
+      { text: "Principal inibidora dos fatores de coagulação (trombina, IXa, Xa); heparina potencia seu efeito", correct: true, explain: "O material descreve a ATIII como principal inibidor e que heparina forma complexo com ATIII para aumentar atividade anticoagulante." },
+      { text: "Ativa proteína C através da trombomodulina", correct: false, explain: "Proteína C é ativada pela trombina em presença de trombomodulina; ATIII inibe proteases, não ativa proteína C." },
+      { text: "É um cofator essencial para fibrinólise", correct: false, explain: "ATIII é anticoagulante que inibe serinas-proteases da cascata de coagulação; fibrinólise é mediada por plasmina." },
+      { text: "Seu déficit aumenta a sensibilidade à heparina", correct: false, explain: "Deficiência de ATIII torna o efeito da heparina diminuído ou ausente, pois heparina precisa de ATIII para ação." }
+  ]},
+  {
+    q: "15) Questão — Quando pedir INR segundo a orientação prática contida no material?",
+    choices: [
+      { text: "Para monitorização de anticoagulação com antagonistas da vitamina K e em avaliação pré-operatória quando há suspeita de coagulopatia", correct: true, explain: "O PDF lista essas indicações explicitamente: monitoramento de AVK e avaliação pré-operatória em certos pacientes." },
+      { text: "Rotineiramente para monitorar heparina não fracionada", correct: false, explain: "INR não é útil para monitorar heparina; para UFH usa-se TTPa/anti-Xa." },
+      { text: "Para avaliar função plaquetária antes de extração dentária", correct: false, explain: "Função plaquetária é avaliada por testes específicos; INR não reflete função plaquetária." },
+      { text: "Somente em pacientes com fibrinólise acelerada", correct: false, explain: "INR é relacionado a via extrínseca/TP; fibrinólise acelerada investigada por PDF/D-dímero e outros testes." }
+  ]},
+  {
+    q: "16) Questão — Qual dos seguintes perfis laboratoriais é mais compatível com deficiência isolada de fibrinogênio (afibrinogenemia ou hipofibrinogenemia)?",
+    choices: [
+      { text: "TP normal, TTPa normal, Tempo de Trombina (TT) prolongado, dosagem de fibrinogênio baixa", correct: true, explain: "A conversão final do fibrinogênio em fibrina é avaliada pelo TT; na deficiência de fibrinogênio o TT costuma estar prolongado e a dosagem confirmará redução do fibrinogênio." },
+      { text: "TP prolongado, TTPa normal, TT normal, fibrinogênio normal", correct: false, explain: "TP prolongado sugere alteração da via extrínseca/comum (fatores II/VII/X) — não é padrão de deficiência isolada de fibrinogênio." },
+      { text: "TTPa prolongado, TT normal, fibrinogênio elevado", correct: false, explain: "TTPa prolongado remete à via intrínseca; fibrinogênio elevado afasta hipofibrinogenemia." },
+      { text: "TT normal, TR prolongado, fibrinogênio normal", correct: false, explain: "Tempo de Reptilase (TR) é usado para avaliar fibrinogênio sem interferência por heparina; TR prolongado com TT normal seria incomum e sugere erro de amostragem/ensaio." }
+  ]},
+  {
+    q: "17) Questão — Paciente em uso de heparina não fracionada apresenta TTPa prolongado. Qual é o exame laboratorial mais adequado para quantificar atividade anticoagulante em situações em que TTPa é pouco confiável?",
+    choices: [
+      { text: "Dosagem de anti-Xa", correct: true, explain: "A atividade anti-Xa mede diretamente a inibição da via do fator Xa e é indicada quando TTPa é pouco confiável (variabilidade reacional, trombocitopenia, presença de heparina) para monitorar heparinas." },
+      { text: "INR", correct: false, explain: "INR padroniza o TP e serve para monitorar antagonistas da vitamina K; não é apropriado para monitorar heparina." },
+      { text: "Tempo de sangramento (TS)", correct: false, explain: "TS avalia função plaquetária; não quantifica atividade anticoagulante de heparinas." },
+      { text: "Tempo de reptilase (TR)", correct: false, explain: "TR é usado para avaliar fibrinogênio independentemente de heparina, não para medir atividade anticoagulante." }
+  ]},
+  {
+    q: "18) Questão — Em um cenário de suspeita de Doença de von Willebrand tipo 1 (quantitativa, parcial), qual combinação de achados é a mais esperada?",
+    choices: [
+      { text: "Tempo de sangramento levemente prolongado, redução moderada da atividade de vWF e resposta clínica a desmopressina (DDAVP)", correct: true, explain: "Na DvW tipo 1 há redução quantitativa parcial de vWF, TS pode estar levemente prolongado; DDAVP frequentemente eleva níveis de vWF e corrige temporariamente a hemostasia." },
+      { text: "TTPa extremamente prolongado, ausência de resposta à DDAVP", correct: false, explain: "TTPa muito prolongado sugere deficiência de fatores intrínsecos; falta de resposta à DDAVP é mais característica de alguns subtipos (tipo 2B ou 3), não do tipo 1 tipicamente." },
+      { text: "Plaquetas < 20.000/mm³ com hemorragia espontânea", correct: false, explain: "DvW geralmente associa-se a defeito qualitativo/quantitativo de vWF, não a trombocitopenia tão severa." },
+      { text: "Fibrinogênio funcional ausente com TT normal", correct: false, explain: "Ausência de fibrinogênio altera TT; isso não é compatível com DvW." }
+  ]},
+  {
+    q: "19) Questão — Qual a ação farmacológica principal da desmopressina (DDAVP) no tratamento de coagulopatias hemorrágicas hereditárias?",
+    choices: [
+      { text: "Estimula liberação de vWF e fator VIII a partir de depósitos endoteliais, aumentando níveis plasmáticos", correct: true, explain: "DDAVP provoca liberação de vWF armazenado em células endoteliais e aumenta o fator VIII, sendo útil em muitos pacientes com DvW tipo 1 e hemofilia A leve." },
+      { text: "Inibe plasmina, reduzindo fibrinólise", correct: false, explain: "DDAVP não atua diretamente no sistema fibrinolítico; antifibrinolíticos (ácido tranexâmico) fazem isso." },
+      { text: "Ativa antitrombina III, potenciando efeito da heparina", correct: false, explain: "DDAVP não ativa ATIII; ao contrário, ATIII é coadjuvante da heparina." },
+      { text: "Bloqueia receptor P2Y12, reduzindo agregação plaquetária", correct: false, explain: "Bloqueadores P2Y12 (ex: clopidogrel) têm efeito antiplaquetário; DDAVP aumenta hemostasia." }
+  ]},
+  {
+    q: "20) Questão — Em um Tromboelastograma (TEG), qual padrão sugere fibrinólise aumentada?",
+    choices: [
+      { text: "Queda rápida da amplitude após formação do coágulo (redução precoce da firmeza), com tempo de lise reduzido", correct: true, explain: "Fibrinólise intensa leva à perda rápida da amplitude (firmeza) do coágulo no traçado do TEG, indicando lise ativa." },
+      { text: "Amplitude aumentada e tempo de formação curto", correct: false, explain: "Amplitude aumentada e formação rápida sugerem hipercoagulabilidade, não fibrinólise." },
+      { text: "Tempo de início (R) prolongado sem alteração da amplitude", correct: false, explain: "R prolongado aponta para deficiência de fatores/hipocoagulabilidade inicial, não padrão primário de fibrinólise." },
+      { text: "Traçado normal com aumento do ângulo (α)", correct: false, explain: "Aumento do ângulo sugere polimerização fibrínica acelerada; não é indicativo de fibrinólise." }
+  ]},
+  {
+    q: "21) Questão — Um paciente com suspeita de coagulação intravascular disseminada (CID) frequentemente apresenta qual combinação laboratoriais?",
+    choices: [
+      { text: "Plaquetopenia, TTPa e TP prolongados, fibrinogênio baixo, D-dímero elevado", correct: true, explain: "CID envolve consumo de plaquetas e fatores, levando a prolongamento de testes (TP/TTPa), queda de fibrinogênio e aumento de produtos de degradação como D-dímero." },
+      { text: "Plaquetas aumentadas, fibrinogênio elevado, D-dímero normal", correct: false, explain: "CID cursa com consumo plaquetário e fibrinogênio geralmente baixos; D-dímero costuma estar elevado." },
+      { text: "Isolamento de TTPa prolongado com fibrinogênio normal e D-dímero baixo", correct: false, explain: "CID tende a afetar múltiplos parâmetros; isolamento de TTPa é insuficiente para caracterizar CID." },
+      { text: "TP normal, TTPa normal, fibrinogênio alto, sem sinais de hemorragia", correct: false, explain: "Esse perfil não condiz com o estado de consumptivo observado na CID." }
+  ]},
+  {
+    q: "22) Questão — Qual situação clínica descrita no PDF justifica solicitar INR antes de um procedimento invasivo agendado?",
+    choices: [
+      { text: "Paciente em uso de varfarina (antagonista da vitamina K) ou história de doença hepática com suspeita de coagulopatia", correct: true, explain: "INR é útil para avaliar risco hemorrágico pré-operatório em pacientes em uso de AVK ou com hepatopatia que pode alterar fatores da via extrínseca." },
+      { text: "Paciente em uso exclusivo de aspirina de baixa dose", correct: false, explain: "Aspirina afeta função plaquetária; INR não reflete função plaquetária — investigação diferente é necessária." },
+      { text: "Jovem sem medicações com história normal de sangramentos", correct: false, explain: "Em pacientes de baixo risco e sem história de sangramento, INR rotineiro não é indicado." },
+      { text: "Paciente com suspeita de trombocitopenia induzida por heparina (TIH) recém-suspensa", correct: false, explain: "TIH envolve plaquetas; investigação e monitoramento são distintos (contagem plaquetária, testes específicos), não INR." }
+  ]},
+  {
+    q: "23) Questão — Segundo o material, qual é a principal limitação dos exames laboratoriais tradicionais na avaliação de pacientes com sangramento agudo?",
+    choices: [
+      { text: "Podem demorar para ficar disponíveis e os resultados nem sempre refletem o comportamento do sangramento no campo operatório", correct: true, explain: "O PDF destaca a discrepância clínico-laboratorial e a limitação de disponibilidade rápida dos exames em cenários críticos." },
+      { text: "São altamente sensíveis a pequenas variações e, portanto, raramente úteis", correct: false, explain: "Apesar das limitações, os exames são úteis quando interpretados em conjunto com a clínica; a afirmação absoluta é incorreta." },
+      { text: "Substituem completamente a avaliação clínica", correct: false, explain: "O material enfatiza a necessidade de integrar clínica e exames; não se deve substituir o julgamento clínico pelos exames isolados." },
+      { text: "Detectam todas as causas de sangramento plaquetário", correct: false, explain: "Exames tradicionais podem não identificar defeitos plaquetários qualitativos; testes específicos são necessários." }
+  ]},
+  {
+    q: "24) Questão — Em relação à antitrombina III (ATIII), qual é a implicação clínica de sua deficiência conforme descrito no PDF?",
+    choices: [
+      { text: "A deficiência de ATIII diminui o efeito anticoagulante da heparina, tornando o tratamento menos eficaz", correct: true, explain: "A heparina necessita de ATIII para exercer efeito; deficiência reduz efeito clínico da heparina." },
+      { text: "A deficiência de ATIII prolonga exclusivamente o tempo de sangramento", correct: false, explain: "ATIII está envolvida em inibição de serino-proteases; sua deficiência predispõe à trombose, não a sangramentos primários." },
+      { text: "ATIII aumenta a atividade da plasmina quando elevada", correct: false, explain: "ATIII inibe serino-proteases da coagulação; não é ativadora da plasmina." },
+      { text: "Deficiência de ATIII é tratada com desmopressina", correct: false, explain: "Desmopressina atua aumentando vWF/fator VIII; reposição de ATIII ou hemoderivados específicos são as medidas quando necessário." }
+  ]},
+  {
+    q: "25) Questão — Qual medida laboratorial é útil para distinguir prolongamento do TT causado por heparina versus por hipofibrinogenemia?",
+    choices: [
+      { text: "Tempo de Reptilase (TR); TR normal com TT prolongado sugere presença de heparina", correct: true, explain: "TR não é afetado pela heparina; assim, TT prolongado com TR normal sugere interferência por heparina, enquanto TR prolongado indica problema fibrinogênico." },
+      { text: "INR", correct: false, explain: "INR padroniza TP e não discrimina interferência por heparina no TT." },
+      { text: "Contagem de plaquetas", correct: false, explain: "Plaquetas não explicam discrepância entre TT e TR relacionadas a fibrinogênio ou heparina." },
+      { text: "D-dímero", correct: false, explain: "D-dímero reflete fibrinólise/consumo, não distingue interferência de heparina no TT." }
+  ]},
+  {
+    q: "26) Questão clínica — Mulher de 28 anos refere epistaxes frequentes desde a adolescência, menorragia com necessidade de substituir absorventes a cada 2 horas no início do período, e história familiar de sangramentos (mãe com sangramento fácil). Exames: contagem plaquetária 220.000/mm³, tempo de sangramento levemente prolongado, TTPa e TP normais. Qual é a hipótese diagnóstica mais provável e qual teste confirmar?",
+    choices: [
+      { text: "Doença de von Willebrand; confirmar com dosagem de vWF antigeno/atividade e fator VIII", correct: true, explain: "Quadro de sangramentos mucocutâneos, história familiar e exames iniciais compatíveis com DvW; confirmação por dosagens de vWF (antígeno e atividade) e relação com fator VIII." },
+      { text: "Púrpura trombocitopênica imune; confirmar com biópsia da medula", correct: false, explain: "PTI cursa com trombocitopenia marcada; contagem plaquetária normal torna PTI improvável." },
+      { text: "Hemofilia A; confirmar com dosagem de fibrinogênio", correct: false, explain: "Hemofilia A é recessiva ligada ao X e cursa com sangramentos articulares e TTPa prolongado; paciente é mulher com quadro mucocutâneo e plaquetas normais." },
+      { text: "Deficiência de antitrombina III; confirmar com INR", correct: false, explain: "Deficiência de ATIII predisporia a trombose, não a sangramentos mucocutâneos — INR não é teste diagnóstico de ATIII." }
+  ]},
+  {
+    q: "27) Caso clínico — Homem de 62 anos submetido a ressecção oncológica extensa intra-abdominal. No pós-operatório imediato apresenta sangramento persistente no dreno, hipotensão progressiva e necessidade crescente de transfusão. Exames: Hb em queda, plaquetas 80.000/mm³, TP 25s (↑), TTPa 60s (↑), fibrinogênio 120 mg/dL (↓), D-dímero elevado. Qual é a hipótese mais provável e qual a conduta laboratorial inicial mais urgente?",
+    choices: [
+      { text: "Coagulação intravascular disseminada (CID) em consumo; conduta: correção hemodinâmica e testes seriados (incluindo fibrinogênio, plaquetas) e transfusão dirigida (concentrado de plaquetas, plasma fresco congelado), além de tratar causa subjacente", correct: true, explain: "Quadro de sangramento consumptivo com redução de fibrinogênio, prolongamento de TP/TTPa e D-dímero elevado é típico de CID; conduta inclui suporte hemodinâmico, reposição dirigida e investigação/tratamento da causa (sangramento/sepse)." },
+      { text: "Hipotermia isolada causando coagulopatia; conduta: apenas aquecer o paciente", correct: false, explain: "Hipotermia pode contribuir, mas os achados laboratoriais (D-dímero elevado, fibrinogênio baixo) sugerem CID consumptivo." },
+      { text: "Reação transfusional alérgica; conduta: suspender transfusão e administrar anti-histamínicos", correct: false, explain: "Reações transfusionais não explicam padrão laboratorial de consumo e D-dímero elevado." },
+      { text: "Deficiência isolada de fator VII; conduta: administrar vitamina K", correct: false, explain: "Deficiência isolada de VII não causa elevação de D-dímero nem plaquetopenia significativa; apresentação é compatível com CID." }
+  ]},
+  {
+    q: "28) Caso clínico — Paciente masculino de 45 anos internado com sepse grave evolui com hipotensão e sinais de disfunção orgânica. Laboratório: TTPa prolongado, TP prolongado, fibrinogênio baixo, D-dímero elevado; trombocitopenia progressiva. O material descreve relação entre sepse e sistema proteína C. Qual intervenção mencionada tem evidência histórica de reduzir mortalidade em sepse grave ao modular esse sistema?",
+    choices: [
+      { text: "Administração de proteína C ativada recombinante (historicamente associada a redução de mortalidade em alguns estudos)", correct: true, explain: "O PDF menciona que proteína C ativada recombinante demonstrou redução de mortalidade em estudos de sepse, o que evidencia papel do sistema proteína C além da coagulação." },
+      { text: "Desmopressina para aumentar vWF", correct: false, explain: "DDAVP aumenta vWF e fator VIII, não é tratamento específico para sepse com CID." },
+      { text: "Tranexâmico para inibir fibrinólise", correct: false, explain: "Antifibrinolíticos não são terapia de primeira linha em CID associado à sepse sem avaliação cuidadosa; uso inadequado pode aumentar trombose." },
+      { text: "Heparina em altas doses para evitar trombose venosa profunda", correct: false, explain: "Heparina tem papel em profilaxia e em algumas situações de CID trombótica, mas não é a intervenção histórica mencionada no PDF relacionada à proteína C ativada." }
+  ]},
+  {
+    q: "29) Caso clínico — Mulher de 70 anos com história de fibrilação atrial crônica em uso de varfarina interrompeu medicamento 3 dias antes de cirurgia eletiva. Pré-operatório apresenta INR de 2,8. Segundo o material, qual seria a conduta mais apropriada antes de um procedimento com risco moderado de sangramento?",
+    choices: [
+      { text: "Avaliar risco/benefício; considerar adiar procedimento até INR <1,5 ou corrigir com vitamina K ou plasma conforme urgência", correct: true, explain: "O material orienta que INR ≥1,5–2,0 exige avaliar correção pré-procedimento; para procedimentos de risco moderado costuma-se corrigir para INR seguro (<1,5) com vitamina K ou plasma, dependendo da urgência." },
+      { text: "Prosseguir sem qualquer correção porque INR terapêutico é esperado", correct: false, explain: "Prosseguir com INR 2,8 aumentaria risco hemorrágico; correção habitualmente indicada em procedimentos invasivos." },
+      { text: "Administrar desmopressina para reduzir INR rapidamente", correct: false, explain: "DDAVP não corrige fatores dependentes de vitamina K; reposição de fatores ou vitamina K é necessária." },
+      { text: "Administrar heparina para antagonizar efeitos da varfarina", correct: false, explain: "Heparina não reverte efeito de AVK; poderia complicar anticoagulação. Reversão envolve vitamina K e hemoderivados se necessário." }
+  ]},
+  {
+    q: "30) Caso clínico — Jovem de 22 anos, atleta, apresenta hematoma expansivo após pequena laceração cutânea, sem antecedentes de sangramento, sem uso de medicamentos. Exames: plaquetas 350.000/mm³, TS prolongado, TTPa e TP normais. Qual é a hipótese mais provável e qual teste complementar seria indicado?",
+    choices: [
+      { text: "Defeito de adesão plaquetária / Doença de von Willebrand ou defeito plaquetário funcional; investigar com dosagem de vWF e testes de agregação plaquetária", correct: true, explain: "TS prolongado com contagem plaquetária normal sugere defeito de função plaquetária ou DvW; investigação complementar inclui dosagem de vWF (antígeno/atividade) e agregometria." },
+      { text: "Hemofilia A leve; confirmar com dosagem de fibrinogênio", correct: false, explain: "Hemofilia A costuma prolongar TTPa e apresentar sangramentos em locais profundos (articulares); TS prolongado direciona mais para plaquetas/vWF." },
+      { text: "CID aguda; confirmar com D-dímero apenas", correct: false, explain: "CID cursa com alterações sistêmicas e geralmente TTPa/TP alterados, fibrinogênio baixo e D-dímero elevado, não é compatível com história localizada e plaquetas normais." },
+      { text: "Trombocitopenia imune; confirmar com contagem de reticulócitos", correct: false, explain: "PTI apresenta contagem plaquetária baixa; aqui as plaquetas estão normais, tornando PTI improvável." }
+  ]}
+];
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

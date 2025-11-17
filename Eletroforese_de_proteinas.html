@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Eletroforese de proteínas</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Eletroforese de proteínas</h1>
+    <p class="lead">30 questões - Eletroforese de proteínas</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão — Na eletroforese de proteínas séricas (EPS), qual fração normalmente apresenta o pico mais alto no traçado eletroforético?",
+    choices: [
+      { text: "Albumina", correct: true, explain: "A albumina corresponde a cerca de 60% das proteínas séricas totais e gera o maior pico na EPS." },
+      { text: "Alfa-1-globulina", correct: false, explain: "A fração alfa-1 representa pequena proporção das proteínas séricas, não sendo o maior pico." },
+      { text: "Betaglobulina", correct: false, explain: "A fração beta é intermediária, abaixo da albumina em amplitude." },
+      { text: "Gamaglobulina", correct: false, explain: "Embora possa aumentar em inflamações e mieloma, não é o maior pico no padrão normal." }
+    ]
+  },
+  {
+    q: "2) Questão — Qual das seguintes proteínas é o principal componente da fração alfa-1-globulina?",
+    choices: [
+      { text: "Alfa-1-antitripsina", correct: true, explain: "A alfa-1-antitripsina representa cerca de 90% da fração alfa-1, sendo seu principal componente." },
+      { text: "Haptoglobina", correct: false, explain: "A haptoglobina compõe a fração alfa-2, não alfa-1." },
+      { text: "Transferrina", correct: false, explain: "A transferrina migra principalmente na faixa beta." },
+      { text: "IgA", correct: false, explain: "A IgA é imunoglobulina e localiza-se entre beta e gama." }
+    ]
+  },
+  {
+    q: "3) Questão — O aumento marcado da fração alfa-2-globulina é característico de qual condição clínica?",
+    choices: [
+      { text: "Síndrome nefrótica", correct: true, explain: "Na síndrome nefrótica ocorre elevação da alfa-2-macroglobulina devido à sua grande massa molecular, impedindo sua perda urinária." },
+      { text: "Cirrose hepática", correct: false, explain: "Cirrose se caracteriza por hipoalbuminemia e aumento policlonal da gama, não pela elevação marcante da alfa-2." },
+      { text: "Anemia ferropriva", correct: false, explain: "Anemia ferropriva eleva transferrina na fração beta." },
+      { text: "Hepatite viral aguda", correct: false, explain: "Hepatite causa redução da síntese proteica, não elevação isolada da alfa-2." }
+    ]
+  },
+  {
+    q: "4) Questão — Em qual fração eletroforética migra predominantemente a transferrina?",
+    choices: [
+      { text: "Betaglobulina", correct: true, explain: "A transferrina compõe a fração beta, sendo uma proteína transportadora de ferro." },
+      { text: "Gamaglobulina", correct: false, explain: "Gama contém imunoglobulinas, não transferrina." },
+      { text: "Albumina", correct: false, explain: "Albumina é uma fração distinta e muito mais intensa." },
+      { text: "Alfa-1-globulina", correct: false, explain: "Transferrina não migra na alfa-1." }
+    ]
+  },
+  {
+    q: "5) Questão — O pico policlonal na fração gama é típico de qual situação clínica?",
+    choices: [
+      { text: "Doenças inflamatórias ou infecciosas", correct: true, explain: "O pico policlonal apresenta base larga devido ao estímulo antigênico difuso, comum em inflamações e infecções crônicas." },
+      { text: "Mieloma múltiplo", correct: false, explain: "Mieloma gera um pico monoclonal estreito, não policlonal." },
+      { text: "Hipogamaglobulinemia", correct: false, explain: "Na hipogamaglobulinemia há redução difusa da gama." },
+      { text: "Síndrome nefrótica", correct: false, explain: "A síndrome nefrótica reduz gama e eleva alfa-2." }
+    ]
+  },
+  {
+    q: "6) Questão — O pico monoclonal estreito na região gama é característico de:",
+    choices: [
+      { text: "Produção clonal de imunoglobulina, como no mieloma múltiplo", correct: true, explain: "O pico estreito representa expansão de um único clone produtor de imunoglobulina, típico do mieloma." },
+      { text: "Resposta inflamatória aguda", correct: false, explain: "Inflamações geram aumento policlonal difuso, não monoclonal." },
+      { text: "Síndrome nefrótica", correct: false, explain: "Nefrose reduz gama e aumenta alfa-2, sem pico monoclonal." },
+      { text: "Imunodeficiências", correct: false, explain: "Imunodeficiências cursam com hipogamaglobulinemia." }
+    ]
+  },
+  {
+    q: "7) Questão — A hipogamaglobulinemia aparece na eletroforese como:",
+    choices: [
+      { text: "Redução difusa da fração gama", correct: true, explain: "A hipogamaglobulinemia se manifesta como diminuição de toda a fração gama, indicando redução de imunoglobulinas." },
+      { text: "Pico estreito de alta amplitude", correct: false, explain: "Esse é o padrão monoclonal, não hipogamaglobulinemia." },
+      { text: "Aumento da fração alfa-1", correct: false, explain: "Elevações da alfa-1 ocorrem em inflamações — não têm relação com hipogamaglobulinemia." },
+      { text: "Aumento da beta-2-globulina", correct: false, explain: "Não é manifestação típica de imunodeficiência." }
+    ]
+  },
+  {
+    q: "8) Questão — Qual fração costuma estar reduzida em doenças hepáticas crônicas, como cirrose?",
+    choices: [
+      { text: "Albumina", correct: true, explain: "A albumina é sintetizada no fígado e sua redução é marcante em hepatopatias." },
+      { text: "Gama-globulina", correct: false, explain: "Em cirrose a fração gama geralmente aumenta (padrão policlonal)." },
+      { text: "Alfa-2-globulina", correct: false, explain: "Alfa-2 pode estar normal ou elevada em inflamação, não é típica redução marcante." },
+      { text: "Beta-globulina", correct: false, explain: "Alterações das beta não são tão específicas quanto a queda acentuada da albumina." }
+    ]
+  },
+  {
+    q: "9) Questão — A alfa-1-antitripsina diminuída na eletroforese sugere:",
+    choices: [
+      { text: "Deficiência congênita de alfa-1-antitripsina", correct: true, explain: "A deficiência (ex: genótipo ZZ) reduz drasticamente o pico alfa-1 e pode causar enfisema precoce e cirrose." },
+      { text: "Anemia ferropriva", correct: false, explain: "Anemia ferropriva altera principalmente a transferrina (fração beta)." },
+      { text: "Síndrome nefrótica", correct: false, explain: "Nefrose não reduz alfa-1 de forma seletiva; a alfa-2 é a fração mais aumentada." },
+      { text: "Infecção aguda", correct: false, explain: "Infecções aumentam proteínas de fase aguda, inclusive alfa-1." }
+    ]
+  },
+  {
+    q: "10) Questão — O aumento da fração beta pode ser observado em qual situação?",
+    choices: [
+      { text: "Anemia ferropriva", correct: true, explain: "A anemia ferropriva eleva transferrina, que migra na fração beta." },
+      { text: "Imunodeficiência primária", correct: false, explain: "Imunodeficiências reduzem gama, não beta." },
+      { text: "Síndrome nefrótica", correct: false, explain: "A fração mais alterada na nefrose é alfa-2." },
+      { text: "Deficiência de IgA", correct: false, explain: "Deficiências de IgA alteram a zona β–γ, não a beta isolada." }
+    ]
+  },
+  {
+    q: "11) Questão — Em qual faixa do espectro eletroforético se localiza predominantemente a IgA?",
+    choices: [
+      { text: "Entre as frações beta e gama", correct: true, explain: "A IgA fica na zona de transição entre beta e gama." },
+      { text: "Exatamente no pico da gama", correct: false, explain: "O pico da gama é dominado por IgG." },
+      { text: "Na fração alfa-1", correct: false, explain: "Alfa-1 não contém imunoglobulinas relevantes." },
+      { text: "Na albumina", correct: false, explain: "Albumina é uma única proteína, não imunoglobulina." }
+    ]
+  },
+  {
+    q: "12) Questão — A eletroforese de proteínas urinárias é especialmente útil para detectar:",
+    choices: [
+      { text: "Proteína de Bence Jones", correct: true, explain: "A proteína de Bence Jones (cadeias leves livres) é típica do mieloma múltiplo e pode ser identificada na eletroforese urinária." },
+      { text: "Transferrina sérica", correct: false, explain: "Transferrina urinária não é o foco do exame e é pouco estável." },
+      { text: "Perfil de imunoglobulinas completas", correct: false, explain: "Imunoglobulinas inteiras são mais bem vistas no soro." },
+      { text: "Albumina exclusivamente", correct: false, explain: "A eletroforese urinária avalia várias proteínas, não apenas albumina." }
+    ]
+  },
+  {
+    q: "13) Questão — No líquor, qual é a principal utilidade da eletroforese de proteínas?",
+    choices: [
+      { text: "Detecção de bandas oligoclonais", correct: true, explain: "A presença de bandas oligoclonais é um importante marcador de esclerose múltipla e outras doenças inflamatórias do SNC." },
+      { text: "Diagnóstico de anemia ferropriva", correct: false, explain: "Anemia ferropriva não é diagnosticada por LCR." },
+      { text: "Avaliação de mieloma múltiplo", correct: false, explain: "Mieloma é avaliado no soro e na urina, não no LCR." },
+      { text: "Avaliação de função hepática", correct: false, explain: "Função hepática é refletida no soro, não no líquor." }
+    ]
+  },
+  {
+    q: "14) Questão — No derrame pleural, a eletroforese auxilia principalmente na diferenciação entre:",
+    choices: [
+      { text: "Transudato e exsudato", correct: true, explain: "A distribuição proteica permite diferenciar exsudatos (ricos em proteínas) de transudatos (pobres), conforme aumento da permeabilidade capilar." },
+      { text: "Ascite e quilotórax", correct: false, explain: "Ascite envolve líquido peritoneal; quilotórax envolve linfa — não são distinguidos pela EPS pleural." },
+      { text: "LCR e plasma", correct: false, explain: "Comparação inadequada." },
+      { text: "Proteinúria glomerular e tubular", correct: false, explain: "Esta distinção ocorre na urina, não no líquido pleural." }
+    ]
+  },
+  {
+    q: "15) Questão — Na eletroforese do líquido ascítico, qual achado é característico?",
+    choices: [
+      { text: "Presença maior de globulinas em relação à albumina", correct: true, explain: "As globulinas aumentam no líquido ascítico por terem diversas origens e atravessarem mais facilmente as membranas." },
+      { text: "Pico monoclonal estreito", correct: false, explain: "Pico monoclonal é típico de distúrbios plasmocitários, não ascite." },
+      { text: "Ausência de frações proteicas", correct: false, explain: "Sempre há proteínas, variáveis conforme etiologia." },
+      { text: "Albumina em concentração maior que a do soro", correct: false, explain: "O líquido ascítico sempre possui albumina menor que o soro." }
+    ]
+  },
+  {
+    q: "16) Questão — Qual das seguintes alternativas descreve corretamente o significado clínico de um pico monoclonal estreito e bem delimitado na região gama em uma eletroforese de proteínas séricas?",
+    choices: [
+      { text: "Produção monoclonal de imunoglobulina por um clone plasmocitário — sugestivo de gamopatia monoclonal como mieloma múltiplo", correct: true, explain: "Um pico monoclonal estreito (M-spike) reflete produção excessiva de uma única imunoglobulina por clone único de plasmócitos; é clássico em mieloma e outras gamopatias monoclonais." },
+      { text: "Resposta policlonal inespecífica a infecção crônica", correct: false, explain: "Resposta policlonal forma uma elevação difusa da base da fração gama, não um pico estreito." },
+      { text: "Perda renal seletiva de albumina (síndrome nefrótica)", correct: false, explain: "Nefrose causa redução de albumina e alterações em alfa-2, não pico monoclonal." },
+      { text: "Hemodiluição por hidratação excessiva", correct: false, explain: "Hemodiluição atenua todos os picos proporcionalmente; não gera pico monoclonal distinto." }
+    ]
+  },
+  {
+    q: "17) Questão — Em um proteinograma sérico com redução importante de albumina e aumento difuso da fração gama (pico policlonal), qual hipótese clínica é a mais compatível?",
+    choices: [
+      { text: "Doença hepática crônica (cirrose) com resposta inflamatória crônica", correct: true, explain: "Cirrose frequentemente cursa com hipoalbuminemia (sintese reduzida) e aumento policlonal da fração gama (estimulação imune crônica)." },
+      { text: "Mieloma múltiplo com pico monoclonal", correct: false, explain: "Mieloma causa pico monoclonal estreito, não aumento difuso/policlonal da gama." },
+      { text: "Deficiência congênita de alfa-1-antitripsina", correct: false, explain: "Deficiência de A1AT reduz pico alfa-1, não explica hipoalbuminemia com gama policlonal." },
+      { text: "Perda de proteínas por enteropatia perdedora de proteína com aumento isolado da beta", correct: false, explain: "Enteropatias causam perda de albumina, mas o padrão de aumento policlonal da gama sugere processo inflamatório/hepático." }
+    ]
+  },
+  {
+    q: "18) Questão — Qual é a utilidade principal da eletroforese de proteínas urinárias em 24 horas na investigação de pacientes com suspeita de mieloma múltiplo?",
+    choices: [
+      { text: "Detecção de cadeias leves (proteína de Bence Jones) que são excretadas na urina e podem não aparecer claramente no soro", correct: true, explain: "As cadeias leves livres (kappa/lambda) frequentemente são excretadas na urina; a EPU facilita sua detecção, complementando a EPS sérica." },
+      { text: "Mensurar albumina sérica total", correct: false, explain: "Albumina sérica é medida no sangue, não na eletroforese urinária; EPU é para detectar proteínas anormais urinárias." },
+      { text: "Identificar oligoclonalidade do líquor", correct: false, explain: "Bandas oligoclonais são avaliadas no líquor, não na urina." },
+      { text: "Avaliar atividade enzimática renal", correct: false, explain: "EPU analisa padrões proteicos, não atividades enzimáticas." }
+    ]
+  },
+  {
+    q: "19) Questão — Em qual situação a eletroforese do líquor (LCR) é indicada de forma rotineira?",
+    choices: [
+      { text: "Pesquisa de bandas oligoclonais para investigação de esclerose múltipla ou inflamação do SNC", correct: true, explain: "A detecção de bandas oligoclonais no LCR é um marcador importante na investigação de EM e outras condições inflamatórias do sistema nervoso central." },
+      { text: "Diagnóstico de doença hepática crônica", correct: false, explain: "Doenças hepáticas são avaliadas pela EPS sérica; LCR não é adequado para esse propósito." },
+      { text: "Monitorização de proteínas totais em paciente com síndrome nefrótica", correct: false, explain: "Síndrome nefrótica é melhor avaliada por proteinúria e eletroforese urinária, não por LCR." },
+      { text: "Triagem populacional de mieloma múltiplo", correct: false, explain: "Triagem populacional não é indicada; investigação de mieloma baseia-se em achados clínicos e testes séricos/urinários." }
+    ]
+  },
+  {
+    q: "20) Questão — Sobre critérios de coleta e estabilidade para eletroforese de proteínas séricas (EPS) e urinárias, assinale a alternativa correta:",
+    choices: [
+      { text: "Soro em tubo seco com volume mínimo ≈1 mL; conservar refrigerado (2–8°C) e EPS sérica estável por até ~10 dias; urina de 24 h refrigerada e EPU estável por 7–10 dias", correct: true, explain: "O material aponta para coleta em tubo seco (ou gel), volumes mínimos, e as janelas de conservação descritas: soro 2–8°C até ~10 dias; urina de 24 h refrigerada 7–10 dias (congelada por mais tempo)." },
+      { text: "Soro deve ser coletado em EDTA e processado em até 24 horas à temperatura ambiente", correct: false, explain: "EDTA não é adequado para EPS; soro de tubo seco é recomendado e conservação refrigerada é exigida." },
+      { text: "Urina de 24 h pode ser enviada à temperatura ambiente por até 30 dias", correct: false, explain: "Urina não deve ficar em temperatura ambiente; conservação refrigerada ou congelada é necessária para estabilidade." },
+      { text: "A amostra de líquor não exige condições de transporte específicas", correct: false, explain: "Líquor deve ser manejado com cuidado e processado adequadamente; não é indiferente às condições de transporte." }
+    ]
+  },
+  {
+    q: "21) Caso clínico — Mulher de 58 anos com queixas de fadiga progressiva, perda de peso e dor óssea lombar. Exames: hemoglobina 9,2 g/dL, creatinina 1,9 mg/dL, cálcio sérico 11,2 mg/dL. EPS sérica mostra pico monoclonal estreito na região gama. Eletroforese urinária detecta banda de cadeias leves. Qual é a melhor interpretação e próximo passo diagnóstico mais indicado?",
+    choices: [
+      { text: "Compatível com mieloma múltiplo — solicitar eletroforese quantitativa de imunoglobulinas, razão kappa/lambda de cadeias leves livres séricas e aspirado/biopsia de medula óssea", correct: true, explain: "Quadro clínico (anemia, dor óssea, hipercalcemia, insuficiência renal) com pico M e proteínas na urina é altamente sugestivo de mieloma; confirmação com quantificação de cadeias leves e investigação medular é indicada." },
+      { text: "Infecção crônica com pico policlonal — iniciar antibioticoterapia empírica", correct: false, explain: "Pico monoclonal e achados sistêmicos orientam para gamopatia monoclonal; antibioticoterapia empírica não é adequada sem foco infeccioso." },
+      { text: "Doença hepática avançada — solicitar elastografia hepática", correct: false, explain: "Doença hepática causa hipoalbuminemia e gama policlonal, não pico monoclonal associado a proteinúria de cadeias leves." },
+      { text: "Deficiência de vitamina B12 — solicitar dosagem de B12 e iniciar suplementação", correct: false, explain: "B12 pode causar anemia, mas não explica pico monoclonal, proteinúria e dor óssea." }
+    ]
+  },
+  {
+    q: "22) Caso clínico — Homem de 42 anos com história de dispneia e edema de membros inferiores. Paracenteses prévias mostram líquido pleural com proteína alta; EPS pleural evidencia predomínio de proteínas de alto peso molecular. A relação proteína pleural/sérica é 0,7. Como interpretar esse derrame e qual é a provável etiologia?",
+    choices: [
+      { text: "Exsudato pleural por processo inflamatório/ infeccioso ou neoplásico (relação >0,5), sugerindo investigar pneumonia, tuberculose ou malignidade", correct: true, explain: "Relação proteína líquido/soro >0,5 caracteriza exsudato (critério de Light); exsudatos são associados a inflamação local, infecção ou neoplasia." },
+      { text: "Transudato por insuficiência cardíaca, tratar com diuréticos sem investigação adicional", correct: false, explain: "Transudato apresenta relação proteína ≤0,5; nesse caso a relação 0,7 indica exsudato." },
+      { text: "Derrame quiloso por traumatismo torácico evidente", correct: false, explain: "Quilotórax tem características específicas (tricglicerídeos altos), não apenas relação proteína." },
+      { text: "Erro de coleta — repetir exame antes de qualquer interpretação", correct: false, explain: "Embora repetição às vezes necessária, achado de relação 0,7 é consistente e exige investigação de exsudato." }
+    ]
+  },
+  {
+    q: "23) Caso clínico — Paciente de 35 anos com síndrome nefrótica confirmada (proteinúria 6 g/24h). EPS sérica mostra redução de albumina e aumento acentuado da alfa-2-globulina; eletroforese urinária evidencia perda proteica com predominância de albumina. Qual é o mecanismo explicado pelo material para esse padrão?",
+    choices: [
+      { text: "Perda seletiva de albumina por aumento da permeabilidade glomerular com retenção relativa de alfa-2-macroglobulina (grande) que aumenta no soro", correct: true, explain: "Na síndrome nefrótica, albumina e proteínas de menor peso são perdidas na urina; alfa-2-macroglobulina, por ser muito grande, é retida e pode aumentar proporcionalmente no soro." },
+      { text: "Produção aumentada de albumina hepática compensatória", correct: false, explain: "O fígado pode sintetizar mais proteínas, mas a perda urinária de albumina explica a redução sérica; não ocorre aumento compensatório suficiente." },
+      { text: "Doença hepática com colestase causando aumento de alfa-2", correct: false, explain: "Colestase altera frações beta/alpha, mas o quadro renal com proteinúria maciça é característico da nefrose." },
+      { text: "Infecção viral sistêmica levando a hipoalbuminemia aguda", correct: false, explain: "Infecções podem reduzir albumina, mas proteinúria de 6 g/24h aponta para síndrome nefrótica como causa primária." }
+    ]
+  },
+  {
+    q: "24) Caso clínico — Paciente de 50 anos com perda auditiva e enfisema de início precoce; EPS sérica mostra pico reduzido em alfa-1-globulina. Qual hipótese molecular e teste confirmatório são mais adequados?",
+    choices: [
+      { text: "Deficiência hereditária de alfa-1-antitripsina (genótipo ZZ possível) — confirmar com dosagem sérica de A1AT e tipagem genética/ fenotipagem", correct: true, explain: "Deficiência de A1AT reduz o pico alfa-1; clínica respiratória precoce + alterações hepáticas sugerem A1AT deficiente, confirmada por dosagem e testes genéticos/fenotípicos." },
+      { text: "Hipergamaglobulinemia secundária — solicitar sorologias virais", correct: false, explain: "Hipergamaglobulinemia aumentaria a fração gama, não reduziria alfa-1." },
+      { text: "Síndrome nefrótica — solicitar proteína 24h", correct: false, explain: "Nefrose causa aumento de alfa-2, não redução seletiva de alfa-1." },
+      { text: "Deficiência de transferrina — pedir ferritina", correct: false, explain: "Transferrina localiza-se na beta; deficiência não explica redução de alfa-1." }
+    ]
+  },
+  {
+    q: "25) Caso clínico — Mulher de 29 anos com quadro neurológico progressivo: diplopia e ataxia. Punção lombar mostra LCR com bandas oligoclonais presentes no LCR mas ausentes no soro. Qual o significado clínico desse achado e qual é o diagnóstico mais provável?",
+    choices: [
+      { text: "Presença de bandas oligoclonais restritas ao LCR sugere produção intratecal de imunoglobulinas — altamente sugestivo de esclerose múltipla", correct: true, explain: "Bandas oligoclonais no LCR (e não no soro) indicam resposta imune intratecal, associada classicamente à EM; esse é um achado diagnóstico de suporte." },
+      { text: "Indica mieloma múltiplo com comprometimento do SNC", correct: false, explain: "Mieloma tende a produzir bandas no soro e urina; bandas restritas ao LCR apontam para produção local no SNC." },
+      { text: "É sugestivo de meningite bacteriana aguda", correct: false, explain: "Meningite aguda altera celularidade e proteínas do LCR, mas bandas oligoclonais intratecais são mais típicas de processos crônicos/inflamatórios como EM." },
+      { text: "Resultado inespecífico — não tem valor diagnóstico", correct: false, explain: "Bandas oligoclonais têm valor diagnóstico clínico relevante quando integradas ao quadro neurológico." }
+    ]
+  },
+  {
+    q: "26) Caso clínico — Homem de 67 anos com histórico de monoclonal gammopathy of undetermined significance (MGUS) conhecido há 4 anos, assintomático, com EPS de acompanhamento mostrando aumento discreto do pico monoclonal em comparação ao exame anterior. Exames laboratoriais: creatinina estável, hemograma sem alterações, cálcio normal. Segundo o material, qual conduta é a mais adequada?",
+    choices: [
+      { text: "Acompanhamento clínico e laboratorial com monitorização periódica (EPS, quantificação de imunoglobulinas, função renal), sem tratamento imediato", correct: true, explain: "MGUS requer vigilância periódica para progressão a mieloma; na ausência de critérios de malignidade (CRAB) não se indica tratamento específico." },
+      { text: "Iniciar quimioterapia imediatamente para prevenir mieloma", correct: false, explain: "Tratamento é reservado para doença ativa (mieloma sintomático); MGUS assintomático é monitorado." },
+      { text: "Realizar biópsia hepática para investigar produção de proteínas", correct: false, explain: "Biópsia hepática não é indicada na maioria dos MGUS sem sinais de doença hepática." },
+      { text: "Prescrever corticosteroides para reduzir o pico monoclonal", correct: false, explain: "Corticosteroides não são terapia de escolha profilática para MGUS e têm risco de efeitos adversos." }
+    ]
+  },
+  {
+    q: "27) Caso clínico — Paciente com suspeita de paraproteína miopática apresenta fração beta-gama com fusão (`β-γ bridging`) na EPS. Em que contexto esse padrão é mais comumente observado e qual investigação complementar é indicada?",
+    choices: [
+      { text: "Padrão clássico de cirrose hepática com hiperglobulinemia policlonal; investigação complementar: testes de função hepática e ultrassom abdominal", correct: true, explain: "Ponte β–γ (β–γ bridging) relaciona-se a aumento policlonal de imunoglobulinas em cirrose; avaliar função hepática e imagem é apropriado." },
+      { text: "Achado de síndrome nefrótica; pedir proteinograma urinário", correct: false, explain: "Nefrose altera alfa-2, não costuma causar ponte β–γ." },
+      { text: "Sinal de infecção bacteriana aguda local", correct: false, explain: "Infecções geram pico policlonal difuso, mas a ponte β–γ é classicamente associada a lesão hepática crônica." },
+      { text: "Indica definitivamente mieloma múltiplo; realizar mielograma", correct: false, explain: "Mieloma tende a gerar pico monoclonal distinto, não ponte β–γ policlonal típica de cirrose." }
+    ]
+  },
+  {
+    q: "28) Caso clínico — Paciente internado com sepse grave e choque; EPS sérica de rotina mostra aumento difuso da fração alfa-1 e alfa-2. Como interpretar essa alteração e qual componente proteico é tipicamente responsável pelo pico alfa-1 aumentado em respostas agudas?",
+    choices: [
+      { text: "Padrão de proteínas de fase aguda — alfa-1-antitripsina (na alfa-1) e haptoglobina/alfa-2-macroglobulina (na alfa-2) aumentam em resposta à inflamação", correct: true, explain: "Proteínas de fase aguda elevam as frações alfa-1 e alfa-2; A1AT é a principal proteína na alfa-1, enquanto haptoglobina e alfa-2-macroglobulina elevam na alfa-2." },
+      { text: "Indica pico monoclonal — procurar mieloma", correct: false, explain: "Aumento difuso nas alfa é consistente com reação inflamatória, não produção monoclonal." },
+      { text: "Reflete hemólise intravascular maciça", correct: false, explain: "Hemólise aumenta haptoglobina? Na hemólise haptoglobina costuma diminuir por consumo; aumento alfa-2 na inflamação é distinto." },
+      { text: "Sugere deficiência de proteínas de fase aguda", correct: false, explain: "Deficiência não explica aumento difuso; o padrão é claramente inflamatório." }
+    ]
+  },
+  {
+    q: "29) Caso clínico — Jovem de 24 anos com história de poli-transfusão prévia e quadro de hiper-rreação imune crônica apresenta EPS com elevação difusa da fração gama (pico policlonal). Qual exame complementar pode ser útil para caracterizar melhor essa resposta policlonal e por quê?",
+    choices: [
+      { text: "Imunofixação eletroforética (IFE) — para distinguir entre aumento policlonal (diversas imunoglobulinas) e presença de componente monoclonal oculto", correct: true, explain: "IFE ajuda a identificar tipos de imunoglobulinas e diferenciar padrões policlonais de monoclonais, sendo útil quando EPS mostra aumento difuso." },
+      { text: "Ultrassonografia abdominal — para avaliar hepatomegalia", correct: false, explain: "Ultrassom pode ser útil em contexto sistêmico, mas não distingue policlonalidade imunológica." },
+      { text: "Teste de coombs direto — para investigar hemólise", correct: false, explain: "Coombs investiga hemólise imune, não caracteriza policlonalidade de gama." },
+      { text: "Dosagem de albumina sérica isolada — para confirmar hipoalbuminemia", correct: false, explain: "Albumina já é medida rotineiramente; não resolve dúvida sobre policlonalidade." }
+    ]
+  },
+  {
+    q: "30) Caso clínico — Paciente masculino de 60 anos com perda de peso, sudorese noturna e linfadenopatia. EPS mostra pico monoclonal discreto; imunofixação revela IgM monoclonal e proteinograma urinário negativo. Qual entidade clínica deve ser considerada e qual investigação complementar é indicada?",
+    choices: [
+      { text: "Macroglobulinemia de Waldenström (linfoplasmocitária) — investigar com imunofenotipagem da medula e estudo da medula óssea/linfonodos", correct: true, explain: "IgM monoclonal associada a sintomas B e linfadenopatia orienta para Waldenström; confirmação exige estudos medulares e imunofenotipagem do clone." },
+      { text: "Mieloma múltiplo clássico — iniciar quimioterapia imediatamente", correct: false, explain: "Mieloma típico produz IgG/IgA mais comumente; IgM monoclonal sugere Waldenström/linfoma de células B." },
+      { text: "Infecção viral aguda — iniciar antivirais", correct: false, explain: "Infecções não costumam gerar IgM monoclonal persistente com linfadenopatia e perda de peso crônica." },
+      { text: "Síndrome nefrótica — pesquisar proteinúria", correct: false, explain: "Ausência de proteinúria e presença de IgM monoclonal direcionam para desordem linfoplasmocitária." }
+    ]
+  }
+];
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
