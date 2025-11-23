@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — CA de laringe</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — CA de laringe</h1>
+    <p class="lead">30 questões - CA de laringe</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+// Fonte: Ca de laringe.pdf :contentReference[oaicite:0]{index=0}
+const questions = [
+  {
+    q: "1) Questão: Qual é o tipo histológico mais comum do câncer de laringe?",
+    choices: [
+      {
+        text: "Carcinoma espinocelular (carcinoma de células escamosas).",
+        correct: true,
+        explain: "O carcinoma de células escamosas (espinocelular) é o tipo histológico predominante no câncer de laringe, relacionado à exposição ao tabaco e álcool. É responsável pela grande maioria dos tumores laríngeos."
+      },
+      {
+        text: "Adenocarcinoma.",
+        correct: false,
+        explain: "Adenocarcinomas são raros na laringe; a laringe é revestida principalmente por epitélio escamoso, o que explica a predominância de carcinomas escamosos."
+      },
+      {
+        text: "Carcinoma de células pequenas (small cell).",
+        correct: false,
+        explain: "Carcinoma de células pequenas é extremamente incomum na laringe; quando presente, representa um subtipo raro e agressivo, mas não é a apresentação típica."
+      },
+      {
+        text: "Linfoma não-Hodgkin da laringe.",
+        correct: false,
+        explain: "Linfomas primários da laringe são raros e têm apresentação clínica e terapêutica diferente; não representam o tipo histológico mais comum."
+      }
+    ]
+  },
+  {
+    q: "2) Questão: Qual é o principal fator de risco ambiental associado ao desenvolvimento do câncer de laringe?",
+    choices: [
+      {
+        text: "Tabagismo (uso crônico de tabaco).",
+        correct: true,
+        explain: "O tabagismo é o principal fator de risco para câncer de laringe, com relação dose-resposta; a combinação tabaco+álcool aumenta ainda mais o risco."
+      },
+      {
+        text: "Exposição ocupacional a pó de madeira apenas.",
+        correct: false,
+        explain: "Exposição ocupacional a pó de madeira pode aumentar risco para alguns tumores das vias aéreas superiores, mas é muito menos relevante que o tabaco como fator causal principal para câncer de laringe."
+      },
+      {
+        text: "Infecções bacterianas crônicas da laringe.",
+        correct: false,
+        explain: "Infecções bacterianas crônicas não são reconhecidas como fator de risco majoritário para câncer de laringe; fatores comportamentais (tabaco/álcool) e agentes virais têm papel mais estabelecido."
+      },
+      {
+        text: "Ingestão de alimentos picantes.",
+        correct: false,
+        explain: "Não há evidência forte que alimentos picantes sejam fator de risco significativo para câncer de laringe; essa alternativa é um distractor."
+      }
+    ]
+  },
+  {
+    q: "3) Questão: Qual topografia da laringe tem maior probabilidade de apresentar rouquidão como sintoma inicial e por quê?",
+    choices: [
+      {
+        text: "Região glótica, porque as cordas vocais estão diretamente envolvidas.",
+        correct: true,
+        explain: "Tumores glóticos (cordas vocais) acometem as pregas vocais e alteram a vibração vocal, produzindo rouquidão precoce — por isso muitos tumores glóticos são detectados em estádios iniciais."
+      },
+      {
+        text: "Região supraglótica, porque afeta sempre a produção de som.",
+        correct: false,
+        explain: "Tumores supraglóticos tendem a provocar sintomas como disfagia e odinofagia mais do que rouquidão precoce, pois as pregas vocais podem ser poupadas inicialmente."
+      },
+      {
+        text: "Região subglótica, porque é mais próxima da traqueia.",
+        correct: false,
+        explain: "Tumores subglóticos geralmente apresentam sintomas tardios relacionados a obstrução aérea; rouquidão não é sintoma característico precoce dessa topografia."
+      },
+      {
+        text: "Cartilagem cricoide, porque altera a ressonância da voz.",
+        correct: false,
+        explain: "Lesões em cartilagens não são a causa típica de rouquidão precoce — a alteração vocal está mais relacionada ao envolvimento das pregas vocais."
+      }
+    ]
+  },
+  {
+    q: "4) Questão: Qual exame é considerado padrão-ouro para a confirmação diagnóstica de câncer de laringe?",
+    choices: [
+      {
+        text: "Biópsia com análise histopatológica.",
+        correct: true,
+        explain: "A confirmação definitiva do câncer de laringe exige biópsia para exame anátomo-patológico; exames endoscópicos/por imagem orientam localização e extensão, mas não substituem a biópsia."
+      },
+      {
+        text: "Tomografia computadorizada de pescoço.",
+        correct: false,
+        explain: "A tomografia é útil para estadiamento e avaliação de extensão, mas não confirma o diagnóstico sem a biópsia histológica."
+      },
+      {
+        text: "Laringoscopia indireta com espelho apenas.",
+        correct: false,
+        explain: "A laringoscopia indireta é ferramenta de triagem e visualização, mas pode não permitir amostragem adequada; a biópsia direta é necessária para diagnóstico definitivo."
+      },
+      {
+        text: "Ressonância magnética sem contraste.",
+        correct: false,
+        explain: "Ressonância é valiosa para avaliar extensão local e estruturas adjacentes, porém não substitui a biópsia histológica para diagnóstico."
+      }
+    ]
+  },
+  {
+    q: "5) Questão: Em relação ao estadiamento TNM do câncer de laringe, qual variável tem maior impacto prognóstico isolado?",
+    choices: [
+      {
+        text: "Extensão tumoral local (T), especialmente presença de invasão das cordas vocais e estruturas adjacentes.",
+        correct: true,
+        explain: "O estágio T correlaciona-se fortemente com prognóstico local e sobrevida; tumores localmente avançados têm pior prognóstico. Entretanto o comprometimento nodal (N+) também é um importante fator prognóstico."
+      },
+      {
+        text: "Presença de metástase a distância (M) apenas.",
+        correct: false,
+        explain: "M entre os fatores é obviamente determinante (M1 altera radicalmente o tratamento), mas em termos de frequência/impacto ao apresentar-se inicialmente, T e N são centrais; M1 é raro no diagnóstico inicial de câncer de laringe."
+      },
+      {
+        text: "Idade do paciente exclusivamente.",
+        correct: false,
+        explain: "Idade influencia tolerância ao tratamento, mas não é a variável do TNM nem o maior preditor isolado do comportamento tumoral."
+      },
+      {
+        text: "Localização anatômica da tireoide.",
+        correct: false,
+        explain: "A tireoide não é determinante no estadiamento do câncer de laringe; a topografia laríngea e acometimento nodal são mais relevantes."
+      }
+    ]
+  },
+  {
+    q: "6) Questão: Qual abordagem terapêutica é considerada padrão para tumores glóticos T1a sem comprometimento do sulco ventricular?",
+    choices: [
+      {
+        text: "Radioterapia com intenção curativa ou cirurgia conservadora (microcirurgia endoscópica), ambas com resultados oncológicos comparáveis.",
+        correct: true,
+        explain: "Tumores glóticos iniciais (T1a) podem ser tratados com radioterapia ou cirurgia transoral microscópica (laser/microcirurgia) com taxas de controle local semelhantes; escolha depende de recursos e preferência."
+      },
+      {
+        text: "Quimioterapia isolada.",
+        correct: false,
+        explain: "Quimioterapia isolada não é indicada como tratamento curativo para tumores glóticos T1a; é usada em regimes combinados ou paliativos, não como monoterapia curativa."
+      },
+      {
+        text: "Laringectomia total imediata.",
+        correct: false,
+        explain: "Laringectomia total é tratamento desnecessário para T1a, pois existem opções conservadoras com preservação da função vocal."
+      },
+      {
+        text: "Observação clínica sem tratamento.",
+        correct: false,
+        explain: "Observação sem tratamento permitiria progressão tumoral; tumores T1a devem ser tratados com intuito curativo."
+      }
+    ]
+  },
+  {
+    q: "7) Questão: Na presença de linfonodos cervicais palpáveis em paciente com câncer de laringe, qual conduta é geralmente recomendada?",
+    choices: [
+      {
+        text: "Avaliação por imagem seguida de esvaziamento cervical (neck dissection) ou biópsia dirigida conforme indicação.",
+        correct: true,
+        explain: "Linfadenopatia cervical sugerindo metástase requer avaliação e, se confirmada, esvaziamento cervical é frequentemente indicado para controle regional; o manejo depende do N staging e do planejamento terapêutico."
+      },
+      {
+        text: "Ignorar os linfonodos, pois eles regredirão com radioterapia local da laringe.",
+        correct: false,
+        explain: "Ignorar linfonodos pode resultar em falha regional. O manejo nodal é parte essencial do estadiamento/tratamento; opções incluem cirurgia e/ou radioterapia de campo cervical."
+      },
+      {
+        text: "Iniciar somente antifúngicos por suspeita de infecção.",
+        correct: false,
+        explain: "Linfadenopatia neoplásica não responde a antifúngicos; tratamento empírico sem investigação não é apropriado."
+      },
+      {
+        text: "Tratamento com corticoterapia sistêmica antes de qualquer investigação.",
+        correct: false,
+        explain: "Corticoterapia pode mascarar achados e atrasar diagnóstico; não é conduta padrão sem indicação específica."
+      }
+    ]
+  },
+  {
+    q: "8) Questão: Qual é a razão para considerar programas de preservação laríngea (quimiorradioterapia) em certos pacientes com câncer de laringe avançado?",
+    choices: [
+      {
+        text: "Preservar a função laríngea (voz e deglutição) sem comprometer taxas de controle oncológico em casos selecionados.",
+        correct: true,
+        explain: "Protocolos de preservação da laringe com quimioterapia concomitante e radioterapia podem evitar laringectomia total e preservar função, mantendo controle tumoral em pacientes selecionados."
+      },
+      {
+        text: "Evitar qualquer toxicidade do tratamento, pois quimiorradioterapia é isenta de efeitos colaterais.",
+        correct: false,
+        explain: "Quimiorradioterapia tem toxicidades importantes (mucosite, disfagia, risco de aspiração) — a preservação funcional é o objetivo, não a ausência de efeitos adversos."
+      },
+      {
+        text: "É sempre superior à cirurgia em termos de sobrevida global para todos os tumores laríngeos.",
+        correct: false,
+        explain: "Nem sempre; em alguns casos cirurgia (por ex. laringectomia total) oferece melhor controle local; escolha depende do estágio, subsite e condição do paciente."
+      },
+      {
+        text: "Reduzir custo do tratamento hospitalar de forma consistente.",
+        correct: false,
+        explain: "Custo relativo varia; quimiorradioterapia pode implicar custos elevados e seguimento intensivo; decisão é baseada em benefício clínico e preferência do paciente."
+      }
+    ]
+  },
+  {
+    q: "9) Questão: Qual sintoma complementar ao rouquidão sugere extensão supraglótica do tumor?",
+    choices: [
+      {
+        text: "Disfagia ou odinofagia (dor ao engolir).",
+        correct: true,
+        explain: "Tumores supraglóticos frequentemente causam disfagia, dor à deglutição e sensação de massa faríngea antes da alteração vocal, pois comprometem estruturas acima das pregas vocais."
+      },
+      {
+        text: "Náusea e vômito persistentes.",
+        correct: false,
+        explain: "Náuseas/vômitos não são sintomas típicos de tumores laríngeos; são mais sugestivos de causas gastrointestinais."
+      },
+      {
+        text: "Hemoptise maciça frequente desde o início.",
+        correct: false,
+        explain: "Hemoptise leve pode ocorrer, mas hemoptise maciça não é característica inicial comum do câncer de laringe."
+      },
+      {
+        text: "Perda de visão.",
+        correct: false,
+        explain: "Perda de visão não está relacionada à topografia laríngea; é sintoma neurológico/ocular e não indica extensão supraglótica."
+      }
+    ]
+  },
+  {
+    q: "10) Questão: Qual exame de imagem é mais apropriado para avaliar invasão cartilaginosa e extensão de partes moles em câncer de laringe?",
+    choices: [
+      {
+        text: "Ressonância magnética (RM) de pescoço.",
+        correct: true,
+        explain: "A ressonância magnética é superior para avaliar tecidos moles e possíveis invasões cartilaginosas e extensão submucosa; TC dá boa avaliação óssea e cartilaginosa, mas RM é melhor para partes moles."
+      },
+      {
+        text: "Radiografia simples de tórax.",
+        correct: false,
+        explain: "Radiografia de tórax é útil para rastrear metástases pulmonares, mas não para avaliar extensão local da laringe."
+      },
+      {
+        text: "Ultrassonografia cervical isolada.",
+        correct: false,
+        explain: "Ultrassom pode avaliar linfonodos cervicais superficiais, mas não é adequado para mapear extensão intrínseca laríngea ou invasão de cartilagem."
+      },
+      {
+        text: "Cintilografia óssea como exame inicial.",
+        correct: false,
+        explain: "Cintilografia óssea avalia metástases ósseas; não é exame de escolha para avaliar extensão local da laringe."
+      }
+    ]
+  },
+  {
+    q: "11) Questão: Em termos epidemiológicos, qual apresentação é mais provável para tumores glóticos em comparação com supraglóticos?",
+    choices: [
+      {
+        text: "Tumores glóticos costumam ser diagnosticados em estágio mais inicial devido à rouquidão precoce.",
+        correct: true,
+        explain: "Devido à alteração vocal que aparece cedo quando as pregas vocais são acometidas, tumores glóticos tendem a ser diagnosticados mais precocemente que supraglóticos, que provocam sintomas mais sutis."
+      },
+      {
+        text: "Tumores supraglóticos são sempre diagnosticados precocemente por dor intensa.",
+        correct: false,
+        explain: "Supraglóticos frequentemente causam dor e disfagia, mas costumam ser diagnosticados em estágios mais avançados porque os sintomas podem ser inespecíficos no início."
+      },
+      {
+        text: "Glóticos têm maior tendência à metástase a distância no diagnóstico inicial.",
+        correct: false,
+        explain: "Glóticos, especialmente T1, tendem a ter menor propensão às metástases regionais iniciais do que tumores supraglóticos, que drenam abundantemente para linfonodos cervicais."
+      },
+      {
+        text: "Supraglóticos nunca envolvem linfonodos cervicais.",
+        correct: false,
+        explain: "Ao contrário: supraglóticos têm maior risco de metástase cervical devido à rica drenagem linfática da região."
+      }
+    ]
+  },
+  {
+    q: "12) Questão: Qual complicação funcional é mais esperada após laringectomia total?",
+    choices: [
+      {
+        text: "Perda permanente da fala alopneumática (necessidade de reabilitação vocal por prótese esofágica, eletrolaringe ou técnica de fala esofágica).",
+        correct: true,
+        explain: "A laringectomia total remove a laringe, resultando em perda da voz natural; reabilitação possível via próteses esofágicas, eletrolaringe ou técnicas de fala alternativa."
+      },
+      {
+        text: "Hipertensão pulmonar imediata.",
+        correct: false,
+        explain: "Hipertensão pulmonar não é complicação típica da laringectomia; complicações respiratórias podem ocorrer, mas não é um desfecho esperado direto."
+      },
+      {
+        text: "Recuperação espontânea da voz em semanas.",
+        correct: false,
+        explain: "A voz natural não se recupera após laringectomia total; necessita-se de reabilitação específica."
+      },
+      {
+        text: "Melhora da função olfatória.",
+        correct: false,
+        explain: "A função olfatória geralmente não melhora com laringectomia; alterações olfativas podem ocorrer secundariamente, mas não há expectativa de melhora."
+      }
+    ]
+  },
+  {
+    q: "13) Questão: Em que situação a traqueostomia de emergência é indicada em paciente com câncer de laringe?",
+    choices: [
+      {
+        text: "Obstrução aérea aguda com risco de asfixia devido ao comprometimento tumoral da via aérea.",
+        correct: true,
+        explain: "Traqueostomia de emergência é indicada quando há obstrução significativa da via aérea que coloca em risco a ventilação; deve-se avaliar local e planejar traqueostomia em nível subglótico, considerando oncologia."
+      },
+      {
+        text: "Em todos os pacientes com câncer de laringe como profilaxia rotineira.",
+        correct: false,
+        explain: "Nem todos os pacientes necessitam de traqueostomia; é indicada apenas quando há comprometimento respiratório ou como parte de estratégia cirúrgica específica."
+      },
+      {
+        text: "Somente para pacientes com tumor T1 glótico sem sintoma respiratório.",
+        correct: false,
+        explain: "Pacientes com T1 glótico e sem obstrução não requerem traqueostomia; seria procedimento excessivo e desnecessário."
+      },
+      {
+        text: "Apenas quando há metástase pulmonar.",
+        correct: false,
+        explain: "Metástase pulmonar não é indicação direta de traqueostomia; a indicação é obstrução das vias aéreas."
+      }
+    ]
+  },
+  {
+    q: "14) Questão: Qual é o papel do HPV no câncer de laringe comparado ao câncer de orofaringe?",
+    choices: [
+      {
+        text: "HPV tem papel bem estabelecido na orofaringe, mas sua associação com câncer de laringe é menos frequente e menos claramente causal.",
+        correct: true,
+        explain: "O HPV (especialmente tipos 16/18) está fortemente associado a carcinomas de orofaringe (melhor prognóstico); a ligação com câncer de laringe é menos comum e menos claramente determinante epidemiologicamente."
+      },
+      {
+        text: "HPV é a causa principal de todos os cânceres de laringe.",
+        correct: false,
+        explain: "Ao contrário, o tabagismo e álcool são os principais fatores de risco para câncer de laringe; HPV é menos frequentemente implicado."
+      },
+      {
+        text: "HPV está completamente ausente em tumores laríngeos.",
+        correct: false,
+        explain: "HPV pode estar presente em alguns tumores laríngeos, mas não é tão prevalente quanto na orofaringe."
+      },
+      {
+        text: "Vacinação contra HPV não tem impacto na redução de tumores da cabeça e pescoço.",
+        correct: false,
+        explain: "A vacinação diminui infecções por HPV e pode reduzir tumores relacionados ao HPV, especialmente na orofaringe; impacto direto na laringe é menos claro, mas proteger contra infecções oncogênicas é benéfico."
+      }
+    ]
+  },
+  {
+    q: "15) Questão: Em um paciente com carcinoma laríngeo e co-morbidade cardíaca severa que contraindica cirurgia extensa, qual alternativa terapêutica pode ser considerada visando controle tumoral?",
+    choices: [
+      {
+        text: "Radioterapia com ou sem quimioterapia (avaliar risco/benefício), buscando preservação da laringe quando possível.",
+        correct: true,
+        explain: "Quando cirurgia extensa é contraindicada, radioterapia — às vezes associada à quimioterapia — pode ser utilizada com intenção curativa ou paliativa, considerando comorbidades e tolerância terapêutica."
+      },
+      {
+        text: "Laringectomia total imediata sem considerar riscos cardiológicos.",
+        correct: false,
+        explain: "Cirurgia extensa em paciente com contraindicação cardiológica grave apresenta risco inaceitável; alternativas não cirúrgicas devem ser consideradas."
+      },
+      {
+        text: "Nenhum tratamento, apenas acompanhamento passivo.",
+        correct: false,
+        explain: "Abster-se de tratamento quando há possibilidade de terapêutica compatível com comorbidades não é recomendação; discutir opções paliativas ou adaptadas ao risco do paciente é necessário."
+      },
+      {
+        text: "Uso crônico de esteroides orais como tratamento antitumoral primário.",
+        correct: false,
+        explain: "Esteroides não têm eficácia antitumoral no câncer de laringe e não substituem terapias oncológicas adequadas."
+      }
+    ]
+  },
+  {
+    q: "16) Questão: Em um paciente com carcinoma laríngeo T2 glótico com mobilidade preservada das pregas vocais, qual é a conduta terapêutica comumente aceita visando controle local e preservação funcional?",
+    choices: [
+      {
+        text: "Radioterapia com intenção curativa ou cirurgia transoral conservadora (microcirurgia a laser), ambas consideradas opções válidas dependendo da infraestrutura e da preferência do paciente.",
+        correct: true,
+        explain: "Tumores glóticos T2 com mobilidade preservada frequentemente podem ser tratados com radioterapia ou cirurgia transoral (laser/microcirurgia) com bons resultados de controle local e preservação vocal. A escolha depende da experiência local, tamanho do tumor e condições clínicas do paciente."
+      },
+      {
+        text: "Quimioterapia isolada como primeira linha para controle local.",
+        correct: false,
+        explain: "Quimioterapia isolada não é tratamento de escolha curativo para tumores T2 glóticos; é usada em regimes combinados ou paliativos, não substitui radioterapia ou cirurgia curativa."
+      },
+      {
+        text: "Laringectomia total de rotina em todos os casos de T2.",
+        correct: false,
+        explain: "Laringectomia total é excessiva para muitos T2 glóticos, principalmente quando existem técnicas conservadoras que preservam a laringe e a função vocal."
+      },
+      {
+        text: "Observação ativa por 6 meses antes de decidir tratamento.",
+        correct: false,
+        explain: "Observação sem tratamento eleva risco de progressão tumoral; tumores T2 devem receber tratamento com intenção curativa o quanto antes."
+      }
+    ]
+  },
+  {
+    q: "17) Questão: Em tumores supraglóticos T1–T2, qual aspecto anatômico explica a maior propensão a metástase nodal em comparação com tumores glóticos?",
+    choices: [
+      {
+        text: "A rica drenagem linfática da região supraglótica, favorecendo disseminação para linfonodos cervicais mesmo em tumores pequenos.",
+        correct: true,
+        explain: "A supraglote possui drenagem linfática abundante, o que aumenta o risco de metástase cervical mesmo em estádios iniciais, justificando avaliação rigorosa do pescoço."
+      },
+      {
+        text: "A presença de cartilagem cricóide na supraglote.",
+        correct: false,
+        explain: "A cartilagem cricóide não explica a maior propensão a metástases; o fator chave é a drenagem linfática regional."
+      },
+      {
+        text: "Maior exposição ao HPV na supraglote comparada à glote.",
+        correct: false,
+        explain: "Embora HPV influencie alguns cânceres de cabeça e pescoço, a diferença de risco nodal supraglote x glote é principalmente anatômica (linfática), não relacionada diretamente ao HPV."
+      },
+      {
+        text: "Diferença na composição cartilaginosa que favorece invasão sanguínea.",
+        correct: false,
+        explain: "A via sanguínea não é o principal mecanismo inicial para metástase cervical; a drenagem linfática regional é predominante."
+      }
+    ]
+  },
+  {
+    q: "18) Questão: Qual é a utilidade clínica do PET-CT no estadiamento do câncer de laringe?",
+    choices: [
+      {
+        text: "Detecção de doença nodal oculta e de metástases a distância, sendo particularmente útil quando há suspeita clínica ou para planejamento terapêutico em estágios avançados.",
+        correct: true,
+        explain: "PET-CT auxilia na identificação de adenopatias não detectadas por TC/RM e metastizações à distância, influenciando estadiamento e conduta; sua sensibilidade aumenta em cenários selecionados."
+      },
+      {
+        text: "Substituir sempre a biópsia para confirmação histológica do tumor primário.",
+        correct: false,
+        explain: "PET-CT não confirma histologia; biópsia continua necessária para diagnóstico definitivo e caracterização tumoral."
+      },
+      {
+        text: "Avaliar invasão perineural com mais precisão que a ressonância magnética.",
+        correct: false,
+        explain: "RM é superior para avaliar invasão perineural e extensão de partes moles; PET-CT complementa a avaliação sistêmica, não substitui RM em detalhes anatômicos locais."
+      },
+      {
+        text: "Eliminar a necessidade de avaliação cervical por imagem em tumores glóticos T1.",
+        correct: false,
+        explain: "Em T1 glótico sem sinais clínicos de acometimento cervical, PET-CT não é rotineiro; a indicação deve ser individualizada."
+      }
+    ]
+  },
+  {
+    q: "19) Questão: Em peça cirúrgica de ressecção laríngea, qual margem cirúrgica é considerada adequada para reduzir risco de recidiva local?",
+    choices: [
+      {
+        text: "Margens livres (tumor ausente nas margens) em amostras histológicas, idealmente com margem microscópica de segurança quando possível.",
+        correct: true,
+        explain: "Margens cirúrgicas livres de tumor são meta principal; margens comprometidas aumentam risco de recidiva local e podem indicar necessidade de reintervenção ou adjuvância (radioterapia)."
+      },
+      {
+        text: "Margem positiva é aceitável se o paciente tiver bom estado geral.",
+        correct: false,
+        explain: "Margens positivas representam tumor residual e associam-se a maior risco de recidiva; não são aceitáveis por serem independentes do estado geral."
+      },
+      {
+        text: "Margens não importam quando se planeja radioterapia pós-operatória.",
+        correct: false,
+        explain: "Embora radioterapia adjuvante possa ser indicada em margem positiva, o objetivo cirúrgico continua sendo obter margens livres; a radioterapia não substitui ressecção adequada em todos os casos."
+      },
+      {
+        text: "Margens de apenas 0,1 mm são suficientes para tumores laríngeos grandes.",
+        correct: false,
+        explain: "Margens microscópicas muito estreitas podem ser insuficientes; a definição exata de margem segura depende do contexto, mas margens claramente negativas são preferíveis."
+      }
+    ]
+  },
+  {
+    q: "20) Questão: Qual é a principal indicação para cirurgia de resgate (salvage) em paciente com recidiva local após radioterapia para câncer de laringe?",
+    choices: [
+      {
+        text: "Recidiva local resecável em paciente com condição clínica permitidora, sendo a laringectomia total frequentemente a opção de resgate oncológico.",
+        correct: true,
+        explain: "Após falha da radioterapia, a cirurgia de resgate (muitas vezes laringectomia total) é indicada quando a recidiva é resecável e o paciente suporta a cirurgia, visando controle local e potencial cura."
+      },
+      {
+        text: "Repetir ciclo de radioterapia idêntico ao anterior sem avaliação cirúrgica.",
+        correct: false,
+        explain: "Reirradiar sem avaliação adequada e sem considerar resgate cirúrgico pode ser ineficaz e tóxico; opções devem ser individualizadas e cirurgia é frequentemente preferida se possível."
+      },
+      {
+        text: "Iniciar apenas suporte paliativo sem oferta de cirurgia.",
+        correct: false,
+        explain: "Paliativo pode ser apropriado em pacientes não resecáveis ou frágeis, mas se a recidiva for resecável e o paciente for apto, cirurgia de resgate é indicada."
+      },
+      {
+        text: "Dar quimioterapia adjuvante preventiva em todos os pacientes após qualquer recidiva local.",
+        correct: false,
+        explain: "Quimioterapia adjuvante não substitui resgate cirúrgico quando este é indicado; a escolha de tratamento depende do potencial de cura e das comorbidades."
+      }
+    ]
+  },
+
+  /* Casos clínicos detalhados: 21 a 30 */
+  {
+    q: "21) Questão: Caso clínico — Homem de 62 anos, tabagista de 40 anos-maço e etilista, queixa de rouquidão progressiva há 6 meses, perda de peso de 6 kg em 3 meses, tosse escassa e odinofagia ocasional. Ao exame, inspeção laríngea por nasofibrolaringoscopia revela lesão exofítica unilateral nas pregas vocais direitas, fixas parcialmente. Tomografia de pescoço mostra massa infiltrativa com suspeita de invasão de músculo vocal e espessamento de cartilagem tireoide. Não há adenomegalias cervicais palpáveis. Qual é o diagnóstico mais provável e qual o próximo passo mais apropriado?",
+    choices: [
+      {
+        text: "Carcinoma de células escamosas glótico avançado (possível T3 por invasão de músculo ou cartilagem) com indicação de biópsia confirmatória e estadiamento imagem complementar (RM) para avaliar extensão cartilaginosa antes de planejar tratamento (cirúrgico vs quimiorradioterápico).",
+        correct: true,
+        explain: "Quadro de paciente com fatores de risco e lesão nas pregas vocais com sinais de invasão sugere carcinoma escamoso glótico avançado. Biópsia para confirmação histológica é obrigatória; RM auxilia na avaliação de partes moles e invasão cartilaginosa para planejamento terapêutico."
+      },
+      {
+        text: "Granuloma laríngeo por refluxo gastroesofágico, tratar com inibidor de bomba de prótons por 8 semanas antes de qualquer investigação invasiva.",
+        correct: false,
+        explain: "Embora refluxo possa causar granulomas e rouquidão, presença de massa exofítica, história de tabagismo intenso, perda de peso e achados de imagem aumentam fortemente a probabilidade de neoplasia, exigindo biópsia imediata."
+      },
+      {
+        text: "Polip vocal benigno crônico, indicar terapia com fonoaudiologia e observação por 3 meses.",
+        correct: false,
+        explain: "Polipos vocais benignos costumam ter aparência diferente e não costumam invadir músculo/cartilagem na TC; dado o contexto clínico, investigação oncológica é prioritária."
+      },
+      {
+        text: "Infecção fúngica da laringe, solicitar exame micológico e iniciar antifúngico sistêmico.",
+        correct: false,
+        explain: "Infecção fúngica é improvável com esses achados de imagem e história; a prioridade é confirmar/excluir malignidade por biópsia."
+      }
+    ]
+  },
+  {
+    q: "22) Questão: Caso clínico — Mulher de 55 anos, sem tabagismo, com história de dor à deglutição por 3 meses, sensação de corpo estranho faríngeo e odinofagia intermitente. Exame por vídeo-laringoscopia identifica lesão ulcerada supraglótica envolvendo epiglote e valéculas. Tomografia mostra adenomegalia jugulodigástrica contralateral de 1,8 cm. Qual é a hipótese diagnóstica mais provável e qual conduta inicial é recomendada?",
+    choices: [
+      {
+        text: "Carcinoma supraglótico com suspeita de acometimento nodal. Realizar biópsia da lesão primária e punção/biopsia do linfonodo suspeito (ou esvaziamento/estadiamento dependendo da confirmação) para estadiamento e planejamento terapêutico multimodal.",
+        correct: true,
+        explain: "Lesão supraglótica ulcerada associada a adenopatia sugere malignidade com disseminação regional. Confirmação histológica do primário e avaliação histológica do linfonodo são necessárias para definir estadiamento e opção terapêutica (cirurgia mais esvaziamento cervical e/ou adjuvância)."
+      },
+      {
+        text: "Doença inflamatória benigna, iniciar antibiótico de amplo espectro e reavaliar em 2 semanas.",
+        correct: false,
+        explain: "Resposta inflamatória poderia cursar com adenomegalia, mas lesão ulcerada supraglótica em paciente adulto e linfonodo >1,5 cm impõe investigação oncológica imediata."
+      },
+      {
+        text: "Tumor benigno de glândula salivares, encaminhar para ressecção ambulatorial sem biópsia prévia.",
+        correct: false,
+        explain: "Localização supraglótica e presença de adenopatia são mais compatíveis com neoplasia mucosa (epitélio), não com tumor de glândula salivar; biópsia é necessária."
+      },
+      {
+        text: "Iniciar corticoterapia para reduzir inflamação e adiar procedimentos cirúrgicos.",
+        correct: false,
+        explain: "Corticoterapia pode mascarar achados e atrasar diagnóstico; não é conduta inicial apropriada sem diagnóstico."
+      }
+    ]
+  },
+  {
+    q: "23) Questão: Caso clínico — Homem de 68 anos, obeso, hipertenso, com histórico de laringe irradiada 5 anos antes por carcinoma glótico T1. Apresenta nova massa cervical direita dolorosa e rouquidão recente. PET-CT evidencia captação intensa no pescoço direito e suspeita de recorrência local. Exame direto sob anestesia encontra massa submucosa fixadora em região glótica. Qual é a melhor abordagem terapêutica de resgate e considerações relevantes?",
+    choices: [
+      {
+        text: "Cirurgia de resgate com laringectomia parcial ou total dependendo da ressecabilidade e da invasão; avaliar necessidades de reconstrução e discussões sobre função e qualidade de vida, pois reirradiar é limitado por toxicidade prévia.",
+        correct: true,
+        explain: "Após recorrência pós-radioterapia, cirurgia de resgate (frequentemente laringectomia) é a opção curativa padrão quando a lesão é ressecável; reirradiar tem limitações por toxicidade cumulativa. Planejamento pré-operatório e consentimento sobre perda funcional são essenciais."
+      },
+      {
+        text: "Reiniciar radioterapia idêntica ao curso anterior sem considerar cirurgia.",
+        correct: false,
+        explain: "Reirradiar no mesmo campo sem avaliar riscos não é ideal; a radioterapia repetida tem risco de toxicidade severa e deve ser considerada com cautela, tipicamente após avaliação multidisciplinar."
+      },
+      {
+        text: "Iniciar apenas quimioterapia paliativa sem discussão cirúrgica.",
+        correct: false,
+        explain: "Quimioterapia paliativa pode ser opção quando cirurgia não é possível, mas se a recorrência for resecável, cirurgia de resgate oferece melhor chance de controle local e possível cura."
+      },
+      {
+        text: "Observação por 3 meses para avaliar evolução natural.",
+        correct: false,
+        explain: "Observação atrasaria tratamento potencialmente curativo; com achados de recorrência e PET-CT positivo, intervenção é indicada após avaliação completa."
+      }
+    ]
+  },
+  {
+    q: "24) Questão: Caso clínico — Paciente feminina de 48 anos, múltiplos pares de adenomegalias cervicais bilaterais, perda progressiva da voz e dispneia noturna. Nasofibrolaringoscopia: lesão extensa supraglótica que compromete epiglote e pregas vestibulares. Biópsia confirma carcinoma espinocelular. TC de tórax evidencia foco pulmonar de 1,2 cm sugestivo de metástase. Como seria o estadiamento TNM aproximado e a implicação terapêutica?",
+    choices: [
+      {
+        text: "Estadiamento sugerido M1 (metástase à distância) com doença regional extensa; abordagem tende a ser sistêmica/paliativa ou combinada para controle sintomático, não voltada à cura isolada local.",
+        correct: true,
+        explain: "Presença de nódulo pulmonar suspeito classifica como M1, alterando objetivo terapêutico para paliativo ou sistêmico, com medidas para controle local de sintomas (radioterapia paliativa, procedimentos de via aérea) conforme condição clínica."
+      },
+      {
+        text: "Estadiamento T1N0M0, tratar apenas com cirurgia curativa local.",
+        correct: false,
+        explain: "Achados indicam doença localmente extensa e metástase pulmonar; não se trata de T1N0M0. A opção cirúrgica curativa isolada não é indicada."
+      },
+      {
+        text: "Estadiamento puramente nodal sem considerar metástase pulmonar.",
+        correct: false,
+        explain: "A identificação de lesão pulmonar suspeita obriga consideração de M1; ignorar metastase altera o tratamento e prognóstico."
+      },
+      {
+        text: "Classificar como tumor benigno por presença de múltiplos linfonodos e tratar com antibiótico prolongado.",
+        correct: false,
+        explain: "Biópsia confirmou carcinoma; comportamento não é compatível com infecção tratável apenas com antibiótico."
+      }
+    ]
+  },
+  {
+    q: "25) Questão: Caso clínico — Homem de 45 anos, sem comorbidades, rouquidão de 2 meses. Exame: nódulo pequeno claramente restrito à prega vocal esquerda, móvel. Suspeita de carcinoma glótico T1a. Quais desfechos funcionais e oncológicos são esperados se optar por microcirurgia endoscópica (laser) comparado à radioterapia?",
+    choices: [
+      {
+        text: "Ambas as opções oferecem taxas de controle local semelhantes para T1a; microcirurgia permite recuperação vocal potencialmente mais rápida e possibilita histologia e avaliação de margens, enquanto radioterapia evita cirurgia mas tem efeitos tardios na mucosa.",
+        correct: true,
+        explain: "T1a glótico tem boas opções: cirurgia transoral (laser) e radioterapia têm resultados oncológicos comparáveis. Microcirurgia permite exame histológico e margens, com recuperação vocal rápida; radioterapia preserva estrutura laríngea sem incisões, mas tem efeitos tardios."
+      },
+      {
+        text: "Microcirurgia apresenta sempre pior sobrevida que radioterapia.",
+        correct: false,
+        explain: "Não há evidência consistente de pior sobrevida com microcirurgia para T1a; ambas são opções válidas com resultados comparáveis em centros experientes."
+      },
+      {
+        text: "Radioterapia elimina necessidade de acompanhamento clínico após conclusão.",
+        correct: false,
+        explain: "Ambas as modalidades exigem seguimento para detecção de recidiva e manejo de complicações tardias; radioterapia não dispensa vigilância."
+      },
+      {
+        text: "Microcirurgia impede qualquer futura radioterapia caso recidive.",
+        correct: false,
+        explain: "Microcirurgia não impede radioterapia futura; radioterapia pode ser empregada como terapia adjuvante ou de resgate se necessário."
+      }
+    ]
+  },
+  {
+    q: "26) Questão: Caso clínico — Mulher de 70 anos, com dispneia progressiva e estridor. Endoscopia revela massa laríngea subglótica ocluindo cerca de 70% da luz. Imediatamente, qual é a intervenção mais segura e eficaz para garantir via aérea e estabilizar o paciente antes do planejamento oncológico?",
+    choices: [
+      {
+        text: "Traqueostomia abaixo do nível de obstrução (em ambiente controlado), para assegurar via aérea definitiva e permitir avaliação e planejamento oncológico subsequente.",
+        correct: true,
+        explain: "Em obstrução laríngea significativa com risco de asfixia, traqueostomia é indicada para garantir via aérea segura. Procedimentos devem ser realizados de forma planejada por equipe experiente, considerando oncologia e futuras abordagens terapêuticas."
+      },
+      {
+        text: "Intubação orotraqueal eletiva e alta hospitalar imediata sem outras intervenções.",
+        correct: false,
+        explain: "Intubação pode ser tecnicamente difícil ou impossível em obstrução alta; traqueostomia oferece via aérea definitiva mais segura neste contexto."
+      },
+      {
+        text: "Administrar nebulizações broncodilatadoras e enviar para casa para observação.",
+        correct: false,
+        explain: "Broncodilatadores não resolvem obstrução extrínseca ou intraluminal laríngea; adiar intervenção pode levar a falha respiratória."
+      },
+      {
+        text: "Inicio imediato de quimioterapia sistêmica para reduzir volume tumoral rapidamente.",
+        correct: false,
+        explain: "Quimioterapia não garante obstrução aguda e não é intervenção de emergência para assegurar via aérea; medidas cirúrgicas (traqueostomia) são prioritárias."
+      }
+    ]
+  },
+  {
+    q: "27) Questão: Caso clínico — Homem de 59 anos, ex-tabagista, apresenta massa cervical indolor há 3 meses. Exame: adenopatia fixa em nível II direito. Imagem revela lesão laríngea pequena e linfonodomegalia cervical ipsilateral. Biópsia do linfonodo demonstra metástase de carcinoma escamoso e biópsia da laringe confirma tumor glótico T1. Considerando presença de metástase ganglionar isolada e primário pequeno, qual conduta cirúrgica é mais apropriada?",
+    choices: [
+      {
+        text: "Tratamento do primário com cirurgia conservadora (microcirurgia) ou radioterapia para o T1 associado a esvaziamento cervical ipsilateral (neck dissection) para controle regional das metástases.",
+        correct: true,
+        explain: "Quando há primário pequeno e metástase ganglionar comprovada, combinação de tratamento do primário (conservador) e esvaziamento cervical é indicada para controle regional, uma vez que o comprometimento nodal altera plano terapêutico."
+      },
+      {
+        text: "Ignorar adenopatia que está distante do tamanho do primário e tratar apenas o T1 localmente.",
+        correct: false,
+        explain: "Metástase confirmada no linfonodo exige tratamento cervical; negligenciar implicaria alto risco de recidiva regional."
+      },
+      {
+        text: "Apenas quimioterapia sistêmica sem cirurgia cervical.",
+        correct: false,
+        explain: "Quimioterapia isolada não é primeira linha para controle regional em metástase ganglionar resecável; esvaziamento cervical ou radioterapia dirigida são preferíveis."
+      },
+      {
+        text: "Esvaziamento cervical bilateral de rotina sem tratar o primário.",
+        correct: false,
+        explain: "Tratamento do primário é essencial; esvaziamento bilateral pode ser excessivo se drenagem e achados forem unilaterais e não há evidência contralateral."
+      }
+    ]
+  },
+  {
+    q: "28) Questão: Caso clínico — Mulher de 52 anos, com história de rouquidão crônica. Endoscopia revela lesão ulcerada na prega vocal. Biópsia revela carcinoma de pequenas células da laringe. Dado o subtipo histológico, qual é a característica clínica e a estratégia terapêutica geral esperada?",
+    choices: [
+      {
+        text: "Carcinoma de pequenas células é raro e costuma ser agressivo com tendência a disseminação sistêmica; abordagem costuma incluir quimioterapia sistêmica com ou sem radioterapia local, e prognóstico é geralmente reservado.",
+        correct: true,
+        explain: "Carcinoma de pequenas células é histologicamente distinto, agressivo e com alta probabilidade de metastização; tratamento multimodal com quimioterapia sistêmica é base, com radioterapia local conforme necessidade, mas expectativa de cura é menor comparada a SCC convencional."
+      },
+      {
+        text: "Tratar apenas com cirurgia conservadora, pois é indolente e de crescimento lento.",
+        correct: false,
+        explain: "Pequenas células não são indolentes; cirurgia isolada raramente é suficiente dada a tendência a disseminação."
+      },
+      {
+        text: "Ignorar o tumor por raridade e fazer acompanhamento clínico.",
+        correct: false,
+        explain: "Devido à agressividade, observação sem tratamento não é apropriada."
+      },
+      {
+        text: "Aplicar apenas terapias alternativas e suporte nutricional.",
+        correct: false,
+        explain: "Terapias alternativas não substituem tratamento oncológico multimodal necessário para este subtipo agressivo."
+      }
+    ]
+  },
+  {
+    q: "29) Questão: Caso clínico — Homem de 66 anos, com história de disfagia, perda ponderal e rouquidão. Endoscopia identifica lesão infiltrativa supraglótica com fixação da epiglote e extensão para a base da língua. TC revela linfonodos bilaterais cervicais e envolvimento transglótico. Biópsia confirma SCC moderadamente diferenciado. Qual o prognóstico relativo e qual estratégia terapêutica multimodal é mais indicada?",
+    choices: [
+      {
+        text: "Doença transglótica com acometimento nodal bilateral tem prognóstico reservado; abordagem multimodal com cirurgia extensa (possivelmente laringectomia) associada a esvaziamento cervical e radioterapia adjuvante (com ou sem quimioterapia) é frequentemente necessária.",
+        correct: true,
+        explain: "Transgressão transglótica e acometimento nodal bilateral indica doença avançada com pior prognóstico. Tratamento multimodal agressivo (cirúrgico com adjuvância) é geralmente requerido para controle local e regional."
+      },
+      {
+        text: "Prognóstico excelente e tratamento com observação apenas.",
+        correct: false,
+        explain: "Doença avançada com drenagem nodal bilateral não tem prognóstico excelente e não se beneficia de mera observação."
+      },
+      {
+        text: "Tratar exclusivamente com terapia endoscópica local, pois doença extensa responde bem.",
+        correct: false,
+        explain: "Doença extensa transcende limites de ressecção endoscópica; tratamentos mais amplos são necessários."
+      },
+      {
+        text: "Indicar apenas radioterapia de pulso curto sem considerar cirurgia nodal.",
+        correct: false,
+        explain: "Radioterapia isolada pode ser insuficiente para doença transglótica com acometimento nodal extenso; frequentemente há necessidade de cirurgia e radioterapia combinadas."
+      }
+    ]
+  },
+  {
+    q: "30) Questão: Caso clínico — Paciente de 58 anos, com queixas de tosse persistente e sensação de massa cervical. História de consumo intenso de álcool e tabaco. Durante discussão multidisciplinar, decide-se por tratamento conservador da laringe com quimiorradioterapia concomitante para preservar função. Quais riscos e complicações funcionais a longo prazo devem ser discutidos com o paciente ao optar por essa estratégia?",
+    choices: [
+      {
+        text: "Risco de disfagia crônica, osteonecrose, fístulas faríngeas, hipossalivação, mucosite grave aguda, e possibilidade de falha no controle local levando a necessidade de laringectomia de resgate; todas essas complicações devem ser explicadas ao paciente.",
+        correct: true,
+        explain: "Quimiorradioterapia pode preservar a laringe, mas acarreta riscos significativos de toxicidade aguda e tardia que afetam voz e deglutição; também existe possibilidade de falha terapêutica exigindo cirurgia de resgate. Esses pontos são essenciais no consentimento informado."
+      },
+      {
+        text: "Nenhum risco significativo porque preserva a laringe, sendo sempre a melhor escolha funcional.",
+        correct: false,
+        explain: "Embora preserve anatomia, a quimiorradioterapia não está isenta de complicações funcionais e riscos de falha; afirmar ausência de risco é incorreto."
+      },
+      {
+        text: "Única complicação possível é perda temporária da voz por 1 semana.",
+        correct: false,
+        explain: "Complicações são mais amplas e podem ser crônicas e incapacitantes; reduzir a discussão a perda temporária é enganoso."
+      },
+      {
+        text: "Risco exclusivo de efeitos secundários cardiotóxicos sem impacto laríngeo.",
+        correct: false,
+        explain: "Embora quimioterápicos tenham potenciais efeitos sistêmicos, os riscos locais (disfagia, mucosite, fibrose) são centrais e devem ser discutidos; não se limita a efeitos cardiotóxicos."
+      }
+    ]
+  }
+];
+
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

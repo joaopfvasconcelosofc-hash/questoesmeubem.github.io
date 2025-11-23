@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — rinites cronicas e rinossinusites</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — rinites cronicas e rinossinusites</h1>
+    <p class="lead">30 questões - rinites cronicas e rinossinusites</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão: Qual é a definição mais adequada de rinite crônica?",
+    choices: [
+      { text: "Sintomas nasais recorrentes por mais de 4 semanas.", correct: false, explain: "Incorreto — por definição do material, rinite é considerada crônica quando os sintomas persistem por mais de 12 semanas." },
+      { text: "Sintomas nasais persistentes por mais de 12 semanas.", correct: true, explain: "Correto — o PDF define rinite crônica como aquelas com mais de 12 semanas de duração dos sintomas. :contentReference[oaicite:1]{index=1}" },
+      { text: "Presença de secreção mucopurulenta na cavidade nasal por 2 semanas.", correct: false, explain: "Incorreto — secreção mucopurulenta pode ocorrer em rinite, mas a definição temporal da cronicidade é >12 semanas." },
+      { text: "Episódios de espirros e prurido ocular durante Primavera.", correct: false, explain: "Incorreto — descreve rinite alérgica sazonal, não rinite crônica." }
+    ]
+  },
+  {
+    q: "2) Questão: Qual das alternativas lista corretamente a tríade clássica de sintomas da rinite alérgica aguda?",
+    choices: [
+      { text: "Febre, anosmia e odinofagia.", correct: false, explain: "Incorreto — febre e odinofagia não fazem parte da tríade clássica de rinite alérgica." },
+      { text: "Congestão nasal, coriza e prurido, com espirros frequentes.", correct: true, explain: "Correto — o material descreve congestão nasal, coriza, prurido e espirros como sintomas típicos da rinite alérgica. :contentReference[oaicite:2]{index=2}" },
+      { text: "Tosse, dispneia e cianose.", correct: false, explain: "Incorreto — esses achados são típicos de comprometimento respiratório inferior, não da rinite alérgica isolada." },
+      { text: "Dor facial, febre e edema periorbitário.", correct: false, explain: "Incorreto — mais sugestivos de complicação de sinusite aguda com acometimento orbital." }
+    ]
+  },
+  {
+    q: "3) Questão: Segundo o conteúdo do PDF, qual é a principal mecanismo imunológico envolvido na rinite alérgica aguda?",
+    choices: [
+      { text: "Hipersensibilidade do tipo II mediada por IgG.", correct: false, explain: "Incorreto — rinite alérgica está relacionada à hipersensibilidade tipo I, mediada por IgE." },
+      { text: "Hipersensibilidade tipo I (IgE) com ativação de mastócitos e basófilos.", correct: true, explain: "Correto — o material descreve sensibilização envolvendo células apresentadoras de antígeno, IgE, mastócitos e basófilos, compatível com hipersensibilidade tipo I. :contentReference[oaicite:3]{index=3}" },
+      { text: "Imunocomplexos circulantes (tipo III).", correct: false, explain: "Incorreto — mecanismo tipo III não é o principal na rinite alérgica descrita no PDF." },
+      { text: "Reação citotóxica mediada por células T CD8+.", correct: false, explain: "Incorreto — não é o mecanismo predominante na rinite alérgica aguda." }
+    ]
+  },
+  {
+    q: "4) Questão: Como o PDF recomenda confirmar o diagnóstico de rinite alérgica?",
+    choices: [
+      { text: "Exclusivamente por radiografia de seios paranasais.", correct: false, explain: "Incorreto — radiografia tem utilidade limitada; diagnóstico baseia-se em história, exame físico e testes confirmatórios de alergia." },
+      { text: "História clínica, exame físico e testes confirmatórios (ex.: testes cutâneos ou IgE específicos).", correct: true, explain: "Correto — o documento destaca história, exame e testes confirmatórios como base do diagnóstico. :contentReference[oaicite:4]{index=4}" },
+      { text: "Somente pela resposta ao uso de antibiótico empírico.", correct: false, explain: "Incorreto — rinite alérgica não é diagnosticada por resposta a antibiótico." },
+      { text: "Por biópsia da mucosa nasal em todos os casos.", correct: false, explain: "Incorreto — biópsia não é necessária para diagnóstico rotineiro de rinite alérgica." }
+    ]
+  },
+  {
+    q: "5) Questão: Qual das seguintes classificações de rinite aparece no PDF?",
+    choices: [
+      { text: "Rinite purulenta, atópica e infecciosa.", correct: false, explain: "Incorreto — a classificação do PDF inclui rinite mucopurulenta, hipertrófica e atrófica (simples e ozenosa), não 'atópica' isolada nessa listagem." },
+      { text: "Rinite mucopurulenta; rinite hipertrófica (difusa e localizada); rinite atrófica (simples e ozenosa).", correct: true, explain: "Correto — o PDF lista essas categorias específicas na classificação das rinites. :contentReference[oaicite:5]{index=5}" },
+      { text: "Rinite vasomotora, rinite hormonal e rinite medicamentosa.", correct: false, explain: "Incorreto — embora existam outras formas de rinite na literatura, essa lista não é a apresentada no PDF consultado." },
+      { text: "Rinite crônica granulomatosa e rinite eosinofílica apenas.", correct: false, explain: "Incorreto — essas categorias não correspondem à classificação mostrada no PDF." }
+    ]
+  },
+  {
+    q: "6) Questão: De acordo com o material, qual é a definição de rinossinusite aguda?",
+    choices: [
+      { text: "Inflamação da mucosa do nariz e seios paranasais com resolução completa dos sintomas em até 12 semanas.", correct: true, explain: "Correto — o PDF define rinossinusite e identifica como aguda quando há resolução completa em até 12 semanas. :contentReference[oaicite:6]{index=6}" },
+      { text: "Inflamação nasal que dura >12 semanas.", correct: false, explain: "Incorreto — duração >12 semanas caracteriza cronificação, não rinossinusite aguda." },
+      { text: "Secreção purulenta crônica sem congestão nasal.", correct: false, explain: "Incorreto — rinossinusite inclui congestão e outros sintomas; a cronificação depende do tempo." },
+      { text: "Processo exclusivamente viral sem afetar os seios paranasais.", correct: false, explain: "Incorreto — rinossinusite é inflamação da mucosa do nariz e dos seios paranasais; pode ser viral ou bacteriana." }
+    ]
+  },
+  {
+    q: "7) Questão: Quais agentes bacterianos são citados no PDF como causas comuns de rinossinusite bacteriana aguda?",
+    choices: [
+      { text: "Staphylococcus aureus, Pseudomonas aeruginosa e Klebsiella spp.", correct: false, explain: "Incorreto — embora S. aureus possa estar envolvido em certas infecções, o PDF cita prioritariamente Streptococcus pneumoniae, Haemophilus influenzae e Moraxella catarrhalis para rinossinusite aguda bacteriana. :contentReference[oaicite:7]{index=7}" },
+      { text: "Streptococcus pneumoniae, Haemophilus influenzae e Moraxella catarrhalis.", correct: true, explain: "Correto — estes são os agentes bacterianos clássicos listados no material como etiologia bacteriana comum. :contentReference[oaicite:8]{index=8}" },
+      { text: "Mycobacterium tuberculosis, Chlamydia pneumoniae e Coxiella burnetii.", correct: false, explain: "Incorreto — esses não são os patógenos típicos citados para rinossinusite aguda no PDF." },
+      { text: "Candida spp., Aspergillus spp. e Cryptococcus spp.", correct: false, explain: "Incorreto — fungos não são listados como causas comuns de rinossinusite aguda no trecho consultado." }
+    ]
+  },
+  {
+    q: "8) Questão: Quais achados do exame complementar são considerados de utilidade limitada para rinossinusite segundo o PDF?",
+    choices: [
+      { text: "Tomografia computadorizada (TC).", correct: false, explain: "Incorreto — TC é recomendada quando há suspeita de complicações ou quadro crônico; não é considerada inútil." },
+      { text: "Ressonância magnética (RM).", correct: false, explain: "Incorreto — RM tem papel em avaliação de complicações e em quadros específicos." },
+      { text: "Radiografia simples dos seios paranasais.", correct: true, explain: "Correto — o documento afirma que a radiografia é pouco sensível e de utilidade limitada para rinossinusite. :contentReference[oaicite:9]{index=9}" },
+      { text: "Nasofibroendoscopia.", correct: false, explain: "Incorreto — nasofibroendoscopia pode evidenciar secreção mucopurulenta e é útil no diagnóstico." }
+    ]
+  },
+  {
+    q: "9) Questão: Conforme o PDF, qual exame pode evidenciar secreção mucopurulenta no meato médio ou recesso esfenoetmoidal?",
+    choices: [
+      { text: "Radiografia de seios paranasais.", correct: false, explain: "Incorreto — radiografia tem sensibilidade limitada; não é o exame descrito para visualizar diretamente secreção intranasal." },
+      { text: "Nasofibroendoscopia.", correct: true, explain: "Correto — o material indica que a nasofibroendoscopia pode evidenciar secreção mucopurulenta no meato médio ou recesso esfenoetmoidal. :contentReference[oaicite:10]{index=10}" },
+      { text: "Teste de função respiratória.", correct: false, explain: "Incorreto — teste de função respiratória não é usado para visualizar secreções nasais." },
+      { text: "Eletroforese de proteínas séricas.", correct: false, explain: "Incorreto — irrelevante para avaliação de secreção nasal." }
+    ]
+  },
+  {
+    q: "10) Questão: Qual é a dose de corticosteróide tópico nasal (mometasona) indicada no PDF para alívio inicial dos sintomas de rinossinusite?",
+    choices: [
+      { text: "A) 50 mcg/dia.", correct: false, explain: "Incorreto — o PDF cita uma dose maior para corticosteróide tópico (mometasona)." },
+      { text: "400 mcg/dia de mometasona (fluorato de mometasona).", correct: true, explain: "Correto — o PDF descreve fluorato de mometasona 400 mcg/dia como corticosteróide tópico que alivia sintomas no início do quadro. :contentReference[oaicite:11]{index=11}" },
+      { text: "2000 mcg/dia.", correct: false, explain: "Incorreto — dose excessiva e não mencionada no material para uso tópico rotineiro." },
+      { text: "Não usar corticosteróide tópico em rinossinusite.", correct: false, explain: "Incorreto — o PDF recomenda corticosteróide tópico como parte do tratamento para alívio dos sintomas." }
+    ]
+  },
+  {
+    q: "11) Questão: Segundo o material, quais antibióticos são citados como opções para rinossinusite bacteriana?",
+    choices: [
+      { text: "Amoxicilina com clavulanato, cefalosporinas de segunda geração, clindamicina ou macrolídeos.", correct: true, explain: "Correto — o PDF lista amoxicilina+clavulanato, cefalosporinas de segunda geração, clindamicina ou macrolídeos como opções terapêuticas. :contentReference[oaicite:12]{index=12}" },
+      { text: "Isoniazida e rifampicina.", correct: false, explain: "Incorreto — são antituberculosos, não indicados rotineiramente para rinossinusite aguda bacteriana." },
+      { text: "Fluconazol e anfotericina B.", correct: false, explain: "Incorreto — antifúngicos sistêmicos não são a primeira escolha para rinossinusite bacteriana descrita no PDF." },
+      { text: "Doxiciclina em monoterapia por 2 semanas em todos os casos.", correct: false, explain: "Incorreto — o PDF não preconiza doxyciclina como rotina universal; opções citadas são as do item A." }
+    ]
+  },
+  {
+    q: "12) Questão: O PDF discute descongestionantes e mucolíticos em rinossinusite. Qual a conclusão apresentada?",
+    choices: [
+      { text: "Devem ser sempre usados por comprovarem melhora significativa.", correct: false, explain: "Incorreto — o documento afirma que não há benefício comprovado em sua utilização." },
+      { text: "Não há benefício comprovado em sua utilização.", correct: true, explain: "Correto — o PDF afirma explicitamente que descongestionantes e mucolíticos não têm benefício comprovado. :contentReference[oaicite:13]{index=13}" },
+      { text: "São contraindicados por aumentar risco de complicações intracranianas.", correct: false, explain: "Incorreto — o PDF não os classifica como diretamente contraindicados por esse motivo; apenas diz que não há benefício comprovado." },
+      { text: "Somente mucolíticos são inúteis; descongestionantes são sempre indicados.", correct: false, explain: "Incorreto — o trecho inclui ambos (descongestionantes e mucolíticos) como sem benefício comprovado." }
+    ]
+  },
+  {
+    q: "13) Questão: Quais são possíveis complicações de rinossinusite listadas no PDF?",
+    choices: [
+      { text: "Celulite orbital, abcesso orbital, trombose de seio cavernoso, osteomielite e complicações endocranianas como meningite e abscessos cerebrais.", correct: true, explain: "Correto — o material cita complicações orbitais (celulite/abcesso, trombose de seio cavernoso), ósseas (osteomielite) e endocranianas (meningite, abscessos cerebrais, trombose). :contentReference[oaicite:14]{index=14}" },
+      { text: "Apenas rinite crônica sem risco de infecção óssea.", correct: false, explain: "Incorreto — há risco de complicações sérias, incluindo ósseas e intracranianas, segundo o PDF." },
+      { text: "Insuficiência renal aguda como complicação direta.", correct: false, explain: "Incorreto — insuficiência renal não é listada como complicação direta da rinossinusite no material consultado." },
+      { text: "Úlcera péptica associada à obstrução nasal.", correct: false, explain: "Incorreto — não há relação direta entre ulcera péptica e rinossinusite descrita no PDF." }
+    ]
+  },
+  {
+    q: "14) Questão: Sobre o papel dos vírus nas rinossinusites agudas, o PDF aponta que:",
+    choices: [
+      { text: "Vírus como rinovírus, influenza e parainfluenza são causas comuns de rinossinusite aguda.", correct: true, explain: "Correto — o documento cita rinovírus, influenza e parainfluenza como etiologia viral importante para rinossinusites agudas. :contentReference[oaicite:15]{index=15}" },
+      { text: "Vírus nunca estão envolvidos em quadros de rinossinusite.", correct: false, explain: "Incorreto — o PDF afirma que a etiologia pode ser viral (ex.: rinovírus)." },
+      { text: "Apenas herpesvírus causa rinossinusite viral.", correct: false, explain: "Incorreto — herpesvírus não é citado como principal agente viral; rinovírus e influenza são destacados." },
+      { text: "Vírus só são causa em imunossuprimidos.", correct: false, explain: "Incorreto — o PDF não limita etiologia viral apenas a imunossuprimidos." }
+    ]
+  },
+  {
+    q: "15) Questão: Qual é a recomendação do PDF sobre o uso de corticóide oral em rinossinusite aguda?",
+    choices: [
+      { text: "Corticóide oral não tem efeito e é contraindicado.", correct: false, explain: "Incorreto — o PDF não contraindica, mas descreve efeito temporário." },
+      { text: "Diminui os sintomas nos primeiros três dias de uso.", correct: true, explain: "Correto — o material indica que corticóide oral diminui os sintomas nos primeiros três dias de uso. :contentReference[oaicite:16]{index=16}" },
+      { text: "Deve ser usado por pelo menos 8 semanas em todos os casos.", correct: false, explain: "Incorreto — o PDF menciona redução dos sintomas nos primeiros dias, não uso prolongado universal." },
+      { text: "Só existe indicação para corticóide oral em rinite alérgica crônica, não em rinossinusite.", correct: false, explain: "Incorreto — o PDF descreve uso de corticóide oral no contexto de rinossinusite aguda para alívio inicial." }
+    ]
+  },
+  {
+    q: "16) Questão: Na rinossinusite crônica, qual alteração histopatológica é descrita no material como predominante?",
+    choices: [
+      { text: "Predomínio de infiltrado neutrofílico.", correct: false, explain: "Incorreto — infiltrado neutrofílico predomina em quadros infecciosos agudos, não na rinossinusite crônica." },
+      { text: "Predomínio de inflamação crônica com eosinófilos.", correct: true, explain: "Correto — o PDF descreve que a rinossinusite crônica pode apresentar infiltração eosinofílica, mesmo na ausência de alergia comprovada. :contentReference[oaicite:1]{index=1}" },
+      { text: "Necrose extensa da mucosa nasal.", correct: false, explain: "Incorreto — necrose não é achado típico de rinossinusite crônica não complicada." },
+      { text: "Formação de granulomas caseosos.", correct: false, explain: "Incorreto — granulomas caseosos sugerem etiologias como tuberculose, não a rinossinusite crônica comum." }
+    ]
+  },
+  {
+    q: "17) Questão: Qual principal diferença temporal entre rinossinusite crônica e aguda discutida no PDF?",
+    choices: [
+      { text: "Aguda: >12 semanas; Crônica: <4 semanas.", correct: false, explain: "Incorreto — é o oposto da classificação correta." },
+      { text: "Aguda: até 12 semanas; Crônica: >12 semanas.", correct: true, explain: "Correto — o PDF define a rinossinusite crônica como aquela com sintomas por mais de 12 semanas. :contentReference[oaicite:2]{index=2}" },
+      { text: "Ambas duram igualmente >12 semanas.", correct: false, explain: "Incorreto — isso descaracteriza a distinção." },
+      { text: "Não existe distinção temporal entre as duas.", correct: false, explain: "Incorreto — a distinção temporal é clara e estruturada." }
+    ]
+  },
+  {
+    q: "18) Questão: Sobre a patogênese da rinossinusite, o PDF relata que o processo inicial envolve:",
+    choices: [
+      { text: "Aumento primário da pressão intracraniana.", correct: false, explain: "Incorreto — não é mencionado como mecanismo inicial." },
+      { text: "Obstrução do óstio sinusal, favorecendo acúmulo de secreção e inflamação.", correct: true, explain: "Correto — o PDF descreve que a obstrução do óstio sinusal inicia o processo de estase e inflamação subsequente. :contentReference[oaicite:3]{index=3}" },
+      { text: "Colonização exclusiva por fungos em todos os casos.", correct: false, explain: "Incorreto — fungos não são causa exclusiva e não são citados assim no material." },
+      { text: "Aumento da atividade dos cílios nasais.", correct: false, explain: "Incorreto — ocorre o contrário: comprometimento mucociliar." }
+    ]
+  },
+  {
+    q: "19) Questão: Qual achado no exame físico é frequentemente observado na rinite alérgica, conforme apresentado no PDF?",
+    choices: [
+      { text: "Mucosa nasal hiperemiada e espessada.", correct: false, explain: "Incorreto — hiperemia é mais comum em quadros infecciosos." },
+      { text: "Mucosa nasal pálida, edemaciada e túrgida.", correct: true, explain: "Correto — o PDF descreve mucosa pálida e edemaciada como característica da rinite alérgica. :contentReference[oaicite:4]{index=4}" },
+      { text: "Perfurações septais.", correct: false, explain: "Incorreto — não é achado fisiopatológico da rinite alérgica." },
+      { text: "Secreção mucopurulenta sempre presente.", correct: false, explain: "Incorreto — secreção mucopurulenta não é obrigatória na rinite alérgica." }
+    ]
+  },
+  {
+    q: "20) Questão: Sobre o tratamento da rinossinusite crônica citado no PDF, qual das opções é correta?",
+    choices: [
+      { text: "Antibióticos isolados resolvem a maioria dos casos.", correct: false, explain: "Incorreto — rinossinusite crônica demanda abordagem multifatorial; antibiótico isolado nem sempre é suficiente." },
+      { text: "Corticosteróides tópicos são recomendados para redução de inflamação.", correct: true, explain: "Correto — o PDF cita o uso de corticosteroides tópicos como parte do manejo da rinossinusite crônica. :contentReference[oaicite:5]{index=5}" },
+      { text: "Cirurgia é sempre obrigatória.", correct: false, explain: "Incorreto — cirurgia é reservada quando tratamento clínico não é eficaz." },
+      { text: "Lavagem nasal é contraindicada.", correct: false, explain: "Incorreto — lavagem nasal é frequentemente recomendada." }
+    ]
+  },
+
+  // =========================
+  // AGORA COMEÇAM OS 10 CASOS CLÍNICOS
+  // =========================
+
+  {
+    q: "21) Questão (Caso clínico): Uma paciente de 27 anos relata congestão nasal persistente há 14 semanas, acompanhada de redução progressiva do olfato, sem febre. Nega tabagismo. Ao exame, nota-se mucosa nasal edemaciada e pólipos bilaterais no meato médio. A TC de seios paranasais demonstra velamento difuso etmoidal. Considerando o conteúdo do PDF, qual é o diagnóstico mais provável?",
+    choices: [
+      { text: "Rinossinusite crônica com pólipos nasais.", correct: true, explain: "Correto — o PDF descreve que sintomas >12 semanas e presença de pólipos sugerem rinossinusite crônica com pólipos nasais. :contentReference[oaicite:6]{index=6}" },
+      { text: "Rinite alérgica sazonal.", correct: false, explain: "Incorreto — duração prolongada e pólipos não condizem com rinite sazonal." },
+      { text: "Rinossinusite bacteriana aguda.", correct: false, explain: "Incorreto — quadro não é agudo e não há sinais de infecção intensa." },
+      { text: "Faringite crônica.", correct: false, explain: "Incorreto — sintomas são eminentemente nasossinusais." }
+    ]
+  },
+  {
+    q: "22) Questão (Caso clínico): Um homem de 35 anos apresenta dor facial unilateral, febre baixa e secreção mucopurulenta há 10 dias. Na nasofibroscopia, observa-se secreção mucopurulenta no meato médio. Segundo o PDF, qual agente bacteriano é mais provável?",
+    choices: [
+      { text: "Mycobacterium tuberculosis.", correct: false, explain: "Incorreto — não é agente comum de rinossinusite aguda bacteriana." },
+      { text: "Streptococcus pneumoniae.", correct: true, explain: "Correto — o PDF cita S. pneumoniae como uma das principais causas de rinossinusite bacteriana aguda. :contentReference[oaicite:7]{index=7}" },
+      { text: "Candida albicans.", correct: false, explain: "Incorreto — fungos não são descritos como causa típica nesse cenário agudo." },
+      { text: "Salmonella spp.", correct: false, explain: "Incorreto — não há relação com rinossinusite aguda." }
+    ]
+  },
+  {
+    q: "23) Questão (Caso clínico): Paciente de 16 anos vem ao ambulatório com queixa de espirros em salva, prurido nasal intenso e secreção hialina. Relata piora matinal. Ao exame, nota-se mucosa nasal pálida e túrgida. Qual tratamento inicial é coerente com o PDF?",
+    choices: [
+      { text: "Antibiótico de amplo espectro por 14 dias.", correct: false, explain: "Incorreto — não há sinais de infecção bacteriana." },
+      { text: "Corticosteróide nasal tópico.", correct: true, explain: "Correto — o PDF recomenda corticoide tópico como base terapêutica da rinite alérgica persistente. :contentReference[oaicite:8]{index=8}" },
+      { text: "Antifúngicos sistêmicos.", correct: false, explain: "Incorreto — rinite alérgica não é tratada com antifúngicos." },
+      { text: "Corticoide oral prolongado.", correct: false, explain: "Incorreto — corticoide oral não é primeira linha e deve ser usado com cautela." }
+    ]
+  },
+  {
+    q: "24) Questão (Caso clínico): Homem de 50 anos apresenta quadro de rinossinusite há 3 dias após infecção viral recente. Há dor facial leve, sem febre, e secreção mucosa clara. O PDF afirma que, nessa fase inicial, o uso de antibióticos:",
+    choices: [
+      { text: "Está indicado imediatamente.", correct: false, explain: "Incorreto — antibioticoterapia não é indicada na fase viral inicial." },
+      { text: "Não está indicado, pois o quadro é compatível com etiologia viral.", correct: true, explain: "Correto — o PDF explica que rinossinusites virais ocorrem com frequência e não requerem antibiótico. :contentReference[oaicite:9]{index=9}" },
+      { text: "É necessário sempre que exista congestão nasal.", correct: false, explain: "Incorreto — congestão não é critério isolado para antibiótico." },
+      { text: "Deve ser iniciado apenas se houver alergia a corticoides.", correct: false, explain: "Incorreto — antibiótico não depende de alergia a corticoide." }
+    ]
+  },
+  {
+    q: "25) Questão (Caso clínico): Uma mulher de 29 anos relata cefaleia frontal, anosmia e secreção nasal espessa há 13 semanas. Já realizou lavagens nasais e corticoide tópico com melhora parcial. TC evidencia velamento difuso dos seios. O próximo passo, conforme critérios do PDF, seria:",
+    choices: [
+      { text: "Iniciar antifúngico sistêmico.", correct: false, explain: "Incorreto — o PDF não recomenda antifúngicos para rinossinusite crônica comum." },
+      { text: "Considerar avaliação para cirurgia funcional endoscópica dos seios paranasais.", correct: true, explain: "Correto — cirurgia é indicada quando tratamento clínico otimizado falha. :contentReference[oaicite:10]{index=10}" },
+      { text: "Realizar punção lombar.", correct: false, explain: "Incorreto — não há indicação neurológica." },
+      { text: "Evitar qualquer avaliação adicional.", correct: false, explain: "Incorreto — sintomas persistentes >12 semanas justificam nova abordagem." }
+    ]
+  },
+  {
+    q: "26) Questão (Caso clínico): Paciente de 43 anos apresenta dor intensa retro-orbitária, febre alta, prostração e edema periorbitário. A TC revela extensão da infecção para região orbitária. Segundo o PDF, isso corresponde a:",
+    choices: [
+      { text: "Trombose de seio cavernoso.", correct: false, explain: "Incorreto — embora possível, não é automaticamente esse diagnóstico." },
+      { text: "Celulite ou abscesso orbitário.", correct: true, explain: "Correto — o PDF cita complicações orbitárias como celulite e abscesso orbitário como graves e emergenciais. :contentReference[oaicite:11]{index=11}" },
+      { text: "Rinite alérgica grave.", correct: false, explain: "Incorreto — achados são infecciosos e complicados." },
+      { text: "Sinusite viral não complicada.", correct: false, explain: "Incorreto — há sinais de complicação grave." }
+    ]
+  },
+  {
+    q: "27) Questão (Caso clínico): Adolescente de 15 anos com rinite recorrente relata espirros e congestão permanente. Ao exame, apresenta mucosa atrófica e crostas espessas com odor fétido. Pelo PDF, esse quadro é compatível com:",
+    choices: [
+      { text: "Rinite ozenosa (forma de rinite atrófica).", correct: true, explain: "Correto — o PDF descreve rinite atrófica ozenosa como associada a crostas e odor fétido. :contentReference[oaicite:12]{index=12}" },
+      { text: "Rinite hipertrófica.", correct: false, explain: "Incorreto — rinite hipertrófica não apresenta odor fétido característico." },
+      { text: "Sinusite bacteriana aguda.", correct: false, explain: "Incorreto — o odor fétido e crostas sugerem atrofia." },
+      { text: "Polipose nasal.", correct: false, explain: "Incorreto — pólipos não geram crostas fétidas." }
+    ]
+  },
+  {
+    q: "28) Questão (Caso clínico): Paciente de 52 anos com história de rinossinusite crônica relata piora súbita da cefaleia, febre e rigidez nucal. Segundo o PDF, complicação possível associada é:",
+    choices: [
+      { text: "Meningite.", correct: true, explain: "Correto — o PDF cita meningite como complicação endocraniana potencial da rinossinusite. :contentReference[oaicite:13]{index=13}" },
+      { text: "Úlcera péptica.", correct: false, explain: "Incorreto — não há relação com rinossinusite." },
+      { text: "Hepatite medicamentosa.", correct: false, explain: "Incorreto — não é descrita como complicação direta." },
+      { text: "Varicela disseminada.", correct: false, explain: "Incorreto — não se relaciona ao quadro." }
+    ]
+  },
+  {
+    q: "29) Questão (Caso clínico): Um homem de 24 anos relata secreção nasal amarelada, dor dentária superior e halitose há 9 dias. O PDF menciona que:",
+    choices: [
+      { text: "Dor dentária pode ser manifestação de rinossinusite maxilar.", correct: true, explain: "Correto — o PDF descreve dor odontogênica como manifestação possível de rinossinusite maxilar. :contentReference[oaicite:14]{index=14}" },
+      { text: "Dor dentária exclui sinusite.", correct: false, explain: "Incorreto — dor dentária pode estar associada ao seio maxilar." },
+      { text: "Halitose nunca ocorre em quadros sinusais.", correct: false, explain: "Incorreto — halitose pode ocorrer em rinossinusites infecciosas." },
+      { text: "Secreção amarelada indica obrigatoriamente fungos.", correct: false, explain: "Incorreto — coloração não define etiologia fúngica." }
+    ]
+  },
+  {
+    q: "30) Questão (Caso clínico): Uma paciente de 33 anos apresenta anosmia persistente, congestão nasal e secreção espessa esbranquiçada há 5 meses. Tentou corticoide tópico com resposta parcial. Segundo o PDF, a presença de anosmia prolongada sugere:",
+    choices: [
+      { text: "Rinite alérgica sazonal simples.", correct: false, explain: "Incorreto — anosmia prolongada sugere quadro mais complexo." },
+      { text: "Rinossinusite crônica possivelmente com polipose.", correct: true, explain: "Correto — o PDF relaciona anosmia persistente com quadros de rinossinusite crônica, especialmente com pólipos nasais. :contentReference[oaicite:15]{index=15}" },
+      { text: "Neoplasia maligna nasal obrigatoriamente.", correct: false, explain: "Incorreto — neoplasia não é a causa predominante na documentação." },
+      { text: "Otite média secretora.", correct: false, explain: "Incorreto — não há relação causal direta com anosmia." }
+    ]
+  }
+];
+
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

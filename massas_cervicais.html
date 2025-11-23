@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Massas Cervicais</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Massas Cervicais</h1>
+    <p class="lead">30 questões - Massas Cervicais</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão — Qual dos seguintes achados é mais característico de um higroma cístico cervical?",
+    choices: [
+      { text: "Massa multilobulada, cística, de consistência amolecida, mais evidente em crianças.", correct: true, explain: "Higroma cístico (linfangioma) tipicamente é multilobulado, cístico e de consistência flácida, com maior incidência na infância; diagnóstico por US/TC; tratamento cirúrgico." },
+      { text: "Massa dura, fixa, associada a perda de peso e sudorese noturna.", correct: false, explain: "Massa dura e sintomas sistêmicos sugerem processo neoplásico (p. ex. linfoma/metástase), não higroma cístico." },
+      { text: "Lesão submucosa transilúcida no lábio inferior que recorre após excisão.", correct: false, explain: "Essa descrição é compatível com mucocele (glândulas salivares), não com higroma cervical." },
+      { text: "Pequenos cálculos no conduto de drenagem com dor pós-prandial.", correct: false, explain: "Sialolitíase da glândula submandibular causa cálculos ductais e dor ao alimentar-se; não é higroma." }
+  ]},
+  {
+    q: "2) Questão — Um cisto do ducto tireoglosso costuma se localizar em:",
+    choices: [
+      { text: "Linha média cervical, frequentemente superior ao nível do pomo de Adão.", correct: true, explain: "O cisto do ducto tireoglosso é uma lesão de linha média resultante da persistência do trajeto da migração da tireoide; frequentemente apresenta-se como massa móvel à deglutição e à protrusão da língua; tratamento: ressecção (procedimento de Sistrunk)." },
+      { text: "Região lateral alta do pescoço, anterior ao esternocleidomastóideo.", correct: false, explain: "Essa localização é mais característica de cisto branquial (região cervical lateral), não do ducto tireoglosso." },
+      { text: "Submandibular profundo, associada a sialolitíase.", correct: false, explain: "Localizações submandibulares estão mais relacionadas a glândulas salivares e sialolitíase." },
+      { text: "Retrofaríngea, com disfagia progressiva.", correct: false, explain: "Cistos retrofaríngeos e abcessos retrofaríngeos têm apresentação diferente; o cisto do ducto tireoglosso é de linha média anterior." }
+  ]},
+  {
+    q: "3) Questão — Qual característica clínica ajuda a diferenciar um cisto branquial de uma adenopatia infecciosa aguda?",
+    choices: [
+      { text: "Cisto branquial costuma ser massa lateral, de crescimento lento e recidivante, sem sinais sistêmicos agudos.", correct: true, explain: "Cisto branquial é congênito, frequentemente apresenta-se como massa lateral indolor que pode crescer com infecções secundárias; adenite infecciosa tende a ser dolorosa, quente e acompanhada de sinais inflamatórios." },
+      { text: "Cisto branquial apresenta sempre febre alta e leucocitose marcada.", correct: false, explain: "Febre e leucocitose são mais indicativas de adenite/infeção; o cisto branquial não tem febre intrínseca." },
+      { text: "Cisto branquial é móvel apenas com a deglutição.", correct: false, explain: "Movimentação com deglutição é típica de lesões tireoideas/ducto tireoglosso; cisto branquial não se move com a deglutição." },
+      { text: "Cisto branquial é sempre bilateral.", correct: false, explain: "Cistos branquiais são tipicamente unilaterais; bilateralidade é incomum." }
+  ]},
+  {
+    q: "4) Questão — Em relação às massas cervicais de origem infecciosa, qual é a conduta indicada para um abcesso do espaço retrofaríngeo em criança?",
+    choices: [
+      { text: "Incisão e drenagem do abscesso associadas a antibioticoterapia sistêmica.", correct: true, explain: "Abscesso retrofaríngeo requer drenagem cirúrgica (ou por via transorofaríngea quando indicado) e antibioticoterapia intravenosa devido ao risco de complicações (vias aéreas, mediastinite)." },
+      { text: "Observação e uso de anti-inflamatórios por 7 dias.", correct: false, explain: "Observação isolada é insuficiente para abscesso; risco de obstrução de vias aéreas e disseminação. Requer intervenção." },
+      { text: "Ressecção ampla do espaço faríngeo com radioterapia adjuvante.", correct: false, explain: "Radioterapia não tem papel no tratamento de abscessos infecciosos agudos; ressecção ampla é inadequada." },
+      { text: "Punção diagnóstica ambulatorial sem antibiótico.", correct: false, explain: "Punção sem antibioticoterapia é inadequada; abscessos exigem drenagem e terapia antimicrobiana." }
+  ]},
+  {
+    q: "5) Questão — Qual exame por imagem é mais indicado inicialmente para avaliar uma massa cervical cística em lactente?",
+    choices: [
+      { text: "Ultrassonografia cervical.", correct: true, explain: "Ultrassom é exame inicial de escolha em crianças para caracterizar massas cervicais (cístico vs sólido), avaliar vascularização e guiar condutas; é não ionizante e prático." },
+      { text: "Tomografia computadorizada sem contraste.", correct: false, explain: "TC pode ser útil complementarmente, especialmente para planejamento cirúrgico, mas não é exame de primeira linha em lactentes devido a radiação." },
+      { text: "Ressonância magnética com gadolínio imediatamente.", correct: false, explain: "RM é útil para avaliação detalhada, mas por ser menos acessível e exigir sedação em crianças, geralmente é secundária ao US." },
+      { text: "Raio-X simples de tórax.", correct: false, explain: "Raio-X de tórax não caracteriza massas cervicais císticas; pode ser pedido se há suspeita de acometimento torácico/mediastinal associado." }
+  ]},
+  {
+    q: "6) Questão — Adenite tuberculosa cervical frequentemente apresenta:",
+    choices: [
+      { text: "Linfonodos cervicais com tendência à fistulização e teste de Mantoux positivo.", correct: true, explain: "Adenite tuberculosa (scrofula) costuma causar linfonodos que podem supurar e formar fístulas; diagnóstico com PPD/Mantoux e biópsia/aspirado." },
+      { text: "Massa rapidamente pulsátil com sopro auscultável.", correct: false, explain: "Pulsações e sopro sugerem lesão vascular (aneurisma) ou fístula arterio-venosa, não adenite tuberculosa." },
+      { text: "Melhora rápida com analgésicos tópicos.", correct: false, explain: "Adenite tuberculosa requer tratamento específico (quimioterapia antituberculosa) e muitas vezes drenagem/biopsia; analgésicos são insuficientes." },
+      { text: "Sempre acometimento bilateral simétrico dos linfonodos.", correct: false, explain: "Acometimento pode ser unilateral ou bilateral, nem sempre simétrico." }
+  ]},
+  {
+    q: "7) Questão — Em paciente jovem com linfadenomegalia cervical indolor progressiva, qual é o exame diagnóstico que deve ser priorizado para esclarecimento etiológico?",
+    choices: [
+      { text: "Biópsia excisional do maior linfonodo palpável.", correct: true, explain: "Para linfadenopatia persistente/indolor suspeita de neoplasia (p. ex. linfoma), biópsia excisional para diagnóstico histopatológico é preferível à punção aspirativa." },
+      { text: "Hemograma completo apenas; aguardar 6 meses.", correct: false, explain: "Hemograma pode ajudar, mas atraso na biópsia pode postergar diagnóstico de linfoma; biópsia indicada quando suspeita." },
+      { text: "Tratamento empírico com antibiótico por 10 dias e reavaliação.", correct: false, explain: "Tratamento empírico pode ser tentado em adenites agudas, mas em adenopatia indolor e progressiva não é adequado adiar investigação histológica." },
+      { text: "Ressonância magnética com contraste como único método diagnóstico.", correct: false, explain: "RM auxilia na extensão, mas não substitui exame histopatológico para diagnóstico definitivo." }
+  ]},
+  {
+    q: "8) Questão — Qual achado é mais sugestivo de linfoma ao exame clínico de uma massa cervical?",
+    choices: [
+      { text: "Adenomegalia indolor, firme, consistência de 'borracha', de início insidioso.", correct: true, explain: "Linfoma geralmente se apresenta como linfonodomegalia indolor, firme, com crescimento variável; sintomas B podem ou não estar presentes." },
+      { text: "Massa flutuante, dolorosa, com eritema e calor local imediato.", correct: false, explain: "Sinais inflamatórios agudos sugerem infecção/adenite supurada, não linfoma." },
+      { text: "Massa que úlcera a pele em menos de 48 horas após aparecimento.", correct: false, explain: "Úlceração rápida é mais característica de infecção necrotizante ou tumor infiltrativo agressivo; linfoma tende a não ulcerar tão rapidamente." },
+      { text: "Massas pequenas, móveis e dolorosas que melhoram com compressão local.", correct: false, explain: "Linfonodos reativos dolorosos podem melhorar com tratamento, mas linfoma costuma ser indolor e não melhora com medidas simples." }
+  ]},
+  {
+    q: "9) Questão — Ao suspeitar de adenomegalia cervical metastática de tumor de cabeça e pescoço, qual procedimento é geralmente indicado para diagnóstico e planejamento terapêutico?",
+    choices: [
+      { text: "Biópsia por agulha-fina para citologia e, se necessário, biópsia excisional.", correct: true, explain: "PAAF (punção aspirativa) pode orientar diagnóstico citológico; em muitos casos é necessária biópsia excisional para confirmação e planejamento cirúrgico/oncológico." },
+      { text: "Terapia radioterápica empírica sem confirmação histológica.", correct: false, explain: "Radioterapia empírica sem diagnóstico histológico é inadequada; confirmação é necessária para tratamento oncológico." },
+      { text: "Iniciar quimioterapia sistêmica imediatamente.", correct: false, explain: "Quimioterapia sem diagnóstico e estadiamento é inadequada; necessita-se de confirmação histológica." },
+      { text: "Somente observar por 3 meses para ver se regride espontaneamente.", correct: false, explain: "Adenomegalia metastática não deve ser apenas observada; exige investigação ativa." }
+  ]},
+  {
+    q: "10) Questão — Em infecções do espaço parafaríngeo, a fonte infecciosa mais comumente associada é:",
+    choices: [
+      { text: "Processos odontológicos, amigdalites, infecções de glândulas submandibulares ou parótidas.", correct: true, explain: "O espaço parafaríngeo recebe infecções secundárias de dentes, amígdalas, glândulas salivares; tratamento costuma incluir drenagem e antibioticoterapia." },
+      { text: "Infecções de ouvido médio exclusivamente.", correct: false, explain: "Infecções de ouvido médio raramente causam abscesso do espaço parafaríngeo diretamente; fontes mais comuns são dentes e tonsilas." },
+      { text: "Infecções renais ascendentes.", correct: false, explain: "Infecções renais não estão relacionadas ao espaço parafaríngeo." },
+      { text: "Dermatoses crônicas do couro cabeludo.", correct: false, explain: "Dermatoses do couro cabeludo não são causa típica de infecção parafaríngea." }
+  ]},
+  {
+    q: "11) Questão — Em mononucleose infecciosa, qual achado é típico relacionado às massas cervicais?",
+    choices: [
+      { text: "Adenomegalia cervical difusa, frequentemente com febre, faringite e linfócitos atípicos no hemograma.", correct: true, explain: "Mononucleose por EBV cursa com linfadenopatia cervical, febre, faringite e linfocitose atípica; tratamento é sintomático." },
+      { text: "Formação de cálculos ductais nas glândulas salivares.", correct: false, explain: "Sialolitíase não é característica da mononucleose." },
+      { text: "Lesões líticas ósseas extensas na mandíbula.", correct: false, explain: "Lesões ósseas líticas sugeririam processo neoplásico (p. ex. linfoma raro ou metastase), não mononucleose." },
+      { text: "Úlcera oral necrótica com exposição de tecido ósseo.", correct: false, explain: "Úlceras necróticas e exposição óssea não são apresentação típica da mononucleose." }
+  ]},
+  {
+    q: "12) Questão — Qual é o tratamento de escolha para um cisto do ducto tireoglosso sintomático?",
+    choices: [
+      { text: "Excisão cirúrgica com técnica de Sistrunk (remoção do cisto e do trato até o osso hióide).", correct: true, explain: "Procedimento de Sistrunk inclui ressecção do cisto e do tracto até o forame cego e parte do osso hióide, reduzindo recidiva; tratamento cirúrgico é indicado." },
+      { text: "Antibiótico oral por 14 dias e observação.", correct: false, explain: "Antibiótico pode tratar infecção secundária, mas cisto sintomático geralmente requer ressecção para cura." },
+      { text: "Radioterapia localizada.", correct: false, explain: "Radioterapia não é tratamento para cisto do ducto tireoglosso." },
+      { text: "Punção aspirativa repetida como tratamento definitivo.", correct: false, explain: "Punção aspirativa pode temporariamente aliviar conteúdo, mas frequentemente recidiva; não é tratamento definitivo." }
+  ]},
+  {
+    q: "13) Questão — Na avaliação de uma massa cervical suspeita de origem neoplásica, quais exames iniciais são mais úteis para estadiamento e investigação complementar?",
+    choices: [
+      { text: "Hemograma, raio-X de tórax e biópsia do linfonodo para anatomia patológica.", correct: true, explain: "Hemograma e radiografia de tórax ajudam em avaliação sistêmica e busca de envolvimento torácico; biópsia é necessária para diagnóstico histológico e estadiamento." },
+      { text: "Somente teste sorológico para EBV.", correct: false, explain: "Sorologia para EBV pode ser útil em suspeita de linfoma associado, mas não substitui biópsia e exames de imagem para estadiamento." },
+      { text: "Exame oftalmológico completo antes de qualquer imagem.", correct: false, explain: "Exame oftalmológico não é priorizado na investigação inicial de massa cervical neoplásica." },
+      { text: "Ecocardiograma transtorácico como primeiro exame.", correct: false, explain: "Ecocardiograma não tem papel no estadiamento de massa cervical primária; exames de imagem cervicais e torácicos são mais relevantes." }
+  ]},
+  {
+    q: "14) Questão — Qual afirmação sobre tumores de nervos periféricos cervicais (schwannomas, neurofibromas) é correta?",
+    choices: [
+      { text: "Frequentemente apresentam-se como massas laterais, de crescimento lento, e podem estar associadas a neurofibromatose quando múltiplos.", correct: true, explain: "Tumores de nervo periférico são massas laterais de crescimento lento; múltiplos neurofibromas sugerem NF1; diagnóstico por imagem e ressecção cirúrgica quando indicado." },
+      { text: "São massas midline que deslocam a língua para o lado oposto.", correct: false, explain: "Tumores de nervo periférico costumam ser laterais; deslocamento lingual está mais associado a grandes ranulas/submandibulares." },
+      { text: "Geram sempre dor intensa proporcional ao tamanho.", correct: false, explain: "Podem ser assintomáticos ou causar dor; a presença de dor não é constante nem proporcional ao tamanho." },
+      { text: "Tratamento preferencial é radioterapia fracionada.", correct: false, explain: "Tratamento de tumores benignos de nervo periférico é geralmente ressecção cirúrgica quando indicado; radioterapia não é padrão." }
+  ]},
+  {
+    q: "15) Questão — Ao planejar a ressecção cirúrgica de uma adenomegalia cervical metastática de tumor de cabeça e pescoço, uma etapa diagnóstica essencial é:",
+    choices: [
+      { text: "Confirmar histologicamente a origem (biópsia) e avaliar extensão por exames de imagem (TC/RM/US) antes da cirurgia.", correct: true, explain: "Confirmação histológica e avaliação imagiológica da extensão primária e do pescoço são cruciais para planejamento cirúrgico oncológico (dissecção cervical, margem, condutas adicionais)." },
+      { text: "Realizar immédiatemente quimioterapia neoadjuvante sem biópsia.", correct: false, explain: "Quimioterapia sem confirmação histológica e estadiamento é inadequada; diagnóstico preciso orienta tratamento." },
+      { text: "Ignorar estudo de imagem se linfonodo for pequeno (<1 cm).", correct: false, explain: "Mesmo pequenos linfonodos suspeitos em paciente com tumor primário exigem investigação adequada; tamanho isolado não dispensa avaliação." },
+      { text: "Esperar 12 meses para avaliar evolução antes de qualquer intervenção.", correct: false, explain: "Aguardar sem diagnóstico em adenomegalia metastática suspeita é arriscado e não é conduta adequada." }
+  ]},
+  {
+    q: "16) Questão — Entre as causas não infecciosas de massas cervicais em adultos, qual opção é mais comum?",
+    choices: [
+      { text: "Metástases de tumores de cabeça e pescoço.", correct: true, explain: "Em adultos, massas cervicais persistentes têm maior probabilidade de serem neoplásicas, com destaque para metástases de tumores de cabeça e pescoço." },
+      { text: "Cisto tireoglosso.", correct: false, explain: "É mais comum em crianças e adultos jovens, mas não é a causa mais frequente de massa cervical persistente em adultos." },
+      { text: "Higroma cístico.", correct: false, explain: "Predomina em lactentes e crianças pequenas." },
+      { text: "Abscesso retrofaríngeo crônico.", correct: false, explain: "Abscessos são geralmente agudos e acompanhados de sintomas infecciosos marcantes." }
+    ]
+  },
+  {
+    q: "17) Questão — Qual sinal semiológico sugere maior risco de malignidade em uma massa cervical?",
+    choices: [
+      { text: "Fixação aos planos profundos.", correct: true, explain: "Fixação e menor mobilidade sugerem infiltração tecidual, característica comum em massas malignas." },
+      { text: "Painel doloroso à palpação.", correct: false, explain: "Dor é mais típica de processos inflamatórios agudos." },
+      { text: "Aumento abrupto após quadro gripal.", correct: false, explain: "Quadros virais podem cursar com adenite reativa." },
+      { text: "Redução de tamanho com compressas quentes.", correct: false, explain: "Essa resposta sugere processo benigno ou inflamatório." }
+    ]
+  },
+  {
+    q: "18) Questão — O espaço retrofaríngeo é delimitado anteriormente por qual estrutura?",
+    choices: [
+      { text: "Fáscia bucofaríngea.", correct: true, explain: "A fáscia bucofaríngea delimita anteriormente o espaço retrofaríngeo, que pode acumular infecções graves." },
+      { text: "Fáscia pré-vertebral.", correct: false, explain: "A fáscia pré-vertebral delimita posteriormente esse espaço." },
+      { text: "Fáscia superficial do pescoço.", correct: false, explain: "Essa fáscia recobre toda a musculatura superficial, não delimitando o espaço retrofaríngeo." },
+      { text: "Músculo esternocleidomastóideo.", correct: false, explain: "Esse músculo delimita estruturas laterais do pescoço, não o espaço retrofaríngeo." }
+    ]
+  },
+  {
+    q: "19) Questão — Qual afirmação é correta sobre a sialolitíase submandibular?",
+    choices: [
+      { text: "É a glândula mais acometida devido à anatomia do ducto e à maior concentração de cálcio salivar.", correct: true, explain: "O ducto de Wharton é mais extenso e sujeito à estase; sua composição salivar favorece a formação de cálculos." },
+      { text: "Cursa sempre com febre alta e toxemia.", correct: false, explain: "Febre pode indicar infecção secundária, mas não é constante." },
+      { text: "Radiografias simples nunca mostram cálculos.", correct: false, explain: "Cálculos são frequentemente radiopacos, especialmente os submandibulares." },
+      { text: "O tratamento inicial é sempre a remoção cirúrgica da glândula.", correct: false, explain: "Tratamento pode incluir hidratação, massagem, sialoendoscopia e remoção do cálculo, não necessariamente excisão glandular." }
+    ]
+  },
+  {
+    q: "20) Questão — O diagnóstico de massa vascular pulsátil cervical deve ser considerado quando:",
+    choices: [
+      { text: "Há presença de sopro à ausculta sobre a massa.", correct: true, explain: "Sopro indica componente vascular relevante, devendo descartar aneurisma ou malformações vasculares." },
+      { text: "A massa apresenta conteúdo espesso e purulento à punção.", correct: false, explain: "Achado purulento indica abscesso, não lesão vascular." },
+      { text: "A massa desaparece ao deglutir.", correct: false, explain: "Movimento com deglutição é mais associado a tireoide/ducto tireoglosso." },
+      { text: "A massa é indolor e móvel superficialmente.", correct: false, explain: "Massas móveis superficiais não são típicas de lesões vasculares pulsáteis." }
+    ]
+  },
+
+  // ---------------- CASOS CLÍNICOS ---------------- //
+
+  {
+    q: "21) Caso clínico — Um adolescente de 14 anos apresenta massa cervical lateral esquerda, indolor, de crescimento lento há 6 meses. Há antecedente de episódios de infecção de vias aéreas superiores que pioravam o volume da lesão. Ao exame: massa cística, móvel, sem sinais inflamatórios. Qual o diagnóstico mais provável?",
+    choices: [
+      { text: "Cisto branquial.", correct: true, explain: "Localização lateral, crescimento lento e aumento durante infecções são típicos de cisto branquial." },
+      { text: "Cisto tireoglosso.", correct: false, explain: "É tipicamente de linha média." },
+      { text: "Higroma cístico.", correct: false, explain: "Mais comum em lactentes." },
+      { text: "Linfoma.", correct: false, explain: "Linfoma é sólido, não cístico." }
+    ]
+  },
+  {
+    q: "22) Caso clínico — Criança de 4 anos com febre, sialorreia, rigidez de nuca e dificuldade para estender o pescoço. Radiografia de pescoço mostra aumento do espaço retrofaríngeo. Qual conduta é mais adequada?",
+    choices: [
+      { text: "Antibioticoterapia IV e drenagem do abscesso retrofaríngeo.", correct: true, explain: "Clínica e imagem sugerem abscesso retrofaríngeo, que requer drenagem cirúrgica e antibiótico IV." },
+      { text: "Apenas anti-inflamatórios orais.", correct: false, explain: "Inadequado diante de risco de obstrução de vias aéreas." },
+      { text: "Observação ambulatorial por 48 horas.", correct: false, explain: "Risco significativo exige abordagem imediata." },
+      { text: "Tomografia de crânio para descartar meningite.", correct: false, explain: "Tomografia não é prioritária diante da suspeita clara de abscesso cervical profundo." }
+    ]
+  },
+  {
+    q: "23) Caso clínico — Homem de 55 anos, tabagista pesado, apresenta massa cervical firme, indolor, de 3 cm no nível II. Relata rouquidão há 3 meses. Qual suspeita deve ser imediatamente considerada?",
+    choices: [
+      { text: "Metástase de carcinoma epidermoide de vias aerodigestivas superiores.", correct: true, explain: "Perfil epidemiológico e sintomas locais sugerem tumor primário de laringe ou orofaringe com metástase cervical." },
+      { text: "Cisto branquial congênito.", correct: false, explain: "Menos provável em adultos sem história prévia." },
+      { text: "Adenite reacional viral.", correct: false, explain: "Duração prolongada e consistência firme são incomuns." },
+      { text: "Lipoma cervical.", correct: false, explain: "Lipomas são moles e não costumam causar rouquidão." }
+    ]
+  },
+  {
+    q: "24) Caso clínico — Mulher de 28 anos com massa de linha média, móvel à protrusão da língua. Há 2 semanas infeccionou, com dor local. Após antibiótico, a massa persiste. Conduta?",
+    choices: [
+      { text: "Ressecção pelo método de Sistrunk.", correct: true, explain: "Cisto tireoglosso recidiva se não for removido com o ducto e parte do osso hióide." },
+      { text: "Nova antibioticoterapia por 30 dias.", correct: false, explain: "Infecção foi tratada; ressecção é definitiva." },
+      { text: "Punção aspirativa mensal.", correct: false, explain: "Punções não previnem recidiva." },
+      { text: "Radioterapia.", correct: false, explain: "Não tem indicação." }
+    ]
+  },
+  {
+    q: "25) Caso clínico — Paciente de 7 anos com aumento doloroso de linfonodos cervicais, febre, exsudato em amígdalas e adenomegalia generalizada moderada. Teste rápido para EBV positivo. Qual achado esperado no hemograma?",
+    choices: [
+      { text: "Linfócitos atípicos.", correct: true, explain: "Mononucleose cursa com linfocitose e linfócitos atípicos." },
+      { text: "Neutropenia profunda.", correct: false, explain: "Não é típico." },
+      { text: "Eosinofilia marcante.", correct: false, explain: "Não há relação direta." },
+      { text: "Anemia microcítica severa.", correct: false, explain: "Não faz parte do quadro típico." }
+    ]
+  },
+  {
+    q: "26) Caso clínico — Mulher de 40 anos apresenta massa cervical lateral direita, pulsátil, sem dor. Ao Doppler: fluxo de alto débito. Diagnóstico provável?",
+    choices: [
+      { text: "Malformação arteriovenosa cervical.", correct: true, explain: "Lesões vasculares pulsáteis com fluxo alto no Doppler são típicas de MAVs." },
+      { text: "Abscesso cervical.", correct: false, explain: "Abscessos não são pulsáteis." },
+      { text: "Cisto branquial.", correct: false, explain: "Císticas, não pulsáteis." },
+      { text: "Sialoadenite.", correct: false, explain: "Não é pulsátil." }
+    ]
+  },
+  {
+    q: "27) Caso clínico — Atleta de 22 anos apresenta aumento de linfonodo cervical após infecção viral recente, móvel, doloroso, sem sintomas B. Conduta inicial?",
+    choices: [
+      { text: "Observação por 3–4 semanas.", correct: true, explain: "Adenopatia reacional costuma regredir espontaneamente; observação inicial é adequada." },
+      { text: "Biópsia excisional imediata.", correct: false, explain: "Não é primeira abordagem em adenopatia reacional típica." },
+      { text: "Quimioterapia empírica.", correct: false, explain: "Inadequado." },
+      { text: "Corticoterapia em altas doses.", correct: false, explain: "Pode mascarar doenças; evitar sem indicação." }
+    ]
+  },
+  {
+    q: "28) Caso clínico — Criança de 10 anos com história de trauma cervical leve há 5 dias, evolui com massa dolorosa crescente. US mostra coleção líquida subcutânea. Diagnóstico?",
+    choices: [
+      { text: "Hematoma cervical.", correct: true, explain: "Trauma recente e coleção líquida sugerem hematoma." },
+      { text: "Cisto branquial infectado.", correct: false, explain: "Sem história prévia típica." },
+      { text: "Aneurisma verdadeiro.", correct: false, explain: "Incomum após trauma leve." },
+      { text: "Linfoma.", correct: false, explain: "Quadro não compatível." }
+    ]
+  },
+  {
+    q: "29) Caso clínico — Idoso de 70 anos com disfagia progressiva, perda de peso e massa cervical dura. Laringoscopia: lesão infiltrativa em hipofaringe. Qual o estadiamento inicial recomendado?",
+    choices: [
+      { text: "TC de pescoço e tórax + biópsia da lesão.", correct: true, explain: "Permite avaliar extensão local, linfonodos e presença de metástases, além de confirmar histologia." },
+      { text: "Ultrassom abdominal.", correct: false, explain: "Não é o foco inicial." },
+      { text: "Endoscopia digestiva alta sem biópsia.", correct: false, explain: "Não avalia adequadamente hipofaringe." },
+      { text: "Raio-X simples de crânio.", correct: false, explain: "Irrelevante para estadiamento." }
+    ]
+  },
+  {
+    q: "30) Caso clínico — Jovem de 19 anos nota aumento em glândula submandibular após refeições, com dor intensa que melhora após algumas horas. US mostra cálculo no ducto. Tratamento inicial?",
+    choices: [
+      { text: "Hidratação, massagem e tentativa de expulsão do cálculo + eventual sialoendoscopia.", correct: true, explain: "Medidas conservadoras são primeira escolha; sialoendoscopia remove cálculos sem necessidade de excisão glandular." },
+      { text: "Ressecção completa da glândula submandibular de imediato.", correct: false, explain: "Somente se tratamento conservador e minimamente invasivo falharem." },
+      { text: "Antibiótico por 30 dias.", correct: false, explain: "A não ser que haja infecção associada, antibióticos não resolvem o cálculo." },
+      { text: "Radioterapia direcionada.", correct: false, explain: "Não tem papel no tratamento de sialolitíase." }
+    ]
+  }
+];
+
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

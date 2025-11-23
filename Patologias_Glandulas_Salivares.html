@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz —  Patologias das Glândulas Salivares</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Patologias das Glândulas Salivares</h1>
+    <p class="lead">30 questões - Patologias das Glândulas Salivares</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+// Conteúdo extraído do arquivo: 15. Patologias das Glândulas Salivares.pptx.pdf. :contentReference[oaicite:0]{index=0}
+const questions = [
+  {
+    q: "1) Questão: Em relação à fisiologia das glândulas salivares, qual das afirmações abaixo é correta?",
+    choices: [
+      {
+        text: "A saliva auxilia na defesa da cavidade oral, umidificação, e inicia a digestão por amilase e lipase salivares.",
+        correct: true,
+        explain: "Correto — o material descreve que a saliva tem papel na defesa da cavidade oral, umidificação e processamento do bolo alimentar, além de iniciar a digestão por amilase e lipase salivares. :contentReference[oaicite:1]{index=1}"
+      },
+      {
+        text: "A principal função das glândulas salivares é absorção de nutrientes no estômago.",
+        correct: false,
+        explain: "Incorreto — as glândulas salivares participam da preparação oral da deglutição e iniciam a digestão enzimática; não têm função de absorção gástrica. :contentReference[oaicite:2]{index=2}"
+      },
+      {
+        text: "A saliva é produzida apenas pelas glândulas maiores (parótidas, submandibulares e sublinguais).",
+        correct: false,
+        explain: "Incorreto — além das glândulas maiores, existem glândulas salivares menores distribuídas por toda a mucosa oral, especialmente lábios e palato. :contentReference[oaicite:3]{index=3}"
+      },
+      {
+        text: "As glândulas sublinguais produzem principalmente saliva serosa, semelhante às parótidas.",
+        correct: false,
+        explain: "Incorreto — segundo o material, as parótidas produzem saliva principalmente serosa, enquanto as sublinguais e as glândulas salivares menores produzem saliva predominantemente mucosa; as submandibulares têm secreção mista/mucosa. :contentReference[oaicite:4]{index=4}"
+      }
+    ]
+  },
+  {
+    q: "2) Questão: Considerando a divisão anatômica das glândulas salivares, assinale a alternativa correta.",
+    choices: [
+      {
+        text: "As glândulas salivares maiores são pares: parótidas, submandibulares e sublinguais; menores estão por toda a mucosa oral.",
+        correct: true,
+        explain: "Correto — o material descreve exatamente essa divisão: glândulas maiores (parótidas, submandibulares, sublinguais) e menores espalhadas pela mucosa oral. :contentReference[oaicite:5]{index=5}"
+      },
+      {
+        text: "As glândulas salivares menores estão restritas ao assoalho da boca.",
+        correct: false,
+        explain: "Incorreto — as glândulas menores estão distribuídas por toda a mucosa oral, especialmente em lábios e palato, não apenas no assoalho. :contentReference[oaicite:6]{index=6}"
+      },
+      {
+        text: "A parótida é única (não pareada) e responsável por toda a saliva serosa.",
+        correct: false,
+        explain: "Incorreto — a parótida é par, e embora produza secreção principalmente serosa, não é responsável por toda a saliva. :contentReference[oaicite:7]{index=7}"
+      },
+      {
+        text: "As submandibulares produzem predominantemente saliva serosa, semelhante às parótidas.",
+        correct: false,
+        explain: "Incorreto — o material aponta que as submandibulares produzem secreção mais mucosa (ou mista), enquanto parótidas são principalmente serosas. :contentReference[oaicite:8]{index=8}"
+      }
+    ]
+  },
+  {
+    q: "3) Questão: Sobre sialoadenites agudas de origem viral, qual afirmação melhor descreve a parotidite por caxumba?",
+    choices: [
+      {
+        text: "É causada por um paramixovírus RNA fita simples e apresenta contágio em 2 a 9 dias; incubação costuma ser 2–3 semanas.",
+        correct: true,
+        explain: "Correto — o arquivo descreve caxumba como causada por um vírus RNA de fita simples da família Paramyxoviridae; contágio de 2 a 9 dias e período de incubação citado para parotidite de 2 a 3 semanas. :contentReference[oaicite:9]{index=9}"
+      },
+      {
+        text: "A parotidite por caxumba tipicamente apresenta secreção purulenta pelo ducto de Stensen.",
+        correct: false,
+        explain: "Incorreto — parotidite por caxumba costuma não apresentar secreção purulenta no orifício do ducto de Stensen; secreção purulenta é mais típica de infecções bacterianas. :contentReference[oaicite:10]{index=10}"
+      },
+      {
+        text: "O diagnóstico da parotidite por caxumba baseia-se exclusivamente em cultura bacteriana do ducto.",
+        correct: false,
+        explain: "Incorreto — o diagnóstico viral é apoiado por sorologia (IgM); cultura bacteriana não é método diagnóstico para caxumba. :contentReference[oaicite:11]{index=11}"
+      },
+      {
+        text: "O tratamento específico para caxumba é terapia antiviral de amplo espectro indicada rotineiramente.",
+        correct: false,
+        explain: "Incorreto — o material recomenda tratamento sintomático (repouso, hidratação, dieta que não estimule salivação); não há terapia antiviral rotineira indicada. :contentReference[oaicite:12]{index=12}"
+      }
+    ]
+  },
+  {
+    q: "4) Questão: Quais exames e achados laboratoriais são mencionados no material como característicos na parotidite viral (caxumba)?",
+    choices: [
+      {
+        text: "Sorologia com IgM positiva, leucopenia inicial seguida de linfocitose e aumento da amilase sérica.",
+        correct: true,
+        explain: "Correto — o slide indica sorologia com pesquisa de IgM, inicialmente leucopenia depois linfocitose, e aumento dos níveis séricos de amilase. :contentReference[oaicite:13]{index=13}"
+      },
+      {
+        text: "Hemoculturas positivas e redução marcada da amilase sérica.",
+        correct: false,
+        explain: "Incorreto — hemoculturas não são citadas como diagnóstico de parotidite viral; a amilase costuma aumentar, não diminuir. :contentReference[oaicite:14]{index=14}"
+      },
+      {
+        text: "Biópsia hepática com fibrose e amilase normal.",
+        correct: false,
+        explain: "Incorreto — essa alternativa é irrelevante para parotidite; o material não menciona biópsia hepática nos achados. :contentReference[oaicite:15]{index=15}"
+      },
+      {
+        text: "Somente exame físico é suficiente; nenhum exame laboratorial é referendado.",
+        correct: false,
+        explain: "Incorreto — o material descreve exames laboratoriais úteis, como sorologia para IgM e alteração da contagem leucocitária e amilase. :contentReference[oaicite:16]{index=16}"
+      }
+    ]
+  },
+  {
+    q: "5) Questão: A forma de apresentação do aumento cístico bilateral das parótidas pode estar associada a qual condição sistêmica descrita no material?",
+    choices: [
+      {
+        text: "Infecção pelo HIV na infância, apresentando aumento cístico bilateral das parótidas e xerostomia.",
+        correct: true,
+        explain: "Correto — o material afirma que o aumento cístico bilateral das parótidas pode ser uma das primeiras manifestações do HIV na infância, associando-se à xerostomia. :contentReference[oaicite:17]{index=17}"
+      },
+      {
+        text: "Hipertireoidismo com hipertrofia uniforme das glândulas salivares.",
+        correct: false,
+        explain: "Incorreto — o slide não relaciona hipertireoidismo com aumento cístico bilateral das parótidas; a associação citada é com HIV. :contentReference[oaicite:18]{index=18}"
+      },
+      {
+        text: "Lúpus eritematoso sistêmico com parotidite supurativa crônica.",
+        correct: false,
+        explain: "Incorreto — o material não menciona LES como causa principal desse padrão cístico; descreve HIV especificamente. :contentReference[oaicite:19]{index=19}"
+      },
+      {
+        text: "Doença de refluxo gastroesofágico com sialorreia reactiva.",
+        correct: false,
+        explain: "Incorreto — refluxo não é citado como causa de aumento cístico bilateral das parótidas no arquivo. :contentReference[oaicite:20]{index=20}"
+      }
+    ]
+  },
+  {
+    q: "6) Questão: Quanto às sialoadenites bacterianas, qual das alternativas reflete corretamente o agente mais comumente implicado e os aspectos clínicos mencionados?",
+    choices: [
+      {
+        text: "Staphylococcus aureus é o agente mais comum; quadro com febre, dor, rubor local, possível secreção purulenta pelo ducto e risco de abscesso.",
+        correct: true,
+        explain: "Correto — o material lista Staphylococcus aureus como agente mais comum e descreve quadro com febre, dor, rubor e secreção purulenta, podendo evoluir para coleções e abscessos. :contentReference[oaicite:21]{index=21}"
+      },
+      {
+        text: "Escherichia coli é o agente mais comum e costuma causar uma parotidite bilateral indolor.",
+        correct: false,
+        explain: "Incorreto — E. coli não é mencionada como agente mais comum; a apresentação bacteriana típica envolve dor e sinais inflamatórios locais. :contentReference[oaicite:22]{index=22}"
+      },
+      {
+        text: "As infecções bacterianas nunca apresentam secreção purulenta pelo ducto de drenagem.",
+        correct: false,
+        explain: "Incorreto — o material especifica que na bactéria a palpação e expressão da glândula podem mostrar secreção purulenta pelo ducto de drenagem. :contentReference[oaicite:23]{index=23}"
+      },
+      {
+        text: "O tratamento recomendado é exclusivamente antiviral e repouso absoluto.",
+        correct: false,
+        explain: "Incorreto — infecções bacterianas requerem antibioticoterapia; antivirais e repouso não são tratamento adequado para etiologia bacteriana. :contentReference[oaicite:24]{index=24}"
+      }
+    ]
+  },
+  {
+    q: "7) Questão: Sobre sialolitíase, marque a alternativa correta conforme o material.",
+    choices: [
+      {
+        text: "Os cálculos ductais ocorrem mais frequentemente nas glândulas submandibulares (cerca de 80–90% dos casos); diagnóstico por inspeção oral, sialografia e ultrassom; tratamento inclui massagens e, às vezes, submandibulectomia.",
+        correct: true,
+        explain: "Correto — o slide afirma que 80–90% dos cálculos ocorrem em submandibulares, métodos diagnósticos incluem inspeção oral, sialografia e ultrassom (cálculos >2 mm) e tratamento varia de massagens a cirurgia. :contentReference[oaicite:25]{index=25}"
+      },
+      {
+        text: "Os cálculos são mais comuns nas parótidas e raramente causam dor ou aumento glandular.",
+        correct: false,
+        explain: "Incorreto — o material enfatiza maggior frequência nas submandibulares e que o quadro clínico inclui dor e aumento do volume glandular. :contentReference[oaicite:26]{index=26}"
+      },
+      {
+        text: "Sialolitíase é primariamente causada por vírus da família Paramyxoviridae.",
+        correct: false,
+        explain: "Incorreto — a formação de cálculos tem etiopatogenia relacionada à deposição de cristais (hidroxiapatita) em torno de material orgânico; não é causada por paramixovírus. :contentReference[oaicite:27]{index=27}"
+      },
+      {
+        text: "O diagnóstico por ultrassom não é útil, e a sialografia é contraindicada em todos os casos.",
+        correct: false,
+        explain: "Incorreto — o material cita tanto ultrassom quanto sialografia como métodos diagnósticos úteis. :contentReference[oaicite:28]{index=28}"
+      }
+    ]
+  },
+  {
+    q: "8) Questão: Qual a provável fisiopatologia da formação de cálculos (sialólitos) segundo o material?",
+    choices: [
+      {
+        text: "Deposição de cristais de hidroxiapatita sobre material orgânico (restos epiteliais ou agentes infecciosos), possivelmente favorecida por aumento de íons cálcio ou fosfato e trajeto ascendente do ducto submandibular.",
+        correct: true,
+        explain: "Correto — o slide descreve a deposição de cristais de hidroxiapatita sobre material orgânico e fatores como aumento de cálcio/fosfato e trajeto ascendente que contribuem para a formação de cálculos. :contentReference[oaicite:29]{index=29}"
+      },
+      {
+        text: "Formação de cálculos é causada unicamente por trauma físico externo sem relação com composição do fluido salivar.",
+        correct: false,
+        explain: "Incorreto — embora trauma não seja enfatizado como causa, a etiologia citada envolve deposição mineral sobre material orgânico e alterações iônicas na saliva. :contentReference[oaicite:30]{index=30}"
+      },
+      {
+        text: "Cálculos são formados por colônias bacterianas exclusivamente, sem deposição mineral.",
+        correct: false,
+        explain: "Incorreto — a hipótese apresentada envolve deposição mineral (hidroxiapatita) iniciada sobre material orgânico, não apenas colônias bacterianas. :contentReference[oaicite:31]{index=31}"
+      },
+      {
+        text: "Sialolitíase é sempre consequência direta de penetração tumoral na luz ductal.",
+        correct: false,
+        explain: "Incorreto — o material não relaciona sialolitíase à penetração tumoral como causa habitual. :contentReference[oaicite:32]{index=32}"
+      }
+    ]
+  },
+  {
+    q: "9) Questão: Sobre mucocele, qual alternativa descreve corretamente suas características clínicas segundo o material?",
+    choices: [
+      {
+        text: "É um pseudocisto decorrente de trauma ou obstrução do ducto das glândulas salivares menores, mais frequente no lábio inferior; é indolor, translúcida e sem cápsula verdadeira; tratamento cirúrgico.",
+        correct: true,
+        explain: "Correto — o slide define mucocele como pseudocisto por extravasamento de mucina, frequência no lábio inferior, aspecto translúcido e tratamento cirúrgico. :contentReference[oaicite:33]{index=33}"
+      },
+      {
+        text: "Mucocele é sempre um tumor maligno das glândulas maiores e requer quimioterapia.",
+        correct: false,
+        explain: "Incorreto — mucocele é lesão cística/pseudocisto das glândulas menores, não um tumor maligno, e o tratamento citado é cirúrgico local. :contentReference[oaicite:34]{index=34}"
+      },
+      {
+        text: "Mucocele apresenta cápsula verdadeira e alta tendência a metastização regional.",
+        correct: false,
+        explain: "Incorreto — mucocele não apresenta cápsula verdadeira e não é neoplasia com comportamento metastático. :contentReference[oaicite:35]{index=35}"
+      },
+      {
+        text: "O tratamento preferencial é observação expectante sem intervenção, pois resolve espontaneamente na maioria dos casos.",
+        correct: false,
+        explain: "Incorreto — o material indica tratamento cirúrgico; não fala em resolução espontânea como conduta preferencial. :contentReference[oaicite:36]{index=36}"
+      }
+    ]
+  },
+  {
+    q: "10) Questão: Quanto à rânula, escolha a alternativa que melhor descreve sua apresentação e manejo.",
+    choices: [
+      {
+        text: "Lesão cística do assoalho da boca, por extravasamento de muco da glândula sublingual ou obstrução de ductos; pode ser sublingual, submentoniana ou submandibular; é indolor, pode deslocar a língua e costuma recidivar; tratamento cirúrgico.",
+        correct: true,
+        explain: "Correto — o slide descreve rânula exatamente nesses termos, incluindo locais, efeito de deslocamento e recidiva, bem como tratamento cirúrgico. :contentReference[oaicite:37]{index=37}"
+      },
+      {
+        text: "Rânula é um sinônimo de adenoma pleomórfico e é tratada por radioterapia.",
+        correct: false,
+        explain: "Incorreto — rânula é uma lesão cística do assoalho e não um tumor; o tratamento citado é cirúrgico, não radioterapia. :contentReference[oaicite:38]{index=38}"
+      },
+      {
+        text: "Rânula costuma ser dolorosa e acompanhada de pus visível no orifício do ducto.",
+        correct: false,
+        explain: "Incorreto — o material descreve rânula como indolor e relacionada a muco extravasado, não caracteristicamente purulenta. :contentReference[oaicite:39]{index=39}"
+      },
+      {
+        text: "A rânula é primariamente diagnosticada por sorologia e exames imunológicos.",
+        correct: false,
+        explain: "Incorreto — o diagnóstico é clínico/imagiológico; sorologia não é o método para rânula conforme o material. :contentReference[oaicite:40]{index=40}"
+      }
+    ]
+  },
+  {
+    q: "11) Questão: Com relação ao adenoma pleomórfico, qual alternativa é verdadeira conforme o conteúdo do arquivo?",
+    choices: [
+      {
+        text: "É o tumor mixto benigno mais comum das glândulas salivares, frequente na parótida (lobo superficial), com crescimento lento e maior incidência acima dos 40 anos; diagnóstico por TC e punção aspirativa com agulha fina; tratamento cirúrgico.",
+        correct: true,
+        explain: "Correto — o material descreve o adenoma pleomórfico exatamente com essas características: tumor misto mais comum, localização, diagnóstico e tratamento. :contentReference[oaicite:41]{index=41}"
+      },
+      {
+        text: "Adenoma pleomórfico é um tumor maligno com alta taxa de metástase linfonodal imediato.",
+        correct: false,
+        explain: "Incorreto — é tipicamente benigno (tumor misto benigno) com crescimento lento; não é descrito como altamente metastizante. :contentReference[oaicite:42]{index=42}"
+      },
+      {
+        text: "O diagnóstico de adenoma pleomórfico dispensa exames de imagem e deve basear-se apenas em sinais clínicos.",
+        correct: false,
+        explain: "Incorreto — o slide recomenda TC e punção aspirativa (FNA) como ferramentas diagnósticas. :contentReference[oaicite:43]{index=43}"
+      },
+      {
+        text: "A abordagem terapêutica preferida é exclusivamente radioterapia sem exérese cirúrgica.",
+        correct: false,
+        explain: "Incorreto — o material indica tratamento cirúrgico como conduta para adenoma pleomórfico. :contentReference[oaicite:44]{index=44}"
+      }
+    ]
+  },
+  {
+    q: "12) Questão: Sobre tumores malignos das glândulas salivares, qual das alternativas está correta segundo o material?",
+    choices: [
+      {
+        text: "São raros (2–6,5% dos tumores de cabeça e pescoço), ocorrem mais nas parótidas, e incluem tipos como carcinoma adenoidocístico, mucoepidermoide e carcinoma de células acinares; tratamento cirúrgico.",
+        correct: true,
+        explain: "Correto — o slide aponta que tumores malignos são raros, mais comuns nas parótidas, lista histologias e indica tratamento cirúrgico. :contentReference[oaicite:45]{index=45}"
+      },
+      {
+        text: "Tumores malignos das glândulas salivares são a causa mais comum de xerostomia em adultos jovens.",
+        correct: false,
+        explain: "Incorreto — o material não relaciona tumores malignos como causa mais comum de xerostomia; xerostomia tem múltiplas causas e tumores malignos são raros. :contentReference[oaicite:46]{index=46}"
+      },
+      {
+        text: "Carcinoma mucoepidermoide nunca ocorre nas glândulas salivares.",
+        correct: false,
+        explain: "Incorreto — o material cita carcinoma mucoepidermoide como um dos tipos histológicos que acometem glândulas salivares. :contentReference[oaicite:47]{index=47}"
+      },
+      {
+        text: "O tratamento preferido para tumores malignos de glândulas salivares é apenas quimioterapia sem cirurgia.",
+        correct: false,
+        explain: "Incorreto — o slide refere-se ao tratamento cirúrgico como principal modalidade. :contentReference[oaicite:48]{index=48}"
+      }
+    ]
+  },
+  {
+    q: "13) Questão: A respeito do diagnóstico por imagem citado no material para afecções das glândulas salivares, assinale a alternativa correta.",
+    choices: [
+      {
+        text: "Ultrassonografia e sialografia são úteis para detectar cálculos maiores que 2 mm e alterações ductais; tomografia é indicada em aumento cístico (ex.: suspeita de lesão associada a HIV) e para punção aspirativa guiada.",
+        correct: true,
+        explain: "Correto — o material menciona ultrassom e sialografia para sialolitíase (cálculos >2 mm) e tomografia/punção aspirativa para avaliação de aumento cístico das parótidas (ex.: HIV). "
+      },
+      {
+        text: "Ressonância magnética é descrita como inutilizável para patologias das glândulas salivares.",
+        correct: false,
+        explain: "Incorreto — o material não afirma inutilidade da RM; não menciona RM explicitamente, mas cita ultrassom, sialografia e TC/ponção aspirativa. "
+      },
+      {
+        text: "Sialografia é o único exame necessário para distinguir entre tumor benigno e maligno sem necessidade de punção.",
+        correct: false,
+        explain: "Incorreto — sialografia avalia ductos e cálculos; para caracterização de tumores o material recomenda TC e punção aspirativa com agulha fina. :contentReference[oaicite:51]{index=51}"
+      },
+      {
+        text: "Exames de imagem não são úteis e o diagnóstico deve ser apenas clínico.",
+        correct: false,
+        explain: "Incorreto — o material descreve vários exames de imagem úteis (ultrassom, sialografia, TC) para diferentes condições. "
+      }
+    ]
+  },
+  {
+    q: "14) Questão: Em relação ao manejo geral das sialoadenites virais e bacterianas apresentado no material, qual é a conduta adequada?",
+    choices: [
+      {
+        text: "Sialoadenites virais (ex.: caxumba): tratamento sintomático (repouso, hidratação, dieta que não estimule salivação). Bacterianas: antibioticoterapia, sintomáticos e, se necessário, drenagem guiada por US.",
+        correct: true,
+        explain: "Correto — o arquivo descreve tratamento sintomático para parotidite viral e antibioticoterapia/possível drenagem para infecções bacterianas. "
+      },
+      {
+        text: "Todas as sialoadenites devem ser tratadas apenas com anti-inflamatórios tópicos; antibióticos nunca são indicados.",
+        correct: false,
+        explain: "Incorreto — nas sialoadenites bacterianas o material indica antibioticoterapia e, às vezes, drenagem. :contentReference[oaicite:54]{index=54}"
+      },
+      {
+        text: "A parotidite viral requer exérese imediata da glândula afetada.",
+        correct: false,
+        explain: "Incorreto — parotidite viral é tratada de forma conservadora/sintomática; cirurgia não é conduta rotineira. :contentReference[oaicite:55]{index=55}"
+      },
+      {
+        text: "Sialolitíase sempre se resolve com antivirais orais em 48 horas.",
+        correct: false,
+        explain: "Incorreto — sialolitíase é mecânica (cálculos) e tratada por massagens, remoção do cálculo ou cirurgia; antivirais não são tratamento. :contentReference[oaicite:56]{index=56}"
+      }
+    ]
+  },
+  {
+    q: "15) Questão: Considerando as manifestações clínicas descritas para parotidite viral, qual conjunto de sinais/sintomas é mais característico?",
+    choices: [
+      {
+        text: "Aumento bilateral das parótidas, dor, apagamento do ângulo mandibular, deslocamento do lóbulo da orelha, febre, mialgia e cefaleia, sem secreção purulenta no ducto de Stensen.",
+        correct: true,
+        explain: "Correto — o material descreve exatamente esse conjunto como característico da parotidite viral (caxumba). :contentReference[oaicite:57]{index=57}"
+      },
+      {
+        text: "Aumento unilateral indolor das parótidas com secreção purulenta pelo ducto em todos os casos.",
+        correct: false,
+        explain: "Incorreto — a parotidite viral tende a ser bilateral e não apresentar secreção purulenta; secreção purulenta é mais compatível com infecção bacteriana. :contentReference[oaicite:58]{index=58}"
+      },
+      {
+        text: "Presenta-se com icterícia franca e hepatomegalia proeminente em 100% dos casos.",
+        correct: false,
+        explain: "Incorreto — o slide não relata icterícia ou hepatomegalia como manifestações obrigatórias da parotidite viral; foco é na região parotídea e sintomas sistêmicos inespecíficos. :contentReference[oaicite:59]{index=59}"
+      },
+      {
+        text: "Dor e aumento glandular que melhoram imediatamente com ingestão de alimentos ácidos.",
+        correct: false,
+        explain: "Incorreto — o material recomenda dieta que não estimule a salivação como parte do manejo da parotidite viral; alimentos que estimulam salivação tendem a piorar o desconforto. :contentReference[oaicite:60]{index=60}"
+      }
+    ]
+  },
+  {
+    q: "16) Questão: Sobre a frequência relativa dos tumores de glândulas salivares segundo o documento, qual alternativa está correta?",
+    choices: [
+      {
+        text: "Os tumores das glândulas salivares representam cerca de 2 a 6,5% de todos os tumores de cabeça e pescoço e são mais comuns na parótida.",
+        correct: true,
+        explain: "Correto — o material afirma que tumores malignos de glândulas salivares representam 2–6,5% dos tumores de cabeça e pescoço e que as parótidas são o local mais frequente. :contentReference[oaicite:1]{index=1}"
+      },
+      {
+        text: "Os tumores salivares são responsáveis por mais da metade dos tumores de cabeça e pescoço.",
+        correct: false,
+        explain: "Incorreto — o material descreve proporção baixa (2–6,5%) e não predominância. :contentReference[oaicite:2]{index=2}"
+      },
+      {
+        text: "As glândulas sublinguais são o local mais frequente de tumores salivares benignos.",
+        correct: false,
+        explain: "Incorreto — o documento aponta a parótida como glândula mais frequentemente acometida. :contentReference[oaicite:3]{index=3}"
+      },
+      {
+        text: "As glândulas menores concentram quase todos os tumores malignos das glândulas salivares.",
+        correct: false,
+        explain: "Incorreto — apesar de tumores em glândulas menores poderem ser malignos, o material mostra maior incidência geral na parótida. :contentReference[oaicite:4]{index=4}"
+      }
+    ]
+  },
+
+  {
+    q: "17) Questão: Considerando a fisiologia da produção salivar, assinale a alternativa correta.",
+    choices: [
+      {
+        text: "A saliva secretada pelas glândulas submandibulares e menores é majoritariamente mucosa, colaborando para a lubrificação e proteção da mucosa oral.",
+        correct: true,
+        explain: "Correto — o material afirma que submandibulares e glândulas menores produzem secreção predominantemente mucosa. :contentReference[oaicite:5]{index=5}"
+      },
+      {
+        text: "A saliva das parótidas é predominantemente mucosa.",
+        correct: false,
+        explain: "Incorreto — parótidas produzem saliva predominantemente serosa. :contentReference[oaicite:6]{index=6}"
+      },
+      {
+        text: "A saliva produzida no repouso é majoritariamente serosa e provém da parótida.",
+        correct: false,
+        explain: "Incorreto — o material refere que, em repouso, a maior parte da saliva é produzida pelas glândulas submandibulares e menores. :contentReference[oaicite:7]{index=7}"
+      },
+      {
+        text: "As glândulas sublinguais produzem altos volumes de saliva serosa durante estímulo.",
+        correct: false,
+        explain: "Incorreto — sublinguais produzem secreção principalmente mucosa, não serosa. :contentReference[oaicite:8]{index=8}"
+      }
+    ]
+  },
+
+  {
+    q: "18) Questão: Qual afirmação sobre o adenoma pleomórfico está de acordo com o material?",
+    choices: [
+      {
+        text: "É o tumor benigno mais comum das glândulas salivares, apresentando crescimento lento e maior incidência após os 40 anos.",
+        correct: true,
+        explain: "Correto — o arquivo afirma que o adenoma pleomórfico é o tumor benigno mais comum, típico acima dos 40 anos e de crescimento lento. :contentReference[oaicite:9]{index=9}"
+      },
+      {
+        text: "Geralmente apresenta comportamento agressivo e metastático.",
+        correct: false,
+        explain: "Incorreto — adenoma pleomórfico é uma neoplasia benigna, sem padrão metastático. :contentReference[oaicite:10]{index=10}"
+      },
+      {
+        text: "Não deve ser investigado com punção aspirativa.",
+        correct: false,
+        explain: "Incorreto — o material indica punção aspirativa como exame diagnóstico. :contentReference[oaicite:11]{index=11}"
+      },
+      {
+        text: "Seu tratamento é exclusivamente expectante, sem cirurgia.",
+        correct: false,
+        explain: "Incorreto — o tratamento indicado é cirúrgico. :contentReference[oaicite:12]{index=12}"
+      }
+    ]
+  },
+
+  {
+    q: "19) Questão: Sobre rânulas, qual alternativa está correta?",
+    choices: [
+      {
+        text: "São coleções de muco do assoalho da boca podendo deslocar a língua, recidivam frequentemente e requerem tratamento cirúrgico.",
+        correct: true,
+        explain: "Correto — o material descreve estes achados como característicos da rânula. :contentReference[oaicite:13]{index=13}"
+      },
+      {
+        text: "São lesões invariavelmente dolorosas e purulentas.",
+        correct: false,
+        explain: "Incorreto — rânulas são descritas como indolores e de muco, não purulentas. :contentReference[oaicite:14]{index=14}"
+      },
+      {
+        text: "Originam-se exclusivamente da glândula parótida.",
+        correct: false,
+        explain: "Incorreto — derivam da glândula sublingual ou de ductos que extravasam muco. :contentReference[oaicite:15]{index=15}"
+      },
+      {
+        text: "Tratamento preferido é antibiótico por 14 dias.",
+        correct: false,
+        explain: "Incorreto — tratamento é cirúrgico; antibiótico não é conduta padrão. :contentReference[oaicite:16]{index=16}"
+      }
+    ]
+  },
+
+  {
+    q: "20) Questão: Sobre sialolitíase, qual alternativa corresponde ao conteúdo do pdf?",
+    choices: [
+      {
+        text: "Acomete principalmente glândulas submandibulares (80–90%) e manifesta dor associada à alimentação, diagnóstico por US e sialografia.",
+        correct: true,
+        explain: "Correto — estes dados estão descritos no material. :contentReference[oaicite:17]{index=17}"
+      },
+      {
+        text: "É causada primariamente por vírus e raramente gera dor.",
+        correct: false,
+        explain: "Incorreto — sialolitíase tem origem mecânica (cálculo), não viral, e geralmente é dolorosa. :contentReference[oaicite:18]{index=18}"
+      },
+      {
+        text: "O tratamento padrão é antiviral.",
+        correct: false,
+        explain: "Incorreto — não há tratamento antiviral para cálculos. :contentReference[oaicite:19]{index=19}"
+      },
+      {
+        text: "A sialografia é totalmente contraindicada em sialolitíase.",
+        correct: false,
+        explain: "Incorreto — o material cita a sialografia como método diagnóstico útil. :contentReference[oaicite:20]{index=20}"
+      }
+    ]
+  },
+
+  /* ============================
+     10 CASOS CLÍNICOS (21–30)
+     ============================ */
+
+  {
+    q: "21) Caso clínico: Uma criança de 7 anos apresenta aumento bilateral e doloroso das regiões pré-auriculares há 2 dias, febre baixa, mal-estar e dificuldade para mastigar. O exame físico revela apagamento do ângulo da mandíbula e discreto desvio do lóbulo da orelha. Não há secreção purulenta visível no ducto de Stensen. A mãe relata que a criança não está vacinada. Qual o diagnóstico mais provável?",
+    choices: [
+      {
+        text: "Parotidite viral (caxumba).",
+        correct: true,
+        explain: "Correto — sinais descritos: aumento bilateral, dor, sintomas sistêmicos, ausência de pus e história de não vacinação são compatíveis com caxumba. :contentReference[oaicite:21]{index=21}"
+      },
+      {
+        text: "Sialoadenite bacteriana purulenta.",
+        correct: false,
+        explain: "Incorreto — a ausência de secreção purulenta e quadro bilateral sugerem etiologia viral, não bacteriana. :contentReference[oaicite:22]{index=22}"
+      },
+      {
+        text: "Rânula sublingual.",
+        correct: false,
+        explain: "Incorreto — rânula envolve assoalho de boca, não região parotídea. :contentReference[oaicite:23]{index=23}"
+      },
+      {
+        text: "Adenoma pleomórfico.",
+        correct: false,
+        explain: "Incorreto — tumor benigno cresce lentamente e não causa febre ou quadro bilateral agudo. :contentReference[oaicite:24]{index=24}"
+      }
+    ]
+  },
+
+  {
+    q: "22) Caso clínico: Mulher de 62 anos apresenta quadro de dor intensa na região submandibular direita, especialmente ao iniciar a refeição. Refere episódios prévios semelhantes. Ao exame, observa-se aumento doloroso da glândula, sem sinais sistêmicos. O médico realiza palpação bimanual e suspeita de cálculo. Qual próximo passo diagnóstico é mais adequado segundo o material?",
+    choices: [
+      {
+        text: "Ultrassonografia de glândulas salivares para pesquisa de cálculos maiores que 2 mm.",
+        correct: true,
+        explain: "Correto — o material recomenda US como método inicial para sialolitíase. :contentReference[oaicite:25]{index=25}"
+      },
+      {
+        text: "Sorologia para IgM.",
+        correct: false,
+        explain: "Incorreto — sorologia está associada à parotidite viral, não ao quadro descrito. :contentReference[oaicite:26]{index=26}"
+      },
+      {
+        text: "Punção aspirativa imediata da glândula.",
+        correct: false,
+        explain: "Incorreto — punção aspirativa é indicada em suspeita de tumor, não nos critérios primários de sialolitíase. :contentReference[oaicite:27]{index=27}"
+      },
+      {
+        text: "Ressonância magnética de crânio.",
+        correct: false,
+        explain: "Incorreto — RM não é método primário descrito para sialolitíase. :contentReference[oaicite:28]{index=28}"
+      }
+    ]
+  },
+
+  {
+    q: "23) Caso clínico: Um paciente de 45 anos apresenta massa indolor na região pré-auricular esquerda com 6 meses de evolução. O nódulo é firme, móvel e de crescimento lento. Não há febre ou outros sintomas. A TC evidencia lesão bem delimitada no lobo superficial da parótida. Qual hipótese diagnóstica é mais provável?",
+    choices: [
+      {
+        text: "Adenoma pleomórfico.",
+        correct: true,
+        explain: "Correto — tumor benigno mais comum das glândulas salivares, apresentando crescimento lento e indolor. :contentReference[oaicite:29]{index=29}"
+      },
+      {
+        text: "Carcinoma adenoidocístico.",
+        correct: false,
+        explain: "Incorreto — carcinoma costuma ter comportamento mais infiltrativo e dor por invasão neural. :contentReference[oaicite:30]{index=30}"
+      },
+      {
+        text: "Sialoadenite viral.",
+        correct: false,
+        explain: "Incorreto — sialoadenite viral é aguda e dolorosa. :contentReference[oaicite:31]{index=31}"
+      },
+      {
+        text: "Sialolitíase.",
+        correct: false,
+        explain: "Incorreto — sialolitíase causa dor desencadeada por refeição, não nódulo sólido persistente. :contentReference[oaicite:32]{index=32}"
+      }
+    ]
+  },
+
+  {
+    q: "24) Caso clínico: Criança de 11 anos HIV positiva apresenta aumento bilateral progressivo das glândulas parótidas. Ao exame, observam-se múltiplas áreas císticas. Qual o diagnóstico mais associado segundo o material?",
+    choices: [
+      {
+        text: "Aumento cístico bilateral das parótidas associado ao HIV.",
+        correct: true,
+        explain: "Correto — o material descreve essa manifestação como comum em crianças com HIV. :contentReference[oaicite:33]{index=33}"
+      },
+      {
+        text: "Rânula profunda.",
+        correct: false,
+        explain: "Incorreto — rânula localiza-se no assoalho da boca, não na região parotídea. :contentReference[oaicite:34]{index=34}"
+      },
+      {
+        text: "Mucocele múltipla.",
+        correct: false,
+        explain: "Incorreto — mucocele acomete principalmente lábio inferior e não forma múltiplos cistos parotídeos. :contentReference[oaicite:35]{index=35}"
+      },
+      {
+        text: "Carcinoma mucoepidermoide.",
+        correct: false,
+        explain: "Incorreto — não é a apresentação típica em crianças com HIV. :contentReference[oaicite:36]{index=36}"
+      }
+    ]
+  },
+
+  {
+    q: "25) Caso clínico: Paciente com dor súbita e intensa na região parotídea direita, febre alta e secreção purulenta visível ao pressionamento do ducto de Stensen. Qual a conduta inicial adequada?",
+    choices: [
+      {
+        text: "Iniciar antibioticoterapia e, se necessário, drenagem de coleções.",
+        correct: true,
+        explain: "Correto — o material indica essas medidas para sialoadenite bacteriana. :contentReference[oaicite:37]{index=37}"
+      },
+      {
+        text: "Prescrever apenas repouso e dieta leve.",
+        correct: false,
+        explain: "Incorreto — manejo conservador isolado não é suficiente para infecção bacteriana. :contentReference[oaicite:38]{index=38}"
+      },
+      {
+        text: "Indicar remoção total da parótida como primeira medida.",
+        correct: false,
+        explain: "Incorreto — cirurgia imediata não é mencionada como conduta inicial. :contentReference[oaicite:39]{index=39}"
+      },
+      {
+        text: "Solicitar sorologia para IgM como investigação primária.",
+        correct: false,
+        explain: "Incorreto — sorologia é útil em parotidite viral, não bacteriana. :contentReference[oaicite:40]{index=40}"
+      }
+    ]
+  },
+
+  {
+    q: "26) Caso clínico: Um adolescente sofre trauma por mordedura acidental no lábio inferior e, após duas semanas, desenvolve uma lesão arredondada, translúcida e indolor no local. Qual diagnóstico é mais compatível?",
+    choices: [
+      {
+        text: "Mucocele por extravasamento de mucina.",
+        correct: true,
+        explain: "Correto — o material descreve mucocele como pseudocisto por extravasamento, frequentemente após trauma no lábio inferior. :contentReference[oaicite:41]{index=41}"
+      },
+      {
+        text: "Abscesso submandibular.",
+        correct: false,
+        explain: "Incorreto — abscesso é doloroso e com sinais inflamatórios importantes. :contentReference[oaicite:42]{index=42}"
+      },
+      {
+        text: "Cisto dermoide.",
+        correct: false,
+        explain: "Incorreto — cistos dermoides têm outras características e não são relacionados ao ducto salivar menor. :contentReference[oaicite:43]{index=43}"
+      },
+      {
+        text: "Carcinoma adenoidocístico.",
+        correct: false,
+        explain: "Incorreto — não se apresenta como lesão translúcida pós-trauma. :contentReference[oaicite:44]{index=44}"
+      }
+    ]
+  },
+
+  {
+    q: "27) Caso clínico: Mulher de 70 anos apresenta dor recorrente na região submandibular, principalmente ao iniciar as refeições. Ultrassom mostra cálculo de 3 mm no ducto. Já realizou massagens sem melhora. Qual conduta é compatível com o material?",
+    choices: [
+      {
+        text: "Remoção do cálculo e possível submandibulectomia se não houver resolução.",
+        correct: true,
+        explain: "Correto — o material cita remoção do cálculo e, em casos refratários, submandibulectomia. :contentReference[oaicite:45]{index=45}"
+      },
+      {
+        text: "Iniciar antivirais para resolução do cálculo.",
+        correct: false,
+        explain: "Incorreto — sialolitíase não é tratada com antivirais. :contentReference[oaicite:46]{index=46}"
+      },
+      {
+        text: "Apenas compressas mornas eternamente.",
+        correct: false,
+        explain: "Incorreto — não é conduta suficiente para cálculo confirmado. :contentReference[oaicite:47]{index=47}"
+      },
+      {
+        text: "Administração de corticoide sistêmico como único tratamento.",
+        correct: false,
+        explain: "Incorreto — não há recomendação desse tratamento isolado para cálculos salivares. :contentReference[oaicite:48]{index=48}"
+      }
+    ]
+  },
+
+  {
+    q: "28) Caso clínico: Um homem de 55 anos relata dor e endurecimento progressivo na região parotídea, associado a episódios de parestesia facial. A punção aspirativa sugere neoplasia maligna. Qual tumor listado no material é conhecido por invasão neural?",
+    choices: [
+      {
+        text: "Carcinoma adenoidocístico.",
+        correct: true,
+        explain: "Correto — carcinoma adenoidocístico apresenta tropismo neural e é maligno. :contentReference[oaicite:49]{index=49}"
+      },
+      {
+        text: "Adenoma pleomórfico.",
+        correct: false,
+        explain: "Incorreto — adenoma pleomórfico é benigno. :contentReference[oaicite:50]{index=50}"
+      },
+      {
+        text: "Mucocele.",
+        correct: false,
+        explain: "Incorreto — mucocele não tem invasão neural. :contentReference[oaicite:51]{index=51}"
+      },
+      {
+        text: "Rânula.",
+        correct: false,
+        explain: "Incorreto — rânula é lesão cística, não tumoral. :contentReference[oaicite:52]{index=52}"
+      }
+    ]
+  },
+
+  {
+    q: "29) Caso clínico: Uma mulher de 30 anos apresenta massa flutuante no assoalho da boca, indolor, translúcida e com queixa de dificuldade articular da língua ao falar. O histórico indica aumento progressivo. Qual diagnóstico é mais provável?",
+    choices: [
+      {
+        text: "Rânula.",
+        correct: true,
+        explain: "Correto — lesão cística do assoalho da boca que pode deslocar a língua. :contentReference[oaicite:53]{index=53}"
+      },
+      {
+        text: "Mucocele do lábio inferior.",
+        correct: false,
+        explain: "Incorreto — localização é distinta. :contentReference[oaicite:54]{index=54}"
+      },
+      {
+        text: "Sialolitíase parotídea.",
+        correct: false,
+        explain: "Incorreto — sialolitíase não se apresenta como lesão cística translúcida do assoalho. :contentReference[oaicite:55]{index=55}"
+      },
+      {
+        text: "Abscesso sublingual.",
+        correct: false,
+        explain: "Incorreto — abscesso seria doloroso e com sinais flogísticos. :contentReference[oaicite:56]{index=56}"
+      }
+    ]
+  },
+
+  {
+    q: "30) Caso clínico: Homem de 48 anos com massa parotídea de crescimento rápido, dor intensa e linfonodos palpáveis. A punção aspira material sugestivo de carcinoma mucoepidermoide de alto grau. Segundo o material, qual é o tratamento de escolha?",
+    choices: [
+      {
+        text: "Tratamento cirúrgico.",
+        correct: true,
+        explain: "Correto — o pdf indica conduta cirúrgica para tumores malignos das glândulas salivares. :contentReference[oaicite:57]{index=57}"
+      },
+      {
+        text: "Apenas quimioterapia.",
+        correct: false,
+        explain: "Incorreto — não é mencionado como tratamento primário. :contentReference[oaicite:58]{index=58}"
+      },
+      {
+        text: "Apenas corticoides.",
+        correct: false,
+        explain: "Incorreto — não é conduta para tumores malignos. :contentReference[oaicite:59]{index=59}"
+      },
+      {
+        text: "Observação clínica prolongada.",
+        correct: false,
+        explain: "Incorreto — tumores malignos requerem intervenção. :contentReference[oaicite:60]{index=60}"
+      }
+    ]
+  }
+];
+
+
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
