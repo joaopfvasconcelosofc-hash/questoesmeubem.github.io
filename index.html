@@ -14,6 +14,28 @@
         margin-bottom: 10px;
         color: #9d4edd;
     }
+    #searchBox {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.2);
+        background: #0b1220;
+        color: #e6eef8;
+        font-size: 16px;
+    }
+    button {
+        background: #9d4edd;
+        color: white;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+    button:hover {
+        background: #7b2cbf;
+    }
     ul {
         list-style: none;
         padding-left: 0;
@@ -44,8 +66,13 @@
 <h1>Lista de Questionários</h1>
 <p>Selecione um questionário para abrir:</p>
 
-<ul>
-    <!-- AQUI COMEÇAM OS LINKS AUTOMÁTICOS -->
+<!-- 🔍 Buscar -->
+<input type="text" id="searchBox" placeholder="Buscar por título...">
+
+<!-- 🔠 Botão para ordenar -->
+<button id="sortAZ">Ordenar A-Z</button>
+
+<ul id="quizList">
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/Eletroforese_de_proteinas.html">Eletroforese de proteínas</a></li>
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/Hemostasia_e_Disturbios_da_Coagulacao.html">Hemostasia e Distúrbios da Coagulação</a></li>
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/leucemias.html">Leucemias</a></li>
@@ -75,8 +102,6 @@
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/quiz_disturbios_hidroeletricos_e_casos_clinicos.html">Distúrbios Hidroeletrolíticos e Casos Clínicos</a></li>
 
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/quiz_hemograma.html">Hemograma</a></li>
-
-    <!-- Aqui havia erro: "quiz_hemograma.htmlquiz_intoxicacoes..." — corrigi -->
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/quiz_intoxicacoes_exogenas.html">Intoxicações Exógenas</a></li>
 
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/quiz_patologias_anel_linfatico_waldeyer.html">Patologias do Anel Linfático de Waldeyer</a></li>
@@ -94,8 +119,34 @@
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/massas_cervicais.html">Massas Cervicais</a></li>
 
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/CA_laringe.html">Câncer de Laringe</a></li>
+    
     <li><a href="https://joaopfvasconcelosofc-hash.github.io/questoesmeubem.github.io/Patologias_Glandulas_Salivares.html">Patologias das Glândulas Salivares</a></li>
 </ul>
+
+<script>
+// 🔍 Busca em tempo real
+document.getElementById("searchBox").addEventListener("input", function () {
+    const filter = this.value.toLowerCase();
+    const items = document.querySelectorAll("#quizList li");
+
+    items.forEach(li => {
+        const text = li.innerText.toLowerCase();
+        li.style.display = text.includes(filter) ? "" : "none";
+    });
+});
+
+// 🔠 Ordenar A-Z AO CLICAR NO BOTÃO
+document.getElementById("sortAZ").addEventListener("click", () => {
+    const list = document.getElementById("quizList");
+    const items = Array.from(list.querySelectorAll("li"));
+
+    items.sort((a, b) =>
+        a.innerText.trim().localeCompare(b.innerText.trim(), "pt-BR")
+    );
+
+    items.forEach(li => list.appendChild(li));
+});
+</script>
 
 </body>
 </html>
