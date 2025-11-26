@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Purpuras</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Purpuras</h1>
+    <p class="lead">30 questões - Purpuras</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão: Defina, de forma sucinta, o que se entende por púrpuras no contexto da hemostasia.",
+    choices: [
+      {
+        text: "Grupo de doenças decorrentes de distúrbios da hemostasia primária com manifestações hemorrágicas na pele e mucosas.",
+        correct: true,
+        explain: "Púrpuras são alterações hemorrágicas secundárias a disfunção da hemostasia primária, com petéquias, equimoses e sangramentos mucosos devido a problemas plaquetários ou vasculares."
+      },
+      {
+        text: "Conjunto de condições exclusivamente causadas por alterações da coagulação plasmática (via extrínseca).",
+        correct: false,
+        explain: "Incorreto — púrpuras relacionam-se principalmente à hemostasia primária (plaquetas e interação com subendotélio), não exclusivamente a vias plasmáticas da coagulação."
+      },
+      {
+        text: "Lesões cutâneas causadas por processos infecciosos primários da derme que simulam sangramentos.",
+        correct: false,
+        explain: "Incorreto — púrpuras são manifestações hemorrágicas por disfunção hemostática, não lesões primariamente infecciosas da derme."
+      },
+      {
+        text: "Termo usado apenas para equimoses causadas por traumas contusos.",
+        correct: false,
+        explain: "Incorreto — embora equimoses façam parte das púrpuras, o termo é amplo e inclui petéquias, sangramentos mucosos e causas não traumáticas."
+      }
+    ]
+  },
+  {
+    q: "2) Questão: Qual é a principal diferença clínica entre púrpuras trombocitopênicas por defeito de número de plaquetas e púrpuras por defeito de função plaquetária?",
+    choices: [
+      {
+        text: "Nas trombocitopenias há redução da contagem de plaquetas; nos defeitos de função a contagem é normal ou próxima do normal, mas aumenta o tempo de sangramento.",
+        correct: true,
+        explain: "Correto — trombocitopenias apresentam contagem baixa; defeitos funcionais causam sangramento com contagem normal, frequentemente com tempo de sangramento prolongado."
+      },
+      {
+        text: "Nos defeitos de função sempre há anemia hemolítica associada, enquanto nas trombocitopenias não.",
+        correct: false,
+        explain: "Incorreto — anemia hemolítica não é característica obrigatória dos defeitos de função plaquetária."
+      },
+      {
+        text: "As púrpuras por defeito de função não causam sangramento mucoso, apenas cutâneo.",
+        correct: false,
+        explain: "Incorreto — defeitos de função podem causar sangramento tanto cutâneo quanto mucoso."
+      },
+      {
+        text: "Nas trombocitopenias o tempo de sangramento é normal, enquanto nos defeitos de função é sempre normal também.",
+        correct: false,
+        explain: "Incorreto — o tempo de sangramento costuma estar prolongado nos defeitos de função; em trombocitopenia também pode haver alteração."
+      }
+    ]
+  },
+  {
+    q: "3) Questão: Cite três manifestações clínicas típicas que podem acompanhar as púrpuras.",
+    choices: [
+      {
+        text: "Petéquias e equimoses cutâneas; gengivorragia; epistaxe.",
+        correct: true,
+        explain: "Correto — petéquias/equimoses e sangramentos mucosos como gengivorragia e epistaxe são descritos no material."
+      },
+      {
+        text: "Icterícia colestática, prurido e xantomas.",
+        correct: false,
+        explain: "Incorreto — esses são sinais hepáticos e não característicos primários das púrpuras."
+      },
+      {
+        text: "Dor torácica, síncope e palidez central isolada.",
+        correct: false,
+        explain: "Incorreto — não são manifestações típicas iniciais de púrpuras; palidez pode ocorrer se houver anemia por sangramento."
+      },
+      {
+        text: "Edema de membros inferiores, crepitações pulmonares e tosse crônica.",
+        correct: false,
+        explain: "Incorreto — correspondem mais a doença cardíaca/pulmonar do que a quadro purpúrico."
+      }
+    ]
+  },
+  {
+    q: "4) Questão: Sobre a Púrpura Trombocitopênica Imunológica (PTI), qual mecanismo imunológico é central na sua fisiopatologia?",
+    choices: [
+      {
+        text: "Produção de autoanticorpos dirigidos contra proteínas da membrana plaquetária (ex.: complexos GPIIb-IIIa, GPIb-IX).",
+        correct: true,
+        explain: "Correto — a PTI envolve autoanticorpos contra antígenos de superfície plaquetária levando à fagocitose por macrófagos."
+      },
+      {
+        text: "Formação de complexos imunes contra o fator von Willebrand causando sua inativação.",
+        correct: false,
+        explain: "Incorreto — PTI é dirigida às plaquetas; a inativação do vWF não é o mecanismo central descrito."
+      },
+      {
+        text: "Deficiência congênita da protease ADAMTS13.",
+        correct: false,
+        explain: "Incorreto — deficiência da ADAMTS13 é característica da PTT, não da PTI."
+      },
+      {
+        text: "Ativação excessiva da via extrínseca por trombina plasmática.",
+        correct: false,
+        explain: "Incorreto — este não é o mecanismo principal da PTI."
+      }
+    ]
+  },
+  {
+    q: "5) Questão: Em relação aos subtipos clínicos da PTI, escolha a opção correta quanto às características da PTI aguda.",
+    choices: [
+      {
+        text: "Maior incidência na infância, afeta ambos os sexos igualmente e costuma ser precedida por infecção viral ou vacinação com curso limitado.",
+        correct: true,
+        explain: "Correto — a PTI aguda é típica da infância, frequentemente pós-infecciosa e de curso autolimitado."
+      },
+      {
+        text: "Predomina em mulheres na terceira e quarta décadas, geralmente sem associação a infecção prévia.",
+        correct: false,
+        explain: "Incorreto — essa descrição corresponde à PTI clássica crônica, não à forma aguda."
+      },
+      {
+        text: "Apresenta-se exclusivamente em pacientes com doenças linfoproliferativas.",
+        correct: false,
+        explain: "Incorreto — PTI associada a outras doenças pode ocorrer com linfoproliferação, mas não é exclusiva."
+      },
+      {
+        text: "É sempre refratária a corticoterapia e exige transplante de medula para remissão.",
+        correct: false,
+        explain: "Incorreto — a maioria dos casos agudos não necessita de tratamento tão agressivo e frequentemente remite."
+      }
+    ]
+  },
+  {
+    q: "6) Questão: Qual achado laboratorial é clássico na PTI e frequentemente observado no hemograma inicial?",
+    choices: [
+      {
+        text: "Trombocitopenia intensa, frequentemente com contagem menor que 5.000/µL.",
+        correct: true,
+        explain: "Correto — o material descreve trombocitopenia intensa na PTI, muitas vezes abaixo de 5.000/µL."
+      },
+      {
+        text: "Aumento importante do tempo de protrombina sem alteração da contagem plaquetária.",
+        correct: false,
+        explain: "Incorreto — tempo de protrombina prolongado não é achado típico isolado na PTI."
+      },
+      {
+        text: "Leucopenia profunda com neutropenia severa em todos os casos.",
+        correct: false,
+        explain: "Incorreto — leucocitose ou atipia linfocitária pode ocorrer em casos virais, não leucopenia universal."
+      },
+      {
+        text: "Eosinofilia com aumento de IgE sérica.",
+        correct: false,
+        explain: "Incorreto — eosinofilia/IgE não são características descritas para PTI no material."
+      }
+    ]
+  },
+  {
+    q: "7) Questão: Sobre o diagnóstico de PTI, qual a afirmação mais correta?",
+    choices: [
+      {
+        text: "O diagnóstico é essencialmente de exclusão; a pesquisa direta de autoanticorpos antiplaquetários não é obrigatória.",
+        correct: true,
+        explain: "Correto — o diagnóstico de PTI baseia-se na exclusão de outras causas de trombocitopenia; testes de anticorpos não são mandatórios."
+      },
+      {
+        text: "A confirmação depende obrigatoriamente da demonstração de autoanticorpos antiplaquetários para ser válida.",
+        correct: false,
+        explain: "Incorreto — a demonstração de autoanticorpos não é exigida para o diagnóstico clínico de PTI."
+      },
+      {
+        text: "Mielograma sempre mostra ausência de megacariócitos na medula óssea.",
+        correct: false,
+        explain: "Incorreto — o mielograma costuma mostrar número normal ou aumentado de megacariócitos."
+      },
+      {
+        text: "A presença de esquizócitos no esfregaço é diagnóstica de PTI.",
+        correct: false,
+        explain: "Incorreto — esquizócitos são indicativos de hemólise microangiopática, mais ligados à PTT."
+      }
+    ]
+  },
+  {
+    q: "8) Questão: Qual a primeira linha de tratamento farmacológico para PTI e qual a faixa posológica usual descrita?",
+    choices: [
+      {
+        text: "Corticoterapia com prednisona em 1–2 mg/kg/dia, com redução gradual conforme resposta.",
+        correct: true,
+        explain: "Correto — tratamento inicial da PTI é prednisona 1–2 mg/kg/dia, reduzida gradualmente conforme elevação plaquetária."
+      },
+      {
+        text: "Plasmaférese diária até normalização da contagem de plaquetas.",
+        correct: false,
+        explain: "Incorreto — plasmaférese é terapia de PTT; não é primeira linha para PTI."
+      },
+      {
+        text: "Anticoagulação imediata com heparina e anticoagulante oral por 6 meses.",
+        correct: false,
+        explain: "Incorreto — anticoagulação não é tratamento de escolha para PTI e pode agravar sangramento."
+      },
+      {
+        text: "Transfusão de plaquetas em pacientes estáveis sem sangramento ativo como primeira medida.",
+        correct: false,
+        explain: "Incorreto — transfusão de plaquetas é reservada para sangramentos graves ou procedimentos; não é rotina inicial em PTI estável."
+      }
+    ]
+  },
+  {
+    q: "9) Questão: Em pacientes com PTI crônica e refratária, qual intervenção cirúrgica é citada como opção terapêutica (terceira linha)?",
+    choices: [
+      {
+        text: "Esplenectomia.",
+        correct: true,
+        explain: "Correto — esplenectomia é indicada em casos crônicos e refratários como terceira linha terapêutica."
+      },
+      {
+        text: "Hepatectomia parcial.",
+        correct: false,
+        explain: "Incorreto — hepatectomia não é tratamento de PTI."
+      },
+      {
+        text: "Ressecção do apêndice.",
+        correct: false,
+        explain: "Incorreto — ressecção do apêndice não tem papel no tratamento da PTI."
+      },
+      {
+        text: "Transplante cardíaco.",
+        correct: false,
+        explain: "Incorreto — irrelevante para o manejo da PTI."
+      }
+    ]
+  },
+  {
+    q: "10) Questão: Assinale a conduta recomendada para pacientes com sangramento e contagem de plaquetas abaixo de 20.000/µL.",
+    choices: [
+      {
+        text: "Internação hospitalar e tratamento para controlar o sangramento e elevar as plaquetas.",
+        correct: true,
+        explain: "Correto — pacientes sintomáticos com plaquetas <20.000/µL devem ser hospitalizados para manejo e monitorização."
+      },
+      {
+        text: "Alta com orientação ambulatorial e retorno em 1 mês.",
+        correct: false,
+        explain: "Incorreto — contagem tão baixa e sangramento exigem internação, não alta com retorno tardio."
+      },
+      {
+        text: "Iniciar anticoagulação profilática imediata para prevenir trombose venosa.",
+        correct: false,
+        explain: "Incorreto — anticoagulação aumenta risco de sangramento; não indicada nessa situação sem outra indicação."
+      },
+      {
+        text: "Prescrever apenas compressas locais e observar sem intervenção adicional.",
+        correct: false,
+        explain: "Incorreto — medidas locais são inadequadas dada a gravidade potencial com plaquetas tão baixas."
+      }
+    ]
+  },
+  {
+    q: "11) Questão: Conceitue Microangiopatia Trombótica (MAT) no contexto da Púrpura Trombocitopênica Trombótica (PTT).",
+    choices: [
+      {
+        text: "Síndrome caracterizada por trombocitopenia e hemólise microangiopática, frequentemente com esquizócitos no esfregaço.",
+        correct: true,
+        explain: "Correto — MAT combina trombocitopenia com hemólise microangiopática, marcador da PTT."
+      },
+      {
+        text: "Processo inflamatório crônico dos vasos que cursa exclusivamente com eosinofilia.",
+        correct: false,
+        explain: "Incorreto — MAT refere-se a trombose e hemólise microangiopática, não inflamação eosinofílica."
+      },
+      {
+        text: "Defeito isolado de coagulação plasmática levando a aumento do tempo de tromboplastina parcial ativado sem hemólise.",
+        correct: false,
+        explain: "Incorreto — MAT envolve hemólise e trombocitopenia, não apenas alterações nos testes de coagulação."
+      },
+      {
+        text: "Infecção vascular por bactérias gram-negativas com formação de abcessos cutâneos.",
+        correct: false,
+        explain: "Incorreto — não descreve MAT nem PTT."
+      }
+    ]
+  },
+  {
+    q: "12) Questão: Qual alteração laboratorial é sugestiva de anemia hemolítica microangiopática na PTT?",
+    choices: [
+      {
+        text: "Esquizócitos no esfregaço sanguíneo, aumento de bilirrubina indireta, elevação de DHL e reticulocitose.",
+        correct: true,
+        explain: "Correto — esses achados caracterizam hemólise intravascular/microangiopática associada à PTT."
+      },
+      {
+        text: "Aumento isolado da albumina sérica sem alteração de hemácias.",
+        correct: false,
+        explain: "Incorreto — aumento de albumina não é sinal de hemólise microangiopática."
+      },
+      {
+        text: "Diminuição isolada do tempo de protrombina sem danos às hemácias.",
+        correct: false,
+        explain: "Incorreto — não é marcador de hemólise microangiopática."
+      },
+      {
+        text: "Leucocitose com neutrofilia sem alteração da hemoglobina.",
+        correct: false,
+        explain: "Incorreto — leucocitose não define anemia hemolítica microangiopática."
+      }
+    ]
+  },
+  {
+    q: "13) Questão: Qual é o papel da protease ADAMTS13 na fisiopatologia da PTT adquirida idiopática?",
+    choices: [
+      {
+        text: "A ADAMTS13 cliva polímeros do fator von Willebrand; sua deficiência (ou inibição por autoanticorpos) leva a multímeros ultralargos que promovem agregação plaquetária e trombose.",
+        correct: true,
+        explain: "Correto — falta de ADAMTS13 impede clivagem dos multímeros de vWF, favorecendo agregação plaquetária e microtromboses típicas da PTT."
+      },
+      {
+        text: "A ADAMTS13 é um inibidor direto da trombina e, quando ausente, há hiperprodução de trombina.",
+        correct: false,
+        explain: "Incorreto — ADAMTS13 atua sobre o vWF, não como inibidor direto da trombina."
+      },
+      {
+        text: "A ADAMTS13 é um fator de crescimento plaquetário que aumenta a produção de plaquetas na medula.",
+        correct: false,
+        explain: "Incorreto — ADAMTS13 não regula diretamente a produção medular de plaquetas."
+      },
+      {
+        text: "A ADAMTS13 cliva fibrinogênio em fibrina; sua ausência causa fibrinólise excessiva.",
+        correct: false,
+        explain: "Incorreto — ADAMTS13 atua sobre vWF, não sobre fibrinogênio."
+      }
+    ]
+  },
+  {
+    q: "14) Questão: Em termos diagnósticos contemporâneos da PTT, qual é a interpretação atual sobre a chamada 'pêntade clássica' (anemia hemolítica microangiopática, trombocitopenia, manifestações neurológicas, disfunção renal e febre)?",
+    choices: [
+      {
+        text: "Atualmente a presença de anemia hemolítica microangiopática associada a trombocitopenia já é suficiente para considerar o diagnóstico de PTT, sem necessidade de todos os cinco elementos clássicos.",
+        correct: true,
+        explain: "Correto — a pêntade nem sempre está presente; anemia hemolítica microangiopática + trombocitopenia são suficientes para suspeitar de PTT."
+      },
+      {
+        text: "A ausência de febre exclui o diagnóstico de PTT.",
+        correct: false,
+        explain: "Incorreto — febre não é obrigatória; sua ausência não exclui PTT."
+      },
+      {
+        text: "A presença de disfunção renal sem hemólise torna o diagnóstico de PTT impossível.",
+        correct: false,
+        explain: "Incorreto — disfunção renal pode ocorrer, mas hemólise microangiopática é central para suspeita."
+      },
+      {
+        text: "A presença de esquizócitos exclui PTT e indica outra doença hematológica.",
+        correct: false,
+        explain: "Incorreto — esquizócitos são compatíveis com hemólise microangiopática e suportam diagnóstico de PTT."
+      }
+    ]
+  },
+  {
+    q: "15) Questão: Qual é o tratamento específico indicado precocemente na PTT adquirida e qual é seu objetivo terapêutico imediato?",
+    choices: [
+      {
+        text: "Plasmaférese (troca plasmática) para remover autoanticorpos anti-ADAMTS13 e multímeros de vWF, restituindo ADAMTS13 circulante; objetivo é reverter trombose microvascular e normalizar plaquetas e DHL.",
+        correct: true,
+        explain: "Correto — plasmaférese remove inibidores e multímeros, além de fornecer ADAMTS13, sendo terapia específica inicial na PTT adquirida."
+      },
+      {
+        text: "Uso exclusivo de aspirina para inibir agregação plaquetária nas primeiras horas.",
+        correct: false,
+        explain: "Incorreto — aspirina não é terapia inicial indicada para PTT e pode ser inadequada diante de trombocitopenia e risco de sangramento."
+      },
+      {
+        text: "Transfusão rotineira de plaquetas para aumentar contagem e evitar trombose.",
+        correct: false,
+        explain: "Incorreto — transfusão de plaquetas é contraindicada em PTT, salvo em situações específicas (ex.: sangramento crítico ou procedimentos)."
+      },
+      {
+        text: "Antibióticos de amplo espectro como primeira medida para controlar a microangiopatia.",
+        correct: false,
+        explain: "Incorreto — antibióticos não tratam a causa imuno-hematológica da PTT adquirida; só usados se houver infecção concomitante comprovada."
+      }
+    ]
+  },
+  {
+    q: "16) Questão: Em um adulto jovem com sangramento cutâneo difuso, petéquias e contagem de plaquetas de 8.000/µL sem outra alteração laboratorial, qual é a hipótese diagnóstica mais provável e a conduta inicial mais adequada?",
+    choices: [
+      {
+        text: "Púrpura trombocitopênica imunológica (PTI); iniciar prednisona 1–2 mg/kg/dia e considerar hospitalização se houver sangramento significativo.",
+        correct: true,
+        explain: "PTI costuma manifestar-se com trombocitopenia intensa (frequentemente <5.000–10.000/µL) e quadro purpúrico. Tratamento inicial inclui corticoterapia (prednisona 1–2 mg/kg/dia) e hospitalização se houver sangramento ou plaquetas muito baixas. :contentReference[oaicite:0]{index=0}"
+      },
+      {
+        text: "Coagulação intravascular disseminada (CIVD); iniciar reposição com plasma fresco e plaquetas imediatamente.",
+        correct: false,
+        explain: "CIVD cursa com alterações do tempo de protrombina/TTPa, fibrinogênio baixo e geralmente sinais de consumo sistêmico — achados ausentes no enunciado; portanto não é a hipótese mais provável."
+      },
+      {
+        text: "Púrpura vascular idiopática; tratar com compressas e acompanhamento ambulatorial apenas.",
+        correct: false,
+        explain: "Púrpura vascular não está associada à trombocitopenia tão intensa; a conduta de apenas observação é inadequada diante de plaquetas tão baixas."
+      },
+      {
+        text: "Trombocitose reativa; iniciar ácido acetilsalicílico para reduzir agregação plaquetária.",
+        correct: false,
+        explain: "Trombocitose é aumento, não diminuição, de plaquetas. Além disso, AAS em trombocitopenia é contraproducente."
+      }
+    ]
+  },
+  {
+    q: "17) Questão: Qual exame complementar é mais útil para diferenciar uma PTT (púrpura trombocitopênica trombótica) de uma PTI em um paciente com trombocitopenia e anemia hemolítica microangiopática?",
+    choices: [
+      {
+        text: "Dosagem da atividade da protease ADAMTS13 (e pesquisa de inibidores), pois na PTT aguda a atividade costuma estar <10% e frequentemente há inibidores autoimunes.",
+        correct: true,
+        explain: "A diminuição marcante da atividade da ADAMTS13 (com ou sem inibidor) é sugestiva de PTT; pacientes com PTT secundária geralmente não apresentam redução tão marcada. A determinação auxilia, embora o diagnóstico e tratamento muitas vezes sejam iniciados por suspeita clínica. :contentReference[oaicite:1]{index=1}"
+      },
+      {
+        text: "Teste direto de Coombs (DAT), pois positivo diferencia PTT de PTI.",
+        correct: false,
+        explain: "DT Coombs positivo indica hemólise autoimune, não diferencial direto entre PTT e PTI; na PTT há hemólise microangiopática com esquizócitos, geralmente Coombs negativo."
+      },
+      {
+        text: "Nível sérico de fibrinogênio, pois fibrinogênio alto confirma PTT.",
+        correct: false,
+        explain: "Fibrinogênio elevado não caracteriza PTT; alterações de fibrinogênio são mais relevantes em CIVD."
+      },
+      {
+        text: "Dosagem de anticorpos antiplaquetários, pois seu resultado é diagnóstico definitivo de PTI.",
+        correct: false,
+        explain: "A presença de anticorpos antiplaquetários não é obrigatória para o diagnóstico clínico de PTI; o diagnóstico é em grande parte de exclusão. :contentReference[oaicite:2]{index=2}"
+      }
+    ]
+  },
+  {
+    q: "18) Questão: Em relação ao uso de transfusão de plaquetas em pacientes com PTT, qual é a afirmação correta?",
+    choices: [
+      {
+        text: "Transfusão de plaquetas é geralmente contraindicada na PTT, salvo em casos de sangramento grave ou para procedimentos de emergência.",
+        correct: true,
+        explain: "Na PTT, transfundir plaquetas pode agravar a formação de trombos microvasculares; por isso é evitada salvo quando há sangramento crítico ou necessidade de procedimento invasivo. :contentReference[oaicite:3]{index=3}"
+      },
+      {
+        text: "Transfusão rotineira de plaquetas é o tratamento de escolha para normalizar contagem rapidamente em PTT.",
+        correct: false,
+        explain: "Incorreto — transfusão rotineira não é indicada e pode ser prejudicial na PTT."
+      },
+      {
+        text: "Transfusão de plaquetas associada a aspirina previne recidiva de PTT.",
+        correct: false,
+        explain: "Não há evidência de que aspirina com transfusão previna recidiva; além disso, AAS pode aumentar sangramento."
+      },
+      {
+        text: "Transfusão é indicada para todos os pacientes com plaquetas <50.000/µL, independentemente do contexto clínico.",
+        correct: false,
+        explain: "Indicação depende do contexto (sangramento, procedimento); valor absoluto isolado não justifica transfusão indiscriminada."
+      }
+    ]
+  },
+  {
+    q: "19) Questão: Qual é o objetivo primário do tratamento nas púrpuras trombocitopênicas, conforme descrito no material?",
+    choices: [
+      {
+        text: "Controlar o quadro hemorrágico e elevar a contagem de plaquetas o suficiente para evitar sangramento clínico, não necessariamente normalizar as plaquetas.",
+        correct: true,
+        explain: "O objetivo é resolução do sangramento e elevação das plaquetas para níveis seguros; não se busca necessariamente normalizar as contagens. :contentReference[oaicite:4]{index=4}"
+      },
+      {
+        text: "Eliminar completamente todos os autoanticorpos e normalizar a contagem de plaquetas permanentemente.",
+        correct: false,
+        explain: "Embora desejável, a eliminação completa de autoanticorpos não é o objetivo terapêutico imediato; foco é controlar sangramento e estabilizar plaquetas."
+      },
+      {
+        text: "Substituir a medula óssea para restabelecer a produção plaquetária normal.",
+        correct: false,
+        explain: "Transplante de medula não é tratamento de rotina para púrpuras; não é mencionado como meta primária no material."
+      },
+      {
+        text: "Instituir anticoagulação crônica para prevenir microtromboses cutâneas.",
+        correct: false,
+        explain: "Anticoagulação não é objetivo no tratamento das púrpuras trombocitopênicas e pode aumentar risco de sangramento."
+      }
+    ]
+  },
+  {
+    q: "20) Questão: Sobre o manejo da PTI refratária aos corticosteroides e à imunoglobulina IV, qual opção terapêutica é citada como terceira linha no material?",
+    choices: [
+      {
+        text: "Esplenectomia.",
+        correct: true,
+        explain: "Esplenectomia é indicação clássica para casos crônicos e refratários da PTI, descrita como terceira linha terapêutica no material. :contentReference[oaicite:5]{index=5}"
+      },
+      {
+        text: "Transplante renal.",
+        correct: false,
+        explain: "Transplante renal não é indicado para PTI; irrelevante na sequência terapêutica descrita."
+      },
+      {
+        text: "Quimioterapia de alta dose como terapia de primeira linha.",
+        correct: false,
+        explain: "Agentes citotóxicos são usados em refratariedade em alguns casos, mas não como primeira linha rotineira."
+      },
+      {
+        text: "Terapia com estatinas de alta potência para reduzir sangramento.",
+        correct: false,
+        explain: "Estatinas não têm papel no tratamento de PTI conforme o material."
+      }
+    ]
+  },
+
+  /* Casos clínicos (21 a 30) */
+  {
+    q: "21) Questão (Caso clínico): Mulher de 28 anos apresenta quadro de 5 dias com petéquias generalizadas, hematomas espontâneos, epistaxe autolimitada e gengivorragia. História de resfriado viral 2 semanas antes. Exame: pele com múltiplas petéquias, sem icterícia; hemograma: Hb 13 g/dL, leucócitos 7.200/µL, plaquetas 4.200/µL. Tempo de sangramento prolongado. Qual é o diagnóstico mais provável e a conduta inicial apropriada?",
+    choices: [
+      {
+        text: "PTI aguda pós-infecciosa; iniciar prednisona 1–2 mg/kg/dia e considerar imunoglobulina IV em caso de sangramento ativo grave.",
+        correct: true,
+        explain: "Quadro compatível com PTI aguda (mais comum na infância/jovens, frequentemente pós-infecção), com trombocitopenia intensa. Terapia inicial: corticoterapia; IVIG é opção em casos de sangramento grave ou necessidade rápida de aumento de plaquetas. :contentReference[oaicite:6]{index=6}"
+      },
+      {
+        text: "Púrpura por vasculite cutânea; iniciar ciclofosfamida de imediato.",
+        correct: false,
+        explain: "A vasculite pode causar púrpura, mas não explicaria trombocitopenia tão intensa isolada; ciclofosfamida não é primeira conduta sem confirmação."
+      },
+      {
+        text: "PTT; iniciar plasmaférese imediata.",
+        correct: false,
+        explain: "PTT cursa com hemólise microangiopática (esquizócitos, aumento LDH, bilirrubina indireta, anemia). Aqui a Hb está normal e não há sinais de hemólise; portanto PTT é menos provável inicialmente."
+      },
+      {
+        text: "CIVD; transfundir plaquetas e fatores sem investigação adicional.",
+        correct: false,
+        explain: "CIVD tipicamente apresenta alterações na coagulação (TP/TTPa, fibrinogênio) e quadro sistêmico. Não há dados de coagulopatia no enunciado; investigação é necessária antes de transfusão indiscriminada."
+      }
+    ]
+  },
+  {
+    q: "22) Questão (Caso clínico): Homem de 46 anos internado com confusão progressiva, febre 38,8°C, oligúria e petéquias. Hemograma: Hb 8,2 g/dL, leucócitos 12.000/µL, plaquetas 22.000/µL; esfregaço: presença de esquizócitos; DHL e bilirrubina indireta aumentadas. Qual é o diagnóstico mais provável e o passo terapêutico imediato?",
+    choices: [
+      {
+        text: "Púrpura trombocitopênica trombótica (PTT) com microangiopatia trombótica; iniciar plasmaférese terapêutica imediatamente.",
+        correct: true,
+        explain: "Quadro com anemia hemolítica microangiopática (esquizócitos, aumento de DHL e bilirrubina indireta), trombocitopenia e comprometimento neurológico/renal é altamente sugestivo de PTT; tratamento específico inicial é plasmaférese para remover autoanticorpos anti-ADAMTS13 e multímeros de vWF. :contentReference[oaicite:7]{index=7}"
+      },
+      {
+        text: "PTI grave; iniciar prednisona apenas e observar.",
+        correct: false,
+        explain: "PTI costuma não cursar com esquizócitos ou hemólise microangiopática significativa; neste quadro, a plasmaférese é prioritária."
+      },
+      {
+        text: "Hemorragia digestiva oculta; preparo para endoscopia de urgência.",
+        correct: false,
+        explain: "Hemorragia digestiva não explica achados de hemólise com esquizócitos e disfunção orgânica associada."
+      },
+      {
+        text: "Reação transfusional aguda; interromper transfusões e administrar diuréticos.",
+        correct: false,
+        explain: "Não há relato de transfusão prévia imediata; quadro sugere processo microangiopático e requer plasmaférese urgente."
+      }
+    ]
+  },
+  {
+    q: "23) Questão (Caso clínico): Mulher de 35 anos com LES controlado em uso de hidroxicloroquina apresenta queixa de sangramento gengival e petéquias. Hemograma: plaquetas 18.000/µL; teste de anticorpos antiplaquetários não disponível. Qual consideração sobre a etiologia e manejo?",
+    choices: [
+      {
+        text: "PTI associada a doença autoimune (LES) é possível; manejo inicial inclui corticoterapia e avaliar necessidade de IVIG ou esplenectomia em caso refratário.",
+        correct: true,
+        explain: "PTI pode ser associada a outras doenças autoimunes como LES; conduta inicial semelhante: corticoterapia, IVIG em casos de sangramento grave; esplenectomia em refratariedade. :contentReference[oaicite:8]{index=8}"
+      },
+      {
+        text: "Descartar imediatamente PTI; tratar apenas a LES com aumento de hidroxicloroquina.",
+        correct: false,
+        explain: "Aumentar apenas a terapia da LES sem avaliar a trombocitopenia pode atrasar tratamento específico para PTI; abordagem direcionada é necessária."
+      },
+      {
+        text: "Suspender hidroxicloroquina porque é a causa provável e aguardar recuperação em semanas sem tratamento adicional.",
+        correct: false,
+        explain: "Embora drogas possam causar trombocitopenia, hidroxicloroquina não é causa clássica neste contexto; não se deve postergar tratamento específico se há sangramento e plaquetas muito baixas."
+      },
+      {
+        text: "Iniciar anticoagulação para prevenir trombose associada à LES.",
+        correct: false,
+        explain: "Anticoagulação é contraproducente em presença de trombocitopenia sintomática e risco de sangramento; não indicada aqui."
+      }
+    ]
+  },
+  {
+    q: "24) Questão (Caso clínico): Homem de 60 anos com quadro progressivo de fadiga e icterícia. Exames: Hb 7,5 g/dL, reticulocitose, DHL elevado, bilirrubina indireta aumentada, plaquetas 140.000/µL, esfregaço sem esquizócitos. Direct Coombs positivo. Qual o diagnóstico mais provável?",
+    choices: [
+      {
+        text: "Anemia hemolítica autoimune (síndrome de Evans possível se associada a trombocitopenia), mas aqui não há trombocitopenia significativa; tratar conforme hemólise autoimune.",
+        correct: true,
+        explain: "Achados de hemólise com Coombs positivo sugerem anemia hemolítica autoimune. Síndrome de Evans envolve hemólise autoimune + trombocitopenia, mas as plaquetas estão normais neste caso. Manejo segue protocolos de hemólise autoimune. :contentReference[oaicite:9]{index=9}"
+      },
+      {
+        text: "PTT, iniciar plasmaférese imediatamente.",
+        correct: false,
+        explain: "PTT cursa com esquizócitos e trombocitopenia; aqui não há trombocitopenia nem esquizócitos, e Coombs positivo sugere hemólise imune."
+      },
+      {
+        text: "Hemólise por deficiência de G6PD; tratar com esquemas antioxidantes.",
+        correct: false,
+        explain: "G6PD causa hemólise por estresse oxidativo e geralmente Coombs é negativo; além disso, a idade e padrão sugerem outra etiologia."
+      },
+      {
+        text: "CIVD, iniciar reposição de fatores e transfusão de plaquetas.",
+        correct: false,
+        explain: "Não há sinais de coagulopatia consumptiva nem trombocitopenia; CIVD é improvável pelo enunciado."
+      }
+    ]
+  },
+  {
+    q: "25) Questão (Caso clínico): Mulher de 30 anos grávida no segundo trimestre com história de sangramento cutâneo leve e plaquetas 28.000/µL, assintomática hemodinamicamente. Qual é a melhor abordagem segundo o material?",
+    choices: [
+      {
+        text: "Considerar tratamento (corticoterapia) pois plaquetas <30.000/µL e risco de sangramento; manejo deve ponderar riscos maternos e fetais, com acompanhamento especial na gravidez.",
+        correct: true,
+        explain: "Pacientes sintomáticos ou com plaquetas abaixo de cerca de 30.000/µL geralmente requerem intervenção; em gestantes, decisões avaliam risco materno-fetal e podem incluir corticoterapia e suporte adequado. :contentReference[oaicite:10]{index=10}"
+      },
+      {
+        text: "Não tratar durante a gestação; esperar até pós-parto para qualquer intervenção.",
+        correct: false,
+        explain: "Postergar tratamento em plaquetopenia significativa pode colocar mãe e feto em risco; abordagem é individualizada e pode requerer tratamento durante gravidez."
+      },
+      {
+        text: "Iniciar terapia anticoagulante profilática para prevenir trombose placentária.",
+        correct: false,
+        explain: "Anticoagulação não é indicada para trombocitopenia isolada e aumenta risco de hemorragia."
+      },
+      {
+        text: "Realizar imediata esplenectomia de urgência como primeira escolha na gestante.",
+        correct: false,
+        explain: "Esplenectomia é opção para casos refratários, geralmente não primeira linha imediata na gestação; é uma intervenção mais invasiva e de terceira linha."
+      }
+    ]
+  },
+  {
+    q: "26) Questão (Caso clínico): Paciente de 50 anos com suspeita de PTT iniciada há 12 horas no pronto-socorro. Quais metas terapêuticas imediatas do tratamento com plasmaférese descritas no material?",
+    choices: [
+      {
+        text: "Iniciar plasmaférese o mais cedo possível; manter até que a contagem plaquetária supere 150.000/µL e valores de DHL se normalizem por 2–3 dias consecutivos.",
+        correct: true,
+        explain: "O material descreve que a plasmaférese deve ser iniciada nas primeiras horas e mantida até que plaquetas atinjam >150.000/µL e DHL normalize por 2–3 dias consecutivos. :contentReference[oaicite:11]{index=11}"
+      },
+      {
+        text: "Realizar apenas uma sessão de plasmaférese e, se sem resposta, encerrar o tratamento.",
+        correct: false,
+        explain: "Uma única sessão costuma ser insuficiente; protocolo indica manutenção até critérios clínicos/laboratoriais de resposta."
+      },
+      {
+        text: "Iniciar plasmaférese apenas se houver confirmação laboratorial de ADAMTS13 <5%.",
+        correct: false,
+        explain: "Devido à gravidade da PTT, o tratamento deve ser iniciado por suspeita clínica, sem aguardar confirmação da ADAMTS13, que pode demorar."
+      },
+      {
+        text: "Substituir plasmaférese por transfusão massiva de concentrados plaquetários.",
+        correct: false,
+        explain: "Transfusão plaquetária é evitada na PTT; plasmaférese é o tratamento específico inicial."
+      }
+    ]
+  },
+  {
+    q: "27) Questão (Caso clínico): Paciente com PTT que respondeu inicialmente à plasmaférese mas teve recidiva precoce (em 20 dias). De acordo com o material, qual é o panorama prognóstico e opções terapêuticas?",
+    choices: [
+      {
+        text: "Recidiva ocorre em 35–50% dos pacientes; muitas vezes retorno à plasmaférese induz nova remissão; agentes imunossupressores (vincristina, azatioprina, ciclofosfamida) podem ser usados em refratariedade/recidiva.",
+        correct: true,
+        explain: "O material relata recidiva em 35–50% e que muitas recidivas respondem novamente à plasmaférese; imunossupressores podem ser considerados em casos difíceis. :contentReference[oaicite:12]{index=12}"
+      },
+      {
+        text: "Recidiva é rara e sempre indica erro diagnóstico inicial; interromper tratamento agressivo.",
+        correct: false,
+        explain: "Recidiva é relativamente comum; não significa necessariamente erro diagnóstico."
+      },
+      {
+        text: "Recidiva precoce implica necessidade imediata de transplante de medula óssea.",
+        correct: false,
+        explain: "Transplante de medula não é abordagem rotineira para recidiva de PTT; outras medidas (plasmaférese, imunossupressores) são priorizadas."
+      },
+      {
+        text: "Uso contínuo de anticoagulantes orais é a medida de escolha para evitar novas crises.",
+        correct: false,
+        explain: "Anticoagulação não previne as microtromboses da PTT e não é recomendada como estratégia para evitar recidiva."
+      }
+    ]
+  },
+  {
+    q: "28) Questão (Caso clínico): Paciente com quadro purpúrico e plaquetas 45.000/µL sem sangramento ativo e sem comorbidades. O que diz o material sobre internação e conduta?",
+    choices: [
+      {
+        text: "Plaquetas acima de 25.000–30.000/µL geralmente não se associam a sangramento importante; paciente estável pode ser acompanhado ambulatorialmente, com orientação e monitorização.",
+        correct: true,
+        explain: "O material indica que contagens acima de ~25.000/µL geralmente não se associam a sangramento e que o objetivo é tratar pacientes sintomáticos; internação é indicada quando há sangramento ou contagens muito baixas (ex.: <20.000/µL). :contentReference[oaicite:13]{index=13}"
+      },
+      {
+        text: "Qualquer contagem abaixo de 100.000/µL requer internação imediata e início de plasmaférese.",
+        correct: false,
+        explain: "Esta conduta é excessiva; internação e plasmaférese são indicadas conforme sintomatologia e diagnóstico (ex.: PTT), não por um limite absoluto de 100.000/µL."
+      },
+      {
+        text: "Iniciar anticoagulação profilática hospitalar em todos com plaquetas <50.000/µL.",
+        correct: false,
+        explain: "Anticoagulação em trombocitopenia deve ser avaliada caso a caso; não é recomendação generalizada para contagens <50.000/µL."
+      },
+      {
+        text: "Realizar esplenectomia de urgência para evitar progressão do quadro.",
+        correct: false,
+        explain: "Esplenectomia é para casos crônicos/refratários, não conduta de primeira linha em paciente estável com plaquetas moderadamente baixas."
+      }
+    ]
+  },
+  {
+    q: "29) Questão (Caso clínico): Paciente com suspeita de PTI crônica sem resposta a corticoterapia e IVIG; quais alternativas terapêuticas o material cita para casos resistentes?",
+    choices: [
+      {
+        text: "Esplenectomia; agentes imunossupressores (azatioprina, ciclofosfamida), alcaloides da vinca (ex.: vincristina/vinblastina) e outros medicamentos como danazol.",
+        correct: true,
+        explain: "O material descreve essas opções para casos refratários à corticoterapia e IVIG, incluindo esplenectomia como terceira linha e uso de agentes imunossupressores ou alcaloides da vinca. :contentReference[oaicite:14]{index=14}"
+      },
+      {
+        text: "Somente aumento da dose de prednisona indefinidamente até resposta.",
+        correct: false,
+        explain: "Persistir indefinidamente com corticoterapia em ausência de resposta não é recomendado; outras opções devem ser consideradas."
+      },
+      {
+        text: "Transplante hepático como tentativa de reverter trombocitopenia.",
+        correct: false,
+        explain: "Transplante hepático não é terapia para PTI resistente; não está indicado conforme o material."
+      },
+      {
+        text: "Uso rotineiro de anticoagulantes para modular função plaquetária.",
+        correct: false,
+        explain: "Anticoagulantes não tratam a destruição imune de plaquetas e podem aumentar risco hemorrágico."
+      }
+    ]
+  },
+  {
+    q: "30) Questão (Caso clínico): Paciente com suspeita de PTT apresenta melhora clínica após plasmaférese, com aumento gradual das plaquetas e queda do DHL. Após alta, qual é a informação sobre prognóstico e recorrência segundo o material?",
+    choices: [
+      {
+        text: "A remissão é alcançada em 80–90% dos pacientes; porém recidivas ocorrem em 35–50% (precoce ou tardia) e muitas respondem a nova plasmaférese.",
+        correct: true,
+        explain: "O material relata alta taxa de remissão (80–90%) com possibilidade de recidiva em 35–50%; várias recidivas respondem novamente à plasmaférese. Fatores como idade >40 e anemia significativa na apresentação associam-se a pior prognóstico. :contentReference[oaicite:15]{index=15}"
+      },
+      {
+        text: "Remissão completa indica cura definitiva sem risco de recidiva.",
+        correct: false,
+        explain: "Mesmo após remissão, recidivas são frequentes; não se pode garantir cura definitiva."
+      },
+      {
+        text: "Pacientes em remissão jamais necessitam de acompanhamento laboratoral.",
+        correct: false,
+        explain: "Acompanhamento é necessário devido ao risco de recidiva e variações laboratoriais."
+      },
+      {
+        text: "Recidiva precoce é rara e, quando ocorre, responde apenas a transplante de medula óssea.",
+        correct: false,
+        explain: "Recidiva precoce não é rara e geralmente responde a nova plasmaférese ou imunossupressores, não exigindo transplante de medula como primeira opção."
+      }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

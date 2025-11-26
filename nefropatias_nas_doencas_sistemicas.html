@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Nefropatias Nas Doenças Sistêmicas</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Nefropatias Nas Doenças Sistêmicas</h1>
+    <p class="lead">30 questões - Nefropatias Nas Doenças Sistêmicas</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão: Qual é a prevalência aproximada de nefropatia diabética entre indivíduos com diabetes mellitus conforme apresentado no material?",
+    choices: [
+      {
+        text: "Cerca de 35% dos indivíduos com diabetes desenvolvem nefropatia diabética.",
+        correct: true,
+        explain: "Correto. O material informa que a nefropatia diabética acomete em torno de 35% dos portadores de diabetes, sendo uma complicação crônica importante."
+      },
+      {
+        text: "Aproximadamente 5% dos indivíduos com diabetes desenvolvem nefropatia diabética.",
+        correct: false,
+        explain: "Incorreto. 5% é muito inferior ao valor apresentado no material (≈35%)."
+      },
+      {
+        text: "Quase 70% dos indivíduos com diabetes apresentam nefropatia diabética.",
+        correct: false,
+        explain: "Incorreto. 70% superestima muito a prevalência descrita no material."
+      },
+      {
+        text: "Nefropatia diabética é rara em diabetes tipo 2, ocorrendo em menos de 1% dos casos.",
+        correct: false,
+        explain: "Incorreto. O material descreve que a nefropatia diabética é relativamente comum (~35%), inclusive sendo causa frequente de DRC."
+      }
+    ]
+  },
+
+  {
+    q: "2) Questão: Segundo o material, qual achado morfológico pode aparecer precocemente e até preceder a albuminúria clínica na nefropatia diabética?",
+    choices: [
+      {
+        text: "Espessamento difuso da membrana basal glomerular (GBM thickening).",
+        correct: true,
+        explain: "Correto. O espessamento difuso da membrana basal glomerular é apontado como um achado precoce que pode preceder a albuminúria clínica."
+      },
+      {
+        text: "Nodular glomerulosclerosis (lesões de Kimmelstiel–Wilson) exclusivamente nas fases iniciais.",
+        correct: false,
+        explain: "Incorreto. As lesões nodulares de Kimmelstiel–Wilson estão associadas a formas mais avançadas e proteinúria elevada, não às fases precoces."
+      },
+      {
+        text: "Atrofia tubular com fibrose intersticial como achado inicial isolado.",
+        correct: false,
+        explain: "Incorreto. Atrofia tubular e fibrose intersticial correlacionam-se com declínio da TFG e costumam acompanhar doença mais avançada."
+      },
+      {
+        text: "Deposição de imunocomplexos subepiteliais semelhantes à glomerulonefrite membranosa.",
+        correct: false,
+        explain: "Incorreto. O material não descreve depósito subepitelial como achado precoce típico da nefropatia diabética; realça GBM thickening e expansão mesangial."
+      }
+    ]
+  },
+
+  {
+    q: "3) Questão: Sobre o rastreamento da doença renal diabética (DRD), qual recomendação temporal o material apresenta para pacientes com DM2?",
+    choices: [
+      {
+        text: "Iniciar rastreamento ao tempo do diagnóstico do diabetes tipo 2.",
+        correct: true,
+        explain: "Correto. O material recomenda efetuar o rastreamento de DRD ao tempo do diagnóstico nos pacientes com DM2."
+      },
+      {
+        text: "Rastrear somente após 10 anos do diagnóstico em DM2.",
+        correct: false,
+        explain: "Incorreto. O material indica rastreio ao diagnóstico para DM2, não esperar 10 anos."
+      },
+      {
+        text: "Não realizar rastreamento em DM2 a menos que haja sintomas renais.",
+        correct: false,
+        explain: "Incorreto. O rastreamento é recomendado rotineiramente, pois a doença pode progredir silenciosamente."
+      },
+      {
+        text: "Rastreio em DM2 apenas se HbA1c > 9%.",
+        correct: false,
+        explain: "Incorreto. A recomendação é rastrear ao diagnóstico independentemente de nível específico de HbA1c."
+      }
+    ]
+  },
+
+  {
+    q: "4) Questão: Para pacientes com diabetes tipo 1, quando o material recomenda iniciar o rastreamento para nefropatia diabética?",
+    choices: [
+      {
+        text: "Após 5 anos do diagnóstico do diabetes tipo 1.",
+        correct: true,
+        explain: "Correto. O material recomenda rastreio após 5 anos de diagnóstico em DM1."
+      },
+      {
+        text: "Ao tempo do diagnóstico do diabetes tipo 1.",
+        correct: false,
+        explain: "Incorreto. Em DM1 o rastreamento é recomendado após 5 anos de diagnóstico, diferente do DM2."
+      },
+      {
+        text: "Nunca, pois DM1 não causa nefropatia.",
+        correct: false,
+        explain: "Incorreto. DM1 pode causar nefropatia; por isso há diretriz de rastreamento após 5 anos."
+      },
+      {
+        text: "Somente após sinais clínicos de insuficiência renal.",
+        correct: false,
+        explain: "Incorreto. O rastreio é preconizado de forma programada (após 5 anos), não apenas após sinais clínicos."
+      }
+    ]
+  },
+
+  {
+    q: "5) Questão: Qual mecanismo fisiopatológico inicial é destacado como importante na gênese da nefropatia diabética?",
+    choices: [
+      {
+        text: "Hiperfiltração glomerular decorrente de redução da resistência arteriolar aferente e eferente.",
+        correct: true,
+        explain: "Correto. O material descreve a hiperfiltração glomerular, pela redução da resistência das arteríolas aferente e eferente, como fase inicial importante."
+      },
+      {
+        text: "Imunocomplexos anti-membrana basal glomerular como único mecanismo inicial.",
+        correct: false,
+        explain: "Incorreto. Embora mecanismos imunomediados possam ocorrer em algumas doenças, a nefropatia diabética envolve especialmente hiperfiltração, inflamação e perda de podócitos."
+      },
+      {
+        text: "Oclusão glomerular por microtrombos como mecanismo primário em todos os casos.",
+        correct: false,
+        explain: "Incorreto. Microtrombos não são descritos como o mecanismo primário universal na nefropatia diabética."
+      },
+      {
+        text: "Atrofia tubular isolada precedendo qualquer alteração glomerular.",
+        correct: false,
+        explain: "Incorreto. A atrofia tubular e fibrose intersticial acompanham evolução e correlacionam-se com declínio da TFG, não sendo o evento inicial isolado."
+      }
+    ]
+  },
+
+  {
+    q: "6) Questão: Quais alterações celulares/ moleculares são implicadas no acúmulo de matriz mesangial na nefropatia diabética, segundo o material?",
+    choices: [
+      {
+        text: "Ativação de citocinas, fatores pró-fibróticos, inflamação sistêmica e fatores de crescimento vascular (VEGF).",
+        correct: true,
+        explain: "Correto. O texto relaciona ativação de citocinas, elementos pró-fibróticos, inflamação e VEGF ao acúmulo de matriz mesangial."
+      },
+      {
+        text: "Apenas deposição de sais de cálcio no mesângio sem participação de citocinas.",
+        correct: false,
+        explain: "Incorreto. A deposição de cálcio isolada não é o mecanismo descrito; o material enfatiza processos inflamatórios e pró-fibróticos."
+      },
+      {
+        text: "Aumento exclusivamente da pressão hidrostática glomerular sem alterações celulares.",
+        correct: false,
+        explain: "Incorreto. Embora pressão e hiperfiltração contribuam, há descrição explícita de mediadores celulares e fatores de crescimento."
+      },
+      {
+        text: "Ativação primária da via alternativa do complemento como fator isolado.",
+        correct: false,
+        explain: "Incorreto. A via do complemento não é apresentada como o mecanismo central para acúmulo de matriz mesangial na nefropatia diabética no material."
+      }
+    ]
+  },
+
+  {
+    q: "7) Questão: Em relação às alterações morfológicas da nefropatia diabética, qual das seguintes combinações é correta conforme o material?",
+    choices: [
+      {
+        text: "Espessamento difuso da membrana basal glomerular, expansão mesangial e, em fases avançadas, lesões nodulares de Kimmelstiel–Wilson.",
+        correct: true,
+        explain: "Correto. O material lista GBM thickening, expansão mesangial e nodular glomerulosclerosis (Kimmelstiel–Wilson) em formas mais avançadas."
+      },
+      {
+        text: "Fusão de processos podocitários sem alterações da membrana basal e sem expansão mesangial.",
+        correct: false,
+        explain: "Incorreto. Apesar de perda de podócitos ser mencionada, o espessamento da GBM e expansão mesangial são achados clássicos."
+      },
+      {
+        text: "Formação de crescentes glomerulares como achado patognomônico da nefropatia diabética.",
+        correct: false,
+        explain: "Incorreto. Crescentes são típicos de glomerulonefrite rapidamente progressiva, não de nefropatia diabética."
+      },
+      {
+        text: "Deposição de imunocomplexos subendoteliais com ausência de alterações na membrana basal.",
+        correct: false,
+        explain: "Incorreto. O padrão descrito para nefropatia diabética inclui alterações da GBM e mesângio, não esse achado isolado."
+      }
+    ]
+  },
+
+  {
+    q: "8) Questão: Qual das seguintes recomendações de controle glicêmico para pacientes pré-dialíticos com nefropatia diabética está indicada no material?",
+    choices: [
+      {
+        text: "Manter HbA1c em torno de 7% em pacientes pré-dialíticos.",
+        correct: true,
+        explain: "Correto. O material recomenda HbA1c próxima de 7% para pacientes pré-dialíticos."
+      },
+      {
+        text: "Manter HbA1c abaixo de 5% para reduzir completamente o risco de DRD.",
+        correct: false,
+        explain: "Incorreto. HbA1c <5% não é recomendado — o material indica meta em torno de 7% para pré-dialíticos."
+      },
+      {
+        text: "Não monitorar HbA1c em pacientes com doença renal diabética.",
+        correct: false,
+        explain: "Incorreto. O material enfatiza o controle glicêmico e recomenda metas específicas de HbA1c dependendo do contexto."
+      },
+      {
+        text: "Sempre buscar HbA1c >9% em pacientes mais jovens sem comorbidades.",
+        correct: false,
+        explain: "Incorreto. Valores elevados de HbA1c aumentam risco de complicações; o material recomenda objetivos de ≈7% em pacientes jovens sem comorbidades."
+      }
+    ]
+  },
+
+  {
+    q: "9) Questão: Sobre o tratamento da nefropatia diabética, qual das seguintes medidas farmacológicas e não farmacológicas é enfatizada no material?",
+    choices: [
+      {
+        text: "Restrição de sal, dieta hipoproteica moderada, controle de volume e uso de agentes hipoglicemiantes/insulina quando indicado.",
+        correct: true,
+        explain: "Correto. O material enumera medidas não-farmacológicas (restrição de sal, controle de volume, dieta) e farmacológicas (hipoglicemiantes, insulina)."
+      },
+      {
+        text: "Aconselha aumento indiscriminado de proteína para 2,5 g/kg/dia em pacientes com DRD.",
+        correct: false,
+        explain: "Incorreto. O material recomenda dieta hipoproteica moderada (~0,8 g/kg/dia) para controle e prevenção da progressão."
+      },
+      {
+        text: "Proibir exercícios físicos em todos os pacientes com nefropatia diabética.",
+        correct: false,
+        explain: "Incorreto. O material incentiva a prática de exercícios físicos como parte do manejo não farmacológico."
+      },
+      {
+        text: "Uso de AINEs crônicos para controle de dor como medida segura na DRD.",
+        correct: false,
+        explain: "Incorreto. O material recomenda evitar AINEs devido ao risco de agravamento da função renal."
+      }
+    ]
+  },
+
+  {
+    q: "10) Questão: Conforme o material, qual a principal causa de doença renal crônica (DRC) entre pacientes que iniciam terapia renal substitutiva (TRS)?",
+    choices: [
+      {
+        text: "Doença renal crônica secundária à diabetes mellitus (DRD).",
+        correct: true,
+        explain: "Correto. O material afirma que a DRC secundária à DM é a principal causa entre pacientes que ingressam em TRS por diálise."
+      },
+      {
+        text: "Doença policística renal exclusivamente hereditária.",
+        correct: false,
+        explain: "Incorreto. Embora a doença policística possa causar DRC, o material destaca a DRD como principal causa de ingresso em TRS."
+      },
+      {
+        text: "Somente nefropatias tropicais como principal causa de TRS.",
+        correct: false,
+        explain: "Incorreto. Doenças tropicais podem causar LRA e DRC, mas não são apontadas como a principal causa de TRS no material."
+      },
+      {
+        text: "Tromboembolismo renal recorrente como causa predominante de DRC.",
+        correct: false,
+        explain: "Incorreto. O texto não indica tromboembolismo renal como principal causa de DRC entre pacientes em TRS."
+      }
+    ]
+  },
+
+  {
+    q: "11) Questão: Em nefroesclerose hipertensiva, qual meta pressórica geral é indicada no material para proteção renal (KDIGO 2021 referenciado)?",
+    choices: [
+      {
+        text: "Meta pressórica geralmente < 130/80 mmHg.",
+        correct: true,
+        explain: "Correto. O material indica meta pressórica geralmente abaixo de 130/80 mmHg segundo KDIGO 2021."
+      },
+      {
+        text: "Permitir pressões até 160/100 mmHg sem tratamento.",
+        correct: false,
+        explain: "Incorreto. Valores tão elevados não são aceitos como meta; o controle rigoroso da PA é recomendado."
+      },
+      {
+        text: "Meta pressórica ideal > 150/90 mmHg para todos os pacientes idosos.",
+        correct: false,
+        explain: "Incorreto. O material não recomenda metas tão permissivas; metas são individualizadas, mas referência geral é <130/80 mmHg."
+      },
+      {
+        text: "Evitar qualquer uso de anti-hipertensivos em nefroesclerose benigna.",
+        correct: false,
+        explain: "Incorreto. O pilar do tratamento é o controle rigoroso da pressão arterial com fármacos apropriados."
+      }
+    ]
+  },
+
+  {
+    q: "12) Questão: Qual classe de fármacos o material aponta como de escolha para reduzir pressão intraglomerular e proteinúria na nefroesclerose hipertensiva?",
+    choices: [
+      {
+        text: "Inibidores da enzima conversora de angiotensina (IECA) ou bloqueadores do receptor de angiotensina II (BRA).",
+        correct: true,
+        explain: "Correto. IECA ou BRA são citados como fármacos de escolha por reduzir pressão intraglomerular e proteinúria."
+      },
+      {
+        text: "Uso exclusivo de anti-inflamatórios não esteroidais (AINEs) como primeiro-line.",
+        correct: false,
+        explain: "Incorreto. AINEs devem ser evitados por risco de lesão renal; não são recomendados para reduzir proteinúria."
+      },
+      {
+        text: "Aplicação rotineira de esteroides sistêmicos para controle da proteinúria hipertensiva.",
+        correct: false,
+        explain: "Incorreto. Esteroides não são mencionados como tratamento para nefroesclerose hipertensiva."
+      },
+      {
+        text: "Bloqueadores beta-adrenérgicos como única terapia para reduzir proteinúria.",
+        correct: false,
+        explain: "Incorreto. Beta-bloqueadores podem reduzir PA, mas IECA/BRA têm efeito específico na redução da pressão intraglomerular e proteinúria."
+      }
+    ]
+  },
+
+  {
+    q: "13) Questão: Qual dos seguintes achados clínicos/ laboratoriais é sugerido pelo material como critério que apoia o diagnóstico clínico de nefroesclerose benigna (na ausência de biópsia)?",
+    choices: [
+      {
+        text: "Proteinúria baixa, geralmente < 1,0 g/24 h, e sedimento urinário normal.",
+        correct: true,
+        explain: "Correto. O material lista proteinúria baixa (<1 g/24h) e sedimento normal entre critérios sugeridos para nefroesclerose benigna."
+      },
+      {
+        text: "Proteinúria nefrótica com albuminúria massiva (>3,5 g/24 h) como achado típico.",
+        correct: false,
+        explain: "Incorreto. Proteinúria nefrótica é atípica para nefroesclerose benigna e sugere outra etiologia glomerular."
+      },
+      {
+        text: "Sedimento ativo com numerosos cilindros celulares e hematúria intensa como achado característico.",
+        correct: false,
+        explain: "Incorreto. Sedimento urinário normalmente é quase normal na nefroesclerose benigna; sedimento ativo sugere outra doença renal."
+      },
+      {
+        text: "Presença obrigatória de diabetes mellitus para diagnóstico.",
+        correct: false,
+        explain: "Incorreto. Ausência de diabetes é um dos critérios sugeridos (a presença de diabetes excluiria a nefroesclerose benigna como causa primária)."
+      }
+    ]
+  },
+
+  {
+    q: "14) Questão: Na nefroesclerose hipertensiva maligna, qual lesão vascular característica histológica o material descreve (às vezes referida como 'onion-skin')?",
+    choices: [
+      {
+        text: "Arteriolosclerose hiperplásica com proliferação concêntrica da íntima (onion-skin).",
+        correct: true,
+        explain: "Correto. A arteriolosclerose hiperplásica com aspecto 'onion-skin' é característica da hipertensão maligna."
+      },
+      {
+        text: "Hialinização difusa sem proliferação intimai típica apenas da forma benigna.",
+        correct: false,
+        explain: "Incorreto. A arteriolosclerose hialina é típica da forma benigna; o 'onion-skin' refere-se à hiperplásica da forma maligna."
+      },
+      {
+        text: "Formação de granulomas vasculares com necrose caseosa.",
+        correct: false,
+        explain: "Incorreto. Granulomas caseosos não são descritos na nefroesclerose hipertensiva."
+      },
+      {
+        text: "Deposição massiva de imunoglobulina G em padrão granular na íntima arterial.",
+        correct: false,
+        explain: "Incorreto. Deposição imune granular não é o achado clássico da hipertensão maligna descrita no material."
+      }
+    ]
+  },
+
+  {
+    q: "15) Questão: De acordo com as recomendações do material, com que frequência devem ser monitorados TFG e creatinina em pacientes com nefropatia crônica associada a hipertensão?",
+    choices: [
+      {
+        text: "A cada 3–6 meses.",
+        correct: true,
+        explain: "Correto. O material recomenda monitorar TFG e creatinina a cada 3–6 meses em acompanhamento."
+      },
+      {
+        text: "Uma vez a cada 10 anos, salvo complicações.",
+        correct: false,
+        explain: "Incorreto. Intervalos tão longos seriam inadequados; o material recomenda 3–6 meses."
+      },
+      {
+        text: "Diariamente em todos os pacientes ambulatoriais.",
+        correct: false,
+        explain: "Incorreto. Monitorização diária não é prática rotineira para pacientes ambulatoriais; 3–6 meses é a orientação."
+      },
+      {
+        text: "Nunca — apenas avaliar se houver sintomas urinários.",
+        correct: false,
+        explain: "Incorreto. O material orienta monitoramento regular independente de sintomas urinários, para detecção precoce da progressão."
+      }
+    ]
+  },
+  {
+    q: "16) Questão: Em pacientes com lúpus eritematoso sistêmico que apresentam proteinúria persistente >0,5 g/24h e hematúria microscópica, qual é a conduta diagnóstica seguinte mais indicada para classificar adequadamente a nefropatia?",
+    choices: [
+      {
+        text: "Realizar biópsia renal para classificação histológica da nefrite lúpica.",
+        correct: true,
+        explain: "Correto. A biópsia renal é necessária para determinar a classe histológica da nefrite lúpica (I–VI) e orientar o tratamento imunossupressor e prognóstico."
+      },
+      {
+        text: "Iniciar corticoterapia empírica sem biópsia, pois a proteinúria orienta o tratamento.",
+        correct: false,
+        explain: "Incorreto. Embora a proteinúria mostre dano renal, a biópsia define a classe e a intensidade do tratamento; tratar empiricamente pode levar a sub/overtratamento."
+      },
+      {
+        text: "Aguardar 6 meses para reavaliar proteinúria antes de decidir por biópsia.",
+        correct: false,
+        explain: "Incorreto. Proteinúria persistente >0,5 g/24h com hematúria justifica investigação ativa (biópsia) sem espera prolongada."
+      },
+      {
+        text: "Pedir apenas antinucleares (ANA) para confirmar atividade e evitar biópsia.",
+        correct: false,
+        explain: "Incorreto. ANA e sorologias ajudam, mas não substituem a biópsia para classificar a nefrite e guiar terapia."
+      }
+    ]
+  },
+
+  {
+    q: "17) Questão: Qual achado histopatológico é típico da nefrite lúpica classe IV (nefropatia difusa proliferativa)?",
+    choices: [
+      {
+        text: "Proliferação endocapilar difusa envolvendo ≥50% dos glomérulos, com hipercelularidade e depósitos subendoteliais.",
+        correct: true,
+        explain: "Correto. A classe IV é caracterizada por lesão proliferativa endocapilar difusa em grande proporção dos glomérulos, com depósitos subendoteliais e atividade inflamatória."
+      },
+      {
+        text: "Alterações mínimas sem imunocomplexos visíveis ao IF.",
+        correct: false,
+        explain: "Incorreto. Achados mínimos são característicos de outras entidades (ex.: LGM mínima), não da nefrite lúpica proliferativa."
+      },
+      {
+        text: "Deposição subepitelial isolada e espessamento difuso da membrana basal sem proliferação celular.",
+        correct: false,
+        explain: "Incorreto. Deposição subepitelial com padrão membranoso seria mais compatível com nefrite lúpica classe V (membranosa)."
+      },
+      {
+        text: "Armadilha de imunocomplexos exclusivamente mesangial sem alterações endocapilares.",
+        correct: false,
+        explain: "Incorreto. Isso descreve classes I–II; a classe IV tem proliferação endocapilar significativa."
+      }
+    ]
+  },
+
+  {
+    q: "18) Questão: Na vasculite ANCA-associada com acometimento renal (Nefrite rapidamente progressiva pauci-imune), qual marcador sorológico tem maior correlação com doença com granulomatosa do tipo Wegener (granulomatose com poliangiite)?",
+    choices: [
+      {
+        text: "c-ANCA associado a anticorpo anti-PR3 (proteinase 3).",
+        correct: true,
+        explain: "Correto. c-ANCA com anti-PR3 é classicamente associado à granulomatose com poliangiite (Wegener) e costuma correlacionar-se com forma granulomatosa e acometimento respiratório/renal."
+      },
+      {
+        text: "Anti-dsDNA específico para vasculite ANCA positiva.",
+        correct: false,
+        explain: "Incorreto. Anti-dsDNA está mais relacionado ao lúpus; não é marcador de vasculite ANCA-associada."
+      },
+      {
+        text: "c-ANCA associado a anti-MPO (mieloperoxidase).",
+        correct: false,
+        explain: "Incorreto. c-ANCA correlaciona-se com anti-PR3; anti-MPO costuma dar padrões p-ANCA e associações clínicas diferentes (p.ex. poliangeíte microscópica)."
+      },
+      {
+        text: "FAN com padrão nuclear homogêneo.",
+        correct: false,
+        explain: "Incorreto. FAN é inespecífico e não substitui ANCA; padrão homogêneo sugere autoimunidade sistêmica (lúpus) mais do que vasculite ANCA."
+      }
+    ]
+  },
+
+  {
+    q: "19) Questão: Em pacientes com amiloidose renal de cadeia leve (AL), qual exame fornece o diagnóstico definitivo por demonstrar depósito amiloide na biópsia renal?",
+    choices: [
+      {
+        text: "Coloração de Congo red mostrando birrefringência verde sob luz polarizada.",
+        correct: true,
+        explain: "Correto. A coloração com Congo red com birrefringência verde-âmbar sob luz polarizada é o padrão-ouro para identificar depósitos amilóides em tecido renal."
+      },
+      {
+        text: "Dosagem de proteína C reativa elevada como prova definitiva de amiloidose.",
+        correct: false,
+        explain: "Incorreto. PCR indica inflamação, mas não é diagnóstico de amiloidose; a confirmação é histológica com Congo red."
+      },
+      {
+        text: "Ecografia renal mostrando rim multiloculado com calcificações.",
+        correct: false,
+        explain: "Incorreto. Ultrassom pode mostrar alterações inespecíficas; não confirma amiloidose."
+      },
+      {
+        text: "Proteinúria seletiva por eletroforese urinária apenas.",
+        correct: false,
+        explain: "Incorreto. Eletroforese pode sugerir paraproteína, mas não substitui biópsia com coloração específica para amiloide."
+      }
+    ]
+  },
+
+  {
+    q: "20) Questão: Qual manifestação renal é mais tipicamente associada à infecção crônica por hepatite B, conforme discutido no material?",
+    choices: [
+      {
+        text: "Nefropatia membranosa (membranous nephropathy) com proteinúria nefrótica.",
+        correct: true,
+        explain: "Correto. Infecção crônica por hepatite B está classicamente associada à nefropatia membranosa, frequentemente com síndromes nefróticas."
+      },
+      {
+        text: "Doença policística renal autossômica dominante.",
+        correct: false,
+        explain: "Incorreto. Doença policística é genética e não relacionada à hepatite B."
+      },
+      {
+        text: "Nefrite intersticial medicamentosa exclusivamente.",
+        correct: false,
+        explain: "Incorreto. Embora hepatites possam ter manifestações imunológicas variadas, a associação clássica com hepatite B é com glomerulopatias membranosas."
+      },
+      {
+        text: "Nefropatia por IgA primária (Berger) sem relação com hepatite B.",
+        correct: false,
+        explain: "Incorreto. A nefropatia por IgA tem associações diferentes (respiratórias, gastrointestinais) e não é a associação clássica com hepatite B."
+      }
+    ]
+  },
+
+  {
+    q: "21) Questão: Caso clínico — Homem de 48 anos com febre, perda ponderal de 5 kg em 2 meses, hemoptise intermitente e creatinina que elevou de 1,0 para 3,2 mg/dL nas últimas 4 semanas. Urinálise: hematúria macroscópica recente e cilindros hemáticos. ANCA c-positivo (anti-PR3). Qual é o diagnóstico mais provável?",
+    choices: [
+      {
+        text: "Granulomatose com poliangiite (Wegener) com nefrite rapidamente progressiva pauci-imune.",
+        correct: true,
+        explain: "Correto. Hemoptise + elevação rápida da creatinina + sedimento ativo e c-ANCA/anti-PR3 apontam para granulomatose com poliangiite com acometimento renal (RPGN pauci-imune)."
+      },
+      {
+        text: "Nefropatia diabética em estágio avançado.",
+        correct: false,
+        explain: "Incorreto. Nefropatia diabética não costuma cursar com hemoptise nem ANCA positivo; a apresentação é distinta."
+      },
+      {
+        text: "Lúpus eritematoso sistêmico sem envolvimento pulmonar.",
+        correct: false,
+        explain: "Incorreto. Lúpus poderia dar nefrite, mas hemoptise e c-ANCA/anti-PR3 tornam granulomatose mais provável."
+      },
+      {
+        text: "Endocardite infecciosa com glomerulonefrite por imunocomplexos sem vasculite ANCA.",
+        correct: false,
+        explain: "Incorreto. Endocardite pode causar hematuria e GN por imunocomplexos, mas presença de c-ANCA/anti-PR3 e hemoptise sugerem vasculite sistêmica."
+      }
+    ]
+  },
+
+  {
+    q: "22) Questão: Caso clínico — Mulher de 34 anos com síndrome nefrótica (edema generalizado, proteinúria 7 g/24h, hipoalbuminemia), história de placas purpúricas palpáveis nas pernas e dor articular; biópsia renal demonstra hipercelularidade mesangial e duplicação da membrana basal com padrão mesangial e subendotelial. Qual etiologia sistêmica é mais compatível com esse quadro?",
+    choices: [
+      {
+        text: "Vasculite por crioglobulinemia mista associada a hepatite C, causando GN membranoproliferativa.",
+        correct: true,
+        explain: "Correto. Púrpura palpável, artralgias e biópsia compatível com GN membranoproliferativa sugerem crioglobulinemia, frequentemente associada à hepatite C."
+      },
+      {
+        text: "Nefrite lúpica classe I com proteinúria nefrótica isolada.",
+        correct: false,
+        explain: "Incorreto. Classe I da nefrite lúpica tem alterações mínimas; o padrão MPGN e sintomas sistêmicos sugerem crioglobulinemia."
+      },
+      {
+        text: "Amiloidose AL sem manifestações cutâneas púrpuras.",
+        correct: false,
+        explain: "Incorreto. Amiloidose pode causar síndrome nefrótica, mas as púrpuras palpáveis e duplicação da MB são mais coerentes com MPGN por crioglobulinas."
+      },
+      {
+        text: "Nefropatia diabética com lesões nodulares Kimmelstiel–Wilson.",
+        correct: false,
+        explain: "Incorreto. Nefropatia diabética tem padrão mesangial/nodular distinto, sem púrpura palpável ou associação com hepatite C."
+      }
+    ]
+  },
+
+  {
+    q: "23) Questão: Caso clínico — Paciente com esclerodermia difusa apresenta súbita elevação da pressão arterial (PA 190/120 mmHg), cefaleia intensa e oligúria com creatinina de 4,8 mg/dL. Qual é a hipótese mais provável e qual o tratamento de primeira linha?",
+    choices: [
+      {
+        text: "Crise renal esclerodérmica; tratamento imediato com inibidor da enzima conversora de angiotensina (IECA) como captopril.",
+        correct: true,
+        explain: "Correto. A crise renal esclerodérmica cursa com hipertensão severa e IRA; IECA (p.ex. captopril) é tratamento de escolha e deve ser iniciado prontamente."
+      },
+      {
+        text: "Nefrite lúpica aguda; iniciar pulse de metilprednisolona antes de IECA.",
+        correct: false,
+        explain: "Incorreto. Esse quadro é típico de crise renal na esclerodermia; terapia inicial é controle pressórico com IECA, não primordialmente corticoide."
+      },
+      {
+        text: "Pielonefrite aguda; iniciar antibiótico empírico e evitar antihipertensivos.",
+        correct: false,
+        explain: "Incorreto. Pielonefrite cursa com febre e dor lombar; não explica hipertensão maligna súbita em esclerodermia."
+      },
+      {
+        text: "Nefropatia por amiloidose; tratamento com diuréticos e suporte apenas.",
+        correct: false,
+        explain: "Incorreto. Amiloidose causa progressão crônica; a apresentação hipertensiva aguda com oligúria em esclerodermia aponta para crise renal esclerodérmica."
+      }
+    ]
+  },
+
+  {
+    q: "24) Questão: Caso clínico — Paciente HIV positivo com carga viral detectável e CD4 baixo apresenta rápida queda da função renal, proteinúria subnefrótica e biópsia com colapso glomerular e hipercelularidade tubulointersticial. Qual diagnóstico renal é mais compatível?",
+    choices: [
+      {
+        text: "HIV-associated nephropathy (HIVAN) com padrão de colapso glomerular (collapsing FSGS).",
+        correct: true,
+        explain: "Correto. HIVAN tipicamente cursa com padrão de colapso glomerular (FSGS colapsante), proteinúria e rápida progressão para DRC em pacientes com alta carga viral e baixa contagem de CD4."
+      },
+      {
+        text: "Nefrite lúpica classe V (membranosa).",
+        correct: false,
+        explain: "Incorreto. Lúpus membranoso tem depósito subepitelial membranoso; o padrão de colapso glomerular é característico de HIVAN."
+      },
+      {
+        text: "Amiloidose AA por infecção crônica do HIV.",
+        correct: false,
+        explain: "Incorreto. Amiloidose AA é rara no contexto de HIV e tem apresentação diferente (Congo red positivo)."
+      },
+      {
+        text: "Nefropatia por drogas antirretrovirais apresentando padrão exclusivo de necrose tubular aguda.",
+        correct: false,
+        explain: "Incorreto. Algumas drogas podem causar NTA, mas a biópsia com colapso glomerular é indicativa de HIVAN."
+      }
+    ]
+  },
+
+  {
+    q: "25) Questão: Caso clínico — Mulher de 29 anos com histórico de lúpus conhecida, queixa de aumento recente de edema, pressão arterial 150/95 mmHg, proteinúria 4 g/24h e baixa C3/C4; biópsia renal mostra depósitos subendoteliais difusos e atividade inflamatória. Qual é a conduta terapêutica inicial mais apropriada?",
+    choices: [
+      {
+        text: "Iniciar terapia imunossupressora com corticosteroides em associação com ciclofosfamida ou micofenolato, conforme classe e gravidade.",
+        correct: true,
+        explain: "Correto. Em nefrite lúpica ativa com proteinúria nefrótica e atividade histológica, iniciar tratamento imunossupressor (corticosteroides + ciclofosfamida ou micofenolato) é indicado para controlar a inflamação e preservar função renal."
+      },
+      {
+        text: "Apenas tratamento antiproteinúrico com IECA e aguardar resolução espontânea.",
+        correct: false,
+        explain: "Incorreto. Proteinúria nefrótica com atividade histológica e baixa C3/C4 requer tratamento imunossupressor além do manejo antiproteinúrico."
+      },
+      {
+        text: "Diálise imediata sem tentativa de terapia imunossupressora.",
+        correct: false,
+        explain: "Incorreto. Diálise é reservada para IRA refratária; inicialmente deve-se tratar a ativa inflamatória para tentar recuperar/estabilizar a função."
+      },
+      {
+        text: "Uso isolado de antiagregante plaquetário para prevenir trombose glomerular.",
+        correct: false,
+        explain: "Incorreto. Antiagregantes não tratam a atividade inflamatória do Lúpus; terapia imunossupressora é necessária."
+      }
+    ]
+  },
+
+  {
+    q: "26) Questão: Caso clínico — Homem de 62 anos com histórico de mieloma múltiplo apresenta proteinúria e aumento progressivo da creatinina; eletroforese de proteínas séricas evidencia pico monoclonal de cadeia leve kappa, e a biópsia renal mostra depósitos amorfos positivos para Congo red. Qual é a relação entre a doença sistêmica e o comprometimento renal?",
+    choices: [
+      {
+        text: "Mieloma múltiplo pode levar a amiloidose AL por deposição de cadeias leves, causando comprometimento renal com síndrome nefrótica e IRC progressiva.",
+        correct: true,
+        explain: "Correto. Em mieloma, produção excessiva de cadeias leves pode formar fibrilas amilóides AL depositadas no rim, levando a proteinúria e insuficiência renal."
+      },
+      {
+        text: "Mieloma múltiplo protege o rim contra deposição proteica e raramente afeta função renal.",
+        correct: false,
+        explain: "Incorreto. Mieloma é uma causa conhecida de comprometimento renal por múltiplos mecanismos, incluindo formação de amiloide AL."
+      },
+      {
+        text: "Pico monoclonal sérico exclui amiloidose renal como causa da disfunção renal.",
+        correct: false,
+        explain: "Incorreto. Pico monoclonal apoia diagnóstico de paraproteinemia; amiloidose AL frequentemente acompanha mieloma/plasma cell dyscrasias."
+      },
+      {
+        text: "Depósitos positivos para Congo red indicam necrose tubular aguda por drogas quimioterápicas, não amiloidose.",
+        correct: false,
+        explain: "Incorreto. Congo red identifica amiloide; NTA não é Congo red-positivo."
+      }
+    ]
+  },
+
+  {
+    q: "27) Questão: Caso clínico — Mulher de 55 anos com febre baixa, lesões cutâneas e sopro cardíaco novo; apresenta creatinina em 2,1 mg/dL e urinálise com hemácia e cilindros. Hemoculturas positivas para Staphylococcus aureus. Qual mecanismo patológico renal é mais provável para explicar a injúria?",
+    choices: [
+      {
+        text: "Glomerulonefrite por deposição de imunocomplexos secundária à endocardite infecciosa.",
+        correct: true,
+        explain: "Correto. Endocardite pode provocar GN por imunocomplexos circulantes, causando sedimento ativo e queda da função renal."
+      },
+      {
+        text: "Nefrite lúpica primária associada a autoanticorpos anti-dsDNA.",
+        correct: false,
+        explain: "Incorreto. Lúpus exige outros sinais laboratoriais; aqui hemoculturas positivas e sopro novo são sugestivos de endocardite com GN por imunocomplexos."
+      },
+      {
+        text: "Amiloidose secundária aguda causada por Staphylococcus, diagnosticada por Congo red.",
+        correct: false,
+        explain: "Incorreto. Amiloidose é processo crônico; quadro agudo com bacteremia e GN aponta para imunocomplexos."
+      },
+      {
+        text: "Pielonefrite aguda ascendente sem componente glomerular.",
+        correct: false,
+        explain: "Incorreto. Pielonefrite causa sintomas e painel infeccioso diferentes; sedimento glomerular com cilindros e hemácias sugere GN por imunocomplexos."
+      }
+    ]
+  },
+
+  {
+    q: "28) Questão: Caso clínico — Paciente com púrpura palpável nas pernas, dor abdominal intermitente e hematúria microscópica; biópsia renal revela depósitos mesangiais de IgA. Qual é o diagnóstico sistêmico mais compatível e qual a principal implicação prognóstica renal?",
+    choices: [
+      {
+        text: "Púrpura de Henoch–Schönlein (vasculite por IgA); evolução renal variável, podendo progredir para DRC em casos com proteinúria persistente e lesões proliferativas.",
+        correct: true,
+        explain: "Correto. Púrpura de Henoch–Schönlein (IgA vasculitis) acomete pele, trato GI e rins; a gravidade renal (proteinúria/lesões proliferativas) determina prognóstico."
+      },
+      {
+        text: "Amiloidose AA com deposição exclusiva de IgA no mesângio e prognóstico benigno.",
+        correct: false,
+        explain: "Incorreto. Amiloidose não tem deposição isolada de IgA; o padrão mesangial IgA é típico de GN por IgA/Henoch–Schönlein."
+      },
+      {
+        text: "Nefrite lúpica tipo membranosa sem envolvimento cutâneo.",
+        correct: false,
+        explain: "Incorreto. Lúpus membranoso tem depósitos subepiteliais e não costuma cursar com púrpura palpável e dor abdominal típica da vasculite por IgA."
+      },
+      {
+        text: "Vasculite ANCA-associada com depósitos de IgA e bom prognóstico renái.",
+        correct: false,
+        explain: "Incorreto. Vasculite ANCA é pauci-imune (poucos depósitos imunológicos); depósitos mesangiais de IgA apontam para vasculite por IgA."
+      }
+    ]
+  },
+
+  {
+    q: "29) Questão: Caso clínico — Paciente com histórico de artrite reumatoide e síndrome nefrótica progressiva; sorologias negativas para hepatites e HIV; biópsia renal mostra padrão membranoproliferativo com intensa deposição de imunocomplexos. Qual associação sistêmica é plausível nesse contexto e que investigação adicional é indicada?",
+    choices: [
+      {
+        text: "Doença autoimune crônica (p.ex. artrite reumatoide) com possível crioglobulinemia; investigar crioglobulinas séricas e pesquisa de hepatite C.",
+        correct: true,
+        explain: "Correto. Doenças autoimunes e infecções crônicas podem provocar GN MPGN por imunocomplexos; avaliar crioglobulinas e causas infecciosas (HCV) é indicado."
+      },
+      {
+        text: "Doença policística renal autossômica, investigar genes PKD1/PKD2.",
+        correct: false,
+        explain: "Incorreto. Doença policística tem quadro e biópsia diferentes; não explica MPGN por imunocomplexos."
+      },
+      {
+        text: "Nefropatia por analgesicos crônicos com coloração Congo red positiva.",
+        correct: false,
+        explain: "Incorreto. Uso crônico de analgésicos causa NTA/analgésico e não MPGN por imunocomplexos; Congo red positivo sugeriria amiloidose."
+      },
+      {
+        text: "Glomerulopatia membranosa idiopática sem relação com artrite reumatoide.",
+        correct: false,
+        explain: "Incorreto. Padrão membranoproliferativo com imunocomplexos se associa mais a processos imunes/infecciosos do que à membranosa idiopática."
+      }
+    ]
+  },
+
+  {
+    q: "30) Questão: Caso clínico — Paciente jovem com histórico de púrpura trombocitopênica trombótica (PTT) apresenta quadro de anemia microangiopática, plaquetas baixas e oligúria progressiva; creatinina aumentada, lactato desidrogenase elevada e fragmentos de hemácias no sangue periférico. Qual é a intervenção imediata mais eficaz descrita para TTP com comprometimento renal?",
+    choices: [
+      {
+        text: "Plasmaférese (plasmapheresis) emergencial para remover autoanticorpos anti-ADAMTS13 e repor ADAMTS13 funcional.",
+        correct: true,
+        explain: "Correto. Plasmaférese urgente é tratamento de escolha para PTT/TMA, removendo autoanticorpos e restaurando atividade ADAMTS13, essencial para reverter microangiopatia e proteger rins."
+      },
+      {
+        text: "Uso isolado de corticosteroides orais sem plasmaférese.",
+        correct: false,
+        explain: "Incorreto. Corticosteroides podem ser adjuvantes, mas plasmaférese é a intervenção obrigatória e imediata em PTT."
+      },
+      {
+        text: "Iniciar hemodiálise crônica sem tentar plasmaférese.",
+        correct: false,
+        explain: "Incorreto. Diálise trata insuficiência renal, mas não corrige a causa subjacente da microangiopatia; plasmaférese é prioritária."
+      },
+      {
+        text: "Administrar apenas transfusão de plaquetas para normalizar contagem imediatamente.",
+        correct: false,
+        explain: "Incorreto. Transfusão de plaquetas geralmente é contraindicada a menos que haja sangramento grave, pois pode exacerbar microtrombos; plasmaférese é o tratamento indicado."
+      }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

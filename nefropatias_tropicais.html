@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Nefropatias Tropicais</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Nefropatias Tropicais</h1>
+    <p class="lead">30 questões - Nefropatias Tropicais</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão: Em relação à lesão renal aguda (LRA) associada à dengue em adultos, qual afirmação está mais alinhada com os dados descritos no material?",
+    choices: [
+      {
+        text: "A LRA em adultos com dengue tem incidência reportada entre aproximadamente 4% e 30%, dependendo da série.",
+        correct: true,
+        explain: "Correto. O material relata que a incidência de LRA na dengue em adultos varia entre cerca de 4% e 30% em diferentes estudos."
+      },
+      {
+        text: "A LRA por dengue é praticamente exclusiva em crianças, ocorrendo em mais de 20% das crianças infectadas.",
+        correct: false,
+        explain: "Incorreto. O material afirma o oposto: LRA é mais frequente em adultos; em crianças a frequência é baixa (≈0,9–1,6%)."
+      },
+      {
+        text: "A presença de LRA na dengue não altera o prognóstico ou mortalidade dos pacientes.",
+        correct: false,
+        explain: "Incorreto. O texto descreve que a LRA na dengue é multifatorial e está associada a aumento da mortalidade."
+      },
+      {
+        text: "A LRA na dengue decorre exclusivamente de mecanismos imunomediados, sem participação de hipoperfusão.",
+        correct: false,
+        explain: "Incorreto. A LRA na dengue é multifatorial: inclui hipoperfusão/choque, disfunção endotelial, lesão direta viral e mecanismos imunomediados."
+      }
+    ]
+  },
+  {
+    q: "2) Questão: Qual mecanismo fisiopatológico NÃO é descrito como contribuinte para a LRA em dengue?",
+    choices: [
+      {
+        text: "Vazamento plasmático secundário à disfunção endotelial levando à hemoconcentração e hipoperfusão renal.",
+        correct: false,
+        explain: "Incorreto — esse mecanismo é descrito no texto como responsável por injúria isquêmica (pré-renal → NTA)."
+      },
+      {
+        text: "Ação direta do vírus sobre células endoteliais e renais com potencial citopático.",
+        correct: false,
+        explain: "Incorreto — o material descreve infecção de células endoteliais e possível presença do vírus em tecidos renais."
+      },
+      {
+        text: "Deposição de imunocomplexos e ativação imune causando glomerulonefrite em todos os casos de dengue.",
+        correct: true,
+        explain: "Correto — a deposição de imunocomplexos e mecanismos imunomediados podem ocorrer, mas não se observa glomerulonefrite em todos os casos; a alternativa dizia 'em todos os casos', o que é incorreto em interpretação estrita do texto. A assertiva como escrita (afirmando ocorrência em todos os casos) é incorreta; assim, para a pergunta formulada (qual NÃO é descrito), esta alternativa representa uma afirmação exagerada e portanto é a resposta adequada."
+      },
+      {
+        text: "Rabdomiólise com liberação de mioglobina nefrotóxica que pode precipitar e causar NTA.",
+        correct: false,
+        explain: "Incorreto — o texto menciona rabdomiólise/mioglobinúria como mecanismo possível para lesão renal na dengue."
+      }
+    ]
+  },
+  {
+    q: "3) Questão: Sobre achados urinários e laboratoriais na dengue grave, assinale a alternativa mais correta.",
+    choices: [
+      {
+        text: "Proteinúria transitória (geralmente não nefrótica), hematúria e sedimento com cilindros granulosos em NTA são achados descritos.",
+        correct: true,
+        explain: "Correto. O material descreve proteinúria transitória não nefrótica, hematúria e sedimento com cilindros granulosos quando há NTA."
+      },
+      {
+        text: "A presença de proteinúria nefrótica é o achado mais comum e persistente na dengue leve.",
+        correct: false,
+        explain: "Incorreto. Proteinúria nefrótica não é descrita como achado comum; o material fala de proteinúria transitória, não nefrótica, em dengue grave."
+      },
+      {
+        text: "Na dengue, cilindros de mioglobina nunca são observados, mesmo na rabdomiólise.",
+        correct: false,
+        explain: "Incorreto. O texto menciona mioglobinúria quando há rabdomiólise, portanto achados relacionados à mioglobina podem ocorrer."
+      },
+      {
+        text: "Hemoconcentração e trombocitopenia não são alterações esperadas em forma grave da dengue.",
+        correct: false,
+        explain: "Incorreto. Hemoconcentração (aumento do hematócrito) e trombocitopenia são descritos como achados em dengue grave."
+      }
+    ]
+  },
+  {
+    q: "4) Questão: Quanto ao manejo da dengue com comprometimento renal, qual a conduta prioritária mencionada no material?",
+    choices: [
+      {
+        text: "Não existe tratamento específico para dengue; medidas de suporte como hidratação e reposição volêmica são o pilar do tratamento renal.",
+        correct: true,
+        explain: "Correto. O material afirma que não há tratamento específico para dengue e que suporte (hidratação/ reposição volêmica) é fundamental; TRS (terapia renal substitutiva) é indicada conforme sinais (uremia, acidose refratária, hipercalemia grave)."
+      },
+      {
+        text: "Uso rotineiro de antivirais específicos para reduzir rapidamente a creatinina.",
+        correct: false,
+        explain: "Incorreto. Não há antivirais específicos citados para dengue no material; o manejo é de suporte."
+      },
+      {
+        text: "Indicação de corticosteroides como primeira linha para prevenir LRA em dengue.",
+        correct: false,
+        explain: "Incorreto. Corticosteroides não são indicados rotineiramente para prevenir LRA em dengue no texto."
+      },
+      {
+        text: "Emprego de diuréticos de alça para todos os pacientes com dengue e aumento de creatinina.",
+        correct: false,
+        explain: "Incorreto. Diuréticos de alça não são recomendação universal; manejo volêmico deve ser individualizado."
+      }
+    ]
+  },
+  {
+    q: "5) Questão: Em relação à leptospirose, qual característica renal importante é destacada no material?",
+    choices: [
+      {
+        text: "A LRA na leptospirose frequentemente é não oligúrica e com níveis séricos de potássio normais ou diminuídos.",
+        correct: true,
+        explain: "Correto. O texto descreve que a LRA na leptospirose caracteriza-se por ser não oligúrica e por potássio sérico normal ou baixo, com mecanismo tubular (lesão do túbulo proximal e resistência à vasopressina)."
+      },
+      {
+        text: "A LRA por leptospirose é quase sempre oligúrica com hiperpotassemia grave.",
+        correct: false,
+        explain: "Incorreto. Contrário ao que o material descreve; a LRA por leptospirose tende a ser não oligúrica e potássio normal/baixo."
+      },
+      {
+        text: "A lesão tubular proximal na leptospirose reduz a excreção de potássio, levando a hipocaliúria típica.",
+        correct: false,
+        explain: "Incorreto. Lesão proximal reduz reabsorção de sódio e aumenta aporte distal, promovendo aumento da excreção de potássio (hipercaliúria), não hipocaliúria."
+      },
+      {
+        text: "A resistência do ducto coletor à vasopressina leva a um quadro de concentração urinária preservada.",
+        correct: false,
+        explain: "Incorreto. A resistência ao ADH causa defeito de concentração urinária, frequentemente levando a poliúria e incapacidade de concentrar a urina."
+      }
+    ]
+  },
+  {
+    q: "6) Questão: Sobre achados urinários na fase aguda da leptospirose, qual das alternativas reflete corretamente o que o material descreve?",
+    choices: [
+      {
+        text: "Proteinúria discreta, hematúria e leucocitúria em cerca de 80% dos casos à admissão, tendendo a normalizar em 7–10 dias.",
+        correct: true,
+        explain: "Correto. O material afirma que o sedimento urinário mostra essas alterações em ~80% dos casos na admissão e que tendem a normalizar entre 7 e 10 dias."
+      },
+      {
+        text: "Proteinúria maciça e síndrome nefrótica na maioria dos pacientes com leptospirose aguda.",
+        correct: false,
+        explain: "Incorreto. O texto refere apenas proteinúria discreta; proteinúria maciça/ síndrome nefrótica não é descrita como achado típico."
+      },
+      {
+        text: "Sedimento urinário tipicamente sem alterações, mesmo na presença de LRA por leptospirose.",
+        correct: false,
+        explain: "Incorreto. O sedimento costuma apresentar alterações (proteinúria discreta, hematúria, leucocitúria) em muitos casos."
+      },
+      {
+        text: "A presença de cilindros alveolares é o achado mais específico para leptospirose renal.",
+        correct: false,
+        explain: "Incorreto. Cilindros granulosos ou cilindros relacionados à NTA podem ser vistos, mas 'cilindros alveolares' não é termo aplicável; a alternativa está incorreta."
+      }
+    ]
+  },
+  {
+    q: "7) Questão: Sobre a recuperação renal pós-leptospirose, qual afirmação corresponde ao conteúdo do material?",
+    choices: [
+      {
+        text: "A creatinina plasmática costuma normalizar rapidamente (≈8º dia em LRA oligúrica e ≈4º dia em não oligúrica); a função tubular geralmente normaliza em até 3 meses, embora capacidade de concentração possa persistir comprometida por >6 meses.",
+        correct: true,
+        explain: "Correto. O material descreve exatamente esse padrão de recuperação: normalização da creatinina em dias mencionados, e recuperação tubular/filtração ao redor de 3 meses; déficit de concentração pode persistir >6 meses."
+      },
+      {
+        text: "A lesão renal por leptospirose é sempre irreversível, com progressão inexorável para DRC em todos os casos.",
+        correct: false,
+        explain: "Incorreto. Embora haja possibilidade de DRC após LRA, a recuperação clínica costuma ser rápida e muitas funções se normalizam; não é sempre irreversível."
+      },
+      {
+        text: "A capacidade de concentração urinária usualmente normaliza nas primeiras 48 horas após início da terapia antibiótica.",
+        correct: false,
+        explain: "Incorreto. O texto afirma que déficit de concentração pode persistir por mais de 6 meses, não que normaliza em 48 horas."
+      },
+      {
+        text: "A normalização da filtração glomerular e reabsorção proximal ocorre em média após 2 a 4 semanas em todos os pacientes.",
+        correct: false,
+        explain: "Incorreto. O material aponta normalização em torno de 3 meses para filtração e funções tubulares, não universalmente em 2–4 semanas."
+      }
+    ]
+  },
+  {
+    q: "8) Questão: Com relação ao tratamento da leptospirose com comprometimento renal, qual dos itens abaixo segue o que está descrito no material?",
+    choices: [
+      {
+        text: "Uso de antibióticos β-lactâmicos (ex.: ceftriaxona) e vantagem demonstrada de hemodiálise precoce, intermitente e diária na redução da mortalidade.",
+        correct: true,
+        explain: "Correto. O material cita ceftriaxona e estudos mostrando benefício da hemodiálise precoce, intermitente e diária na leptospirose grave."
+      },
+      {
+        text: "Evitar qualquer forma de diálise, pois piora a sobrevida na leptospirose.",
+        correct: false,
+        explain: "Incorreto. Contrariamente, a diálise precoce tem sido associada à redução da mortalidade."
+      },
+      {
+        text: "Tratamento antibiótico é supérfluo na leptospirose; apenas suporte clínico é indicado.",
+        correct: false,
+        explain: "Incorreto. Antibióticos (β-lactâmicos) são citados como tratamento; não são supérfluos."
+      },
+      {
+        text: "O tempo de início da terapia dialítica não influencia a mortalidade nesses pacientes.",
+        correct: false,
+        explain: "Incorreto. O texto destaca que o tempo de início da diálise (diálise precoce) é o fator mais importante para redução da mortalidade."
+      }
+    ]
+  },
+  {
+    q: "9) Questão: Em relação às formas de malária que mais frequentemente envolvem o rim, o material aponta:",
+    choices: [
+      {
+        text: "Plasmodium falciparum e Plasmodium malariae são as espécies mais associadas ao comprometimento renal.",
+        correct: true,
+        explain: "Correto. O material afirma que o envolvimento renal ocorre principalmente em infecções por P. falciparum e P. malariae."
+      },
+      {
+        text: "A malária por P. vivax é a que mais causa LRA severa e necessidade de hemodiálise.",
+        correct: false,
+        explain: "Incorreto. O texto destaca P. falciparum e P. malariae, não P. vivax, como associadas ao comprometimento renal mais frequente."
+      },
+      {
+        text: "Nenhuma espécie de Plasmodium causa alterações glomerulares ou tubulares nos rins.",
+        correct: false,
+        explain: "Incorreto. O texto descreve que malária grave pode comprometer glomérulos, túbulos e interstício."
+      },
+      {
+        text: "P. ovale é a versão que mais frequentemente leva a síndrome nefrótica em adultos.",
+        correct: false,
+        explain: "Incorreto. O material não descreve P. ovale como principal causadora de síndrome nefrótica; glomerulonefrite é incomum na malária por P. falciparum."
+      }
+    ]
+  },
+  {
+    q: "10) Questão: Sobre os fatores que contribuem para a ocorrência de LRA na malária, assinale a alternativa que condensa corretamente esses fatores.",
+    choices: [
+      {
+        text: "Hipovolemia, vasoconstrição, hemólise com hemoglobinúria, deposição de imunocomplexos, disfunção da microcirculação por citoaderência das hemácias parasitadas e rabdomiólise.",
+        correct: true,
+        explain: "Correto. O material lista exatamente esses fatores como contribuintes para LRA na malária."
+      },
+      {
+        text: "Apenas a deposição direta do parasita nos túbulos renais é responsável pela LRA na malária.",
+        correct: false,
+        explain: "Incorreto. A LRA na malária é multifatorial, não somente por deposição direta do parasita."
+      },
+      {
+        text: "Hipervolemia e vasodilatação prolongada são os principais mecanismos descritos para LRA na malária.",
+        correct: false,
+        explain: "Incorreto. O texto descreve hipovolemia e vasoconstrição, não hipervolemia/vasodilatação."
+      },
+      {
+        text: "Somente mecanismos imunomediados explicam a lesão renal na malária, sem participação de hemólise.",
+        correct: false,
+        explain: "Incorreto. Hemólise com hemoglobinúria é explicitamente citada como fator contribuinte."
+      }
+    ]
+  },
+  {
+    q: "11) Questão: Qual é a característica histopatológica/tubular mais proeminente nas formas graves de malária, conforme o material?",
+    choices: [
+      {
+        text: "As alterações tubulares são mais proeminentes que as glomerulares, com cilindros de hemoglobina e hemácias degeneradas nos túbulos proximais e distais.",
+        correct: true,
+        explain: "Correto. O material afirma que as alterações tubulares são mais proeminentes e menciona cilindros de hemoglobina e hemácias degeneradas."
+      },
+      {
+        text: "Glomerulonefrite difusa proliferativa é a lesão renal mais típica da malária por P. falciparum.",
+        correct: false,
+        explain: "Incorreto. O desenvolvimento de glomerulonefrite em malária por P. falciparum não é comum segundo o material."
+      },
+      {
+        text: "A malária raramente provoca qualquer alteração tubular; as lesões se limitam ao interstício.",
+        correct: false,
+        explain: "Incorreto. O material descreve alterações tubulares proeminentes."
+      },
+      {
+        text: "A presença de grandes depósitos de IgA nos glomérulos é o achado histológico clássico na malária.",
+        correct: false,
+        explain: "Incorreto. Depósito de imunocomplexos é citado como possível em algumas doenças tropicais, mas IgA como achado clássico da malária renal não é descrito."
+      }
+    ]
+  },
+  {
+    q: "12) Questão: Em relação ao tratamento da LRA por malária, qual conduta é indicada pelo material?",
+    choices: [
+      {
+        text: "Terapia antimalárica específica combinada com hemodiálise precoce quando necessária, melhorando a sobrevida.",
+        correct: true,
+        explain: "Correto. O texto recomenda tratamento antimalárico e afirma que hemodiálise precoce aumenta a sobrevida em LRA por malária."
+      },
+      {
+        text: "Somente suporte hídrico, sem necessidade de tratamento antimalárico nas formas graves com LRA.",
+        correct: false,
+        explain: "Incorreto. Tratamento antimalárico é essencial; suporte isolado não é suficiente nas formas graves."
+      },
+      {
+        text: "Corticosteroides em altas doses são o tratamento de escolha para prevenir LRA por malária.",
+        correct: false,
+        explain: "Incorreto. Corticosteroides não são mencionados como tratamento de escolha para LRA por malária no material."
+      },
+      {
+        text: "Ter um quadro de LRA por malária contraindica o uso de hemodiálise por aumentar mortalidade.",
+        correct: false,
+        explain: "Incorreto. O material indica que hemodiálise precoce aumenta a sobrevida, não que está contraindicada."
+      }
+    ]
+  },
+  {
+    q: "13) Questão: Considerando o conteúdo geral sobre 'nefrópatas tropicais', qual afirmação reflete corretamente a visão principal do material?",
+    choices: [
+      {
+        text: "Doenças tropicais como dengue, leptospirose e malária podem acometer os rins e frequentemente causam LRA ou acometimento glomerular/tubular.",
+        correct: true,
+        explain: "Correto. O material inicia afirmando que doenças tropicais podem acometer os rins, com frequência observando-se LRA secundária; acometimento pode ser glomerular ou tubular."
+      },
+      {
+        text: "As doenças tropicais raramente têm qualquer impacto renal clínico significativo.",
+        correct: false,
+        explain: "Incorreto. O texto enfatiza que essas doenças frequentemente acarretam LRA e podem aumentar a mortalidade."
+      },
+      {
+        text: "Apenas as arboviroses são responsáveis por nefrópatas tropicais; bactérias não participam.",
+        correct: false,
+        explain: "Incorreto. Leptospirose (bacteriana) é citada como causa importante de comprometimento renal; não só arboviroses."
+      },
+      {
+        text: "O acometimento renal em doenças tropicais limita-se exclusivamente ao desenvolvimento de síndrome nefrótica.",
+        correct: false,
+        explain: "Incorreto. O texto descreve variadas formas de lesão — LRA, glomerulonefrites, tubular, etc. — não somente síndrome nefrótica."
+      }
+    ]
+  },
+  {
+    q: "14) Questão: Sobre critérios de LRA do tipo renal por NTA mencionados no material (referente a dengue), qual parâmetro é apontado?",
+    choices: [
+      {
+        text: "Sódio urinário elevado (>1%) e relação ureia/creatinina plasmática < 20 são indicativos de NTA do tipo renal.",
+        correct: true,
+        explain: "Correto. O material descreve que NTA do tipo renal apresenta sódio urinário >1% e ração ureia/creatinina plasmática <20."
+      },
+      {
+        text: "A presença de sodio urinário <1% e relação ureia/creatinina >100 é típica de NTA renal aguda.",
+        correct: false,
+        explain: "Incorreto. Essa descrição se aproxima de pré-renal; o material cita sódio urinário >1% e relação ureia/creatinina <20 para NTA renal."
+      },
+      {
+        text: "A relação ureia/creatinina plasmática é irrelevante na diferenciação entre NTA e pré-renal.",
+        correct: false,
+        explain: "Incorreto. O material usa essa relação como um dos parâmetros para caracterizar NTA do tipo renal."
+      },
+      {
+        text: "NTA do tipo renal sempre está associado a hematúria maciça.",
+        correct: false,
+        explain: "Incorreto. NTA não implica necessariamente hematúria maciça; a afirmação é exagerada e não apresentada no texto."
+      }
+    ]
+  },
+  {
+    q: "15) Questão: O material menciona 'nefropatia por IgA' em um dos tópicos. Qual afirmação sobre essa menção é correta?",
+    choices: [
+      {
+        text: "O texto cita a nefropatia por IgA como a causa mais comum de doença glomerular no mundo em um contexto de achados histopatológicos relacionados a dengue.",
+        correct: true,
+        explain: "Correto. O material, ao comentar achados histopatológicos, menciona a nefropatia por IgA como causa mais comum de doença glomerular no mundo."
+      },
+      {
+        text: "A nefropatia por IgA é descrita como manifestação exclusiva da malária no material.",
+        correct: false,
+        explain: "Incorreto. O texto não associa nefropatia por IgA exclusivamente à malária; a menção foi geral nos achados histopatológicos."
+      },
+      {
+        text: "O documento afirma que a nefropatia por IgA é incomum e irrelevante epidemiologicamente.",
+        correct: false,
+        explain: "Incorreto. O material descreve a nefropatia por IgA como a causa mais comum de doença glomerular no mundo, ou seja, epidemiologicamente relevante."
+      },
+      {
+        text: "A nefropatia por IgA é responsabilizada por todas as formas de LRA em doenças tropicais.",
+        correct: false,
+        explain: "Incorreto. Embora mencionada, a nefropatia por IgA não é atribuída como causa de todas as formas de LRA; há múltiplos mecanismos envolvidos."
+      }
+    ]
+  },
+  {
+    q: "16) Questão: Em um paciente adulto com malária por Plasmodium falciparum apresentando oligúria progressiva e creatinina em elevação, qual achado laboratorial/evidência clínica descrita no material incrementa a suspeita de necessidade de terapia renal substitutiva (TRS)?",
+    choices: [
+      {
+        text: "Presença de uremia sintomática (náuseas, confusão) associada a elevação progressiva da creatinina.",
+        correct: true,
+        explain: "Correto. O material descreve que manifestações de uremia (p.ex. náuseas, confusão) e aumentos importantes da creatinina indicam necessidade de TRS na LRA por malária."
+      },
+      {
+        text: "Proteinúria discreta isolada sem alteração significativa da creatinina.",
+        correct: false,
+        explain: "Incorreto. Proteinúria discreta pode ocorrer, mas isoladamente, sem insuficiência renal funcional, não indica TRS."
+      },
+      {
+        text: "Hemoconcentração com hematócrito discreto acima do basal, sem alterações neurológicas.",
+        correct: false,
+        explain: "Incorreto. Hemoconcentração é achado comum em dengue; na malária, hemoconcentração isolada não é critério imediato para TRS sem sinais de uremia/acidose/hipercalemia."
+      },
+      {
+        text: "Leve aumento isolado de CPK sem alteração da filtração glomerular estimada.",
+        correct: false,
+        explain: "Incorreto. A elevação de CPK só sugeriria risco por rabdomiólise; indicação de TRS depende de disfunção renal significativa (uremia, acidose refratária, hipercalemia)."
+      }
+    ]
+  },
+  {
+    q: "17) Questão: Sobre a epidemiologia e espécies de Plasmodium relacionadas à nefronefropatia, qual alternativa melhor descreve o conteúdo do material?",
+    choices: [
+      {
+        text: "P. falciparum e P. malariae são as espécies mais frequentemente associadas ao comprometimento renal e LRA.",
+        correct: true,
+        explain: "Correto. O material aponta P. falciparum e P. malariae como as espécies que mais comumente envolvem o rim."
+      },
+      {
+        text: "P. vivax é a espécie mais frequentemente associada à síndrome nefrótica em adultos.",
+        correct: false,
+        explain: "Incorreto. O texto não aponta P. vivax como a principal causa de síndrome nefrótica; P. falciparum e P. malariae são as mais associadas ao comprometimento renal."
+      },
+      {
+        text: "P. ovale e P. vivax juntos respondem pela maioria dos casos de LRA que necessitam diálise.",
+        correct: false,
+        explain: "Incorreto. Essa afirmação contraria o conteúdo, que destaca P. falciparum (e P. malariae) para casos graves com necessidade dialítica."
+      },
+      {
+        text: "Todas as espécies de Plasmodium têm igual potencial para causar LRA e necessidade de diálise.",
+        correct: false,
+        explain: "Incorreto. O material descreve variação por espécie, não igualdade de risco."
+      }
+    ]
+  },
+  {
+    q: "18) Questão: Em relação à rabdomiólise como mecanismo de lesão renal nas doenças tropicais, qual conclusão é compatível com o conteúdo do PDF?",
+    choices: [
+      {
+        text: "Rabdomiólise pode levar à mioglobinúria, que é nefrotóxica e pode precipitar NTA, sendo mencionada como mecanismo em dengue, leptospirose e malária.",
+        correct: true,
+        explain: "Correto. O material cita rabdomiólise/mioglobinúria como mecanismo potencial de NTA em várias infecções (p.ex. dengue, malária, leptospirose)."
+      },
+      {
+        text: "Rabdomiólise é exclusiva da leptospirose e não ocorre na dengue ou malária.",
+        correct: false,
+        explain: "Incorreto. O PDF aponta rabdomiólise em diferentes contextos, não exclusiva à leptospirose."
+      },
+      {
+        text: "A mioglobinúria protege os túbulos renais contra lesão isquêmica, reduzindo risco de NTA.",
+        correct: false,
+        explain: "Incorreto. Mioglobina é nefrotóxica e pode precipitar nos túbulos, agravando a NTA."
+      },
+      {
+        text: "Rabdomiólise causa exclusivamente síndrome nefrótica sem predomínio tubular.",
+        correct: false,
+        explain: "Incorreto. Rabdomiólise costuma provocar lesão tubular aguda por mioglobina, não síndrome nefrótica."
+      }
+    ]
+  },
+  {
+    q: "19) Questão: Qual das afirmativas sobre LRA na leptospirose corresponde ao que está descrito no material?",
+    choices: [
+      {
+        text: "A LRA na leptospirose é frequentemente não oligúrica, com níveis séricos de potássio normais ou baixos e disfunção tubular proximal.",
+        correct: true,
+        explain: "Correto. O PDF descreve a LRA da leptospirose como tipicamente não oligúrica, com potássio normal/baixo e lesão do túbulo proximal."
+      },
+      {
+        text: "A LRA por leptospirose é quase sempre oligúrica e associada a hiperpotassemia grave.",
+        correct: false,
+        explain: "Incorreto. Contraria o conteúdo do PDF, que descreve o contrário (não oligúrica, potássio normal/baixo)."
+      },
+      {
+        text: "A resistência do ducto coletor à vasopressina na leptospirose leva a concentração urinária preservada.",
+        correct: false,
+        explain: "Incorreto. A resistência ao ADH causa defeito de concentração urinária (poliúria), não concentração preservada."
+      },
+      {
+        text: "Lesão proximal na leptospirose diminui excreção distal de potássio, reduzindo a fração excretada de potássio.",
+        correct: false,
+        explain: "Incorreto. Lesão proximal aumenta o aporte distal de sódio e resulta em aumento da excreção de potássio (maior fração de excreção)."
+      }
+    ]
+  },
+  {
+    q: "20) Questão: Quanto à recuperação renal após LRA por leptospirose, qual o padrão temporal descrito no material?",
+    choices: [
+      {
+        text: "Normalização da creatinina por volta do 8º dia em LRA oligúrica e no 4º dia em não oligúrica; filtração e funções tubulares normalizam por volta do 3º mês; déficit de concentração pode persistir >6 meses.",
+        correct: true,
+        explain: "Correto. O PDF descreve esse padrão temporal de recuperação após LRA por leptospirose."
+      },
+      {
+        text: "A creatinina nunca normaliza; os pacientes sempre evoluem para DRC em menos de 1 mês.",
+        correct: false,
+        explain: "Incorreto. Embora exista risco de DRC, a maioria recupera creatinina conforme prazos descritos; não é evolução universal para DRC em 1 mês."
+      },
+      {
+        text: "Capacidade de concentração costuma normalizar nas primeiras 48 horas após antibioticoterapia.",
+        correct: false,
+        explain: "Incorreto. O texto afirma que déficit de concentração pode persistir por mais de 6 meses."
+      },
+      {
+        text: "Reabilitação tubular completa ocorre dentro de 7–10 dias em todos os casos.",
+        correct: false,
+        explain: "Incorreto. O PDF indica normalização das funções tubulares por volta do 3º mês, não em 7–10 dias para todos."
+      }
+    ]
+  },
+
+  /* Casos clínicos (21–30) */
+  {
+    q: "21) Caso Clínico: Homem de 38 anos, morador de área rural, febre há 7 dias, calafrios intermitentes, cefaleia, vômitos e colúria. Ao exame: icterícia discreta, PA 100/60 mmHg, taquicárdico. Laboratórios: Hb 9,8 g/dL, Ht 30%, creatinina 3,2 mg/dL (antes era 0,9), ureia 85 mg/dL, hemoglobinúria maciça no urina, parasitológico positivo para Plasmodium falciparum. Considerando o que o material apresenta, qual é a hipótese patogênica mais provável para a LRA deste paciente e conduta imediata mais apropriada?",
+    choices: [
+      {
+        text: "Mecanismo multifatorial com hemólise maciça e hemoglobinúria causando NTA; iniciar tratamento antimalárico imediato e avaliar necessidade de hemodiálise precoce.",
+        correct: true,
+        explain: "Correto. O PDF descreve que hemólise com hemoglobinúria é um dos fatores que contribuem para LRA na malária; o tratamento antimalárico e hemodiálise precoce, quando indicada, aumentam a sobrevida."
+      },
+      {
+        text: "A lesão é provavelmente glomerular por deposição de IgA; indicar imediatamente imunossupressão com corticoides.",
+        correct: false,
+        explain: "Incorreto. Glomerulonefrite por deposição de IgA não é o mecanismo mais provável nesse quadro de malária com hemoglobinúria; imunossupressão não é indicada inicialmente."
+      },
+      {
+        text: "Quadro é compatível com insuficiência prerenal exclusiva por desidratação; iniciar apenas reidratação oral e aguardar.",
+        correct: false,
+        explain: "Incorreto. Embora hipovolemia possa contribuir, presença de hemoglobinúria e quadro grave por P. falciparum sugerem NTA multifatorial — além do suporte volêmico, tratamento antimalárico e avaliação para TRS são necessários."
+      },
+      {
+        text: "Trata-se de intoxicação medicamentosa por antimaláricos, portanto suspender todo tratamento e aguardar melhora.",
+        correct: false,
+        explain: "Incorreto. Não há evidência de toxicidade medicamentosa; o foco é tratar a malária e gerir as complicações renais, não suspender terapia antimalárica."
+      }
+    ]
+  },
+  {
+    q: "22) Caso Clínico: Mulher de 28 anos, estivadora, apresentou febre, mialgias intensas e dor abdominal. Evoluiu com plaquetopenia e aumento do hematócrito. Em 3º dia da doença iniciou oligúria e creatinina subiu de 0,7 para 2,5 mg/dL. Urina com proteinúria discreta e cilindros granulosos. Sem história prévia de doença renal. Qual é a interpretação mais compatível segundo o material e qual intervenção imediata é prioritária?",
+    choices: [
+      {
+        text: "Dengue com fase crítica e vazamento plasmático causando hipoperfusão renal e NTA; priorizar reposição volêmica cuidadosa para restaurar perfusão e monitorar necessidade de TRS.",
+        correct: true,
+        explain: "Correto. O PDF descreve que na dengue a fase crítica pode apresentar vazamento plasmático e hipovolemia, levando à NTA; reposição volêmica adequada é pilar do tratamento."
+      },
+      {
+        text: "Quadro de líquor-positivo para leptospirose com necessidade imediata de plasmaférese.",
+        correct: false,
+        explain: "Incorreto. Não há indicação de plasmaférese nesse contexto. Achados são compatíveis com dengue e hipovolemia."
+      },
+      {
+        text: "Síndrome nefrótica por IgA; iniciar inibidores da RAAS e estatina como prioridade.",
+        correct: false,
+        explain: "Incorreto. Proteinúria discreta e evolução aguda sugerem lesão aguda tubular/functional; síndrome nefrótica por IgA não se encaixa no quadro agudo descrito."
+      },
+      {
+        text: "Tratar com diuréticos agressivos para reduzir edema e evitar TRS.",
+        correct: false,
+        explain: "Incorreto. Diuréticos agressivos podem agravar hipovolemia. Prioridade é reposição volêmica controlada, não diuréticos indiscriminados."
+      }
+    ]
+  },
+  {
+    q: "23) Caso Clínico: Paciente masculino de 45 anos, trabalhador rural, apto com histórico recente de exposição a água de enchentes. Há 5 dias febre, dor muscular, conjuntivite e dor lombar. Evoluiu com poliúria e creatinina de 2,0 mg/dL (baseline desconhecido). Urina: baixa osmolaridade, proteinúria discreta, aumento da fração de excreção de potássio. Considerando o material, qual diagnóstico e mecanismo tubular mais provável?",
+    choices: [
+      {
+        text: "Leptospirose com disfunção tubular proximal e resistência medular ao ADH, explicando baixa osmolaridade urinária, poliúria e aumento da excreção de potássio.",
+        correct: true,
+        explain: "Correto. O PDF descreve que a leptospirose causa lesão do túbulo proximal e resistência do ducto coletor medular à vasopressina, levando a defeito de concentração e aumento da fração de excreção de potássio."
+      },
+      {
+        text: "Malária por P. malariae causando glomerulonefrite primária com perda de concentração urinária.",
+        correct: false,
+        explain: "Incorreto. Embora malária possa afetar rins, o padrão tubular descrito (baixa osmolaridade, aumento FE K) é típico da leptospirose segundo o material."
+      },
+      {
+        text: "Rabdomiólise causada por uso de estatinas levando à insuficiência renal com baixa osmolaridade urinária.",
+        correct: false,
+        explain: "Incorreto. Rabdomiólise causaria mioglobinúria e frequentemente oligúria; o padrão de resistência ao ADH e aumento FE K é mais compatível com leptospirose."
+      },
+      {
+        text: "Poliúria psicogênica sem relação com infecção; investigar distúrbios psiquiátricos.",
+        correct: false,
+        explain: "Incorreto. Sinais e epidemiologia (exposição a água) e achados laboratoriais sugerem leptospirose, não poliúria psicogênica."
+      }
+    ]
+  },
+  {
+    q: "24) Caso Clínico: Mulher de 52 anos internada por leptospirose grave com icterícia e LRA. Evolui com creatinina 6,8 mg/dL, acidose metabólica e hipercalemia refratária a medidas conservadoras. Segundo o material, qual a conduta mais alinhada?",
+    choices: [
+      {
+        text: "Iniciar hemodiálise precoce (TRS), já que estudos mostram redução importante da mortalidade quando a diálise é intermitente, precoce e diária na leptospirose grave.",
+        correct: true,
+        explain: "Correto. O PDF relata que hemodiálise precoce está associada à redução da mortalidade na leptospirose quando indicada por sinais como acidose e hipercalemia refratárias."
+      },
+      {
+        text: "Evitar diálise, pois o início precoce piora o prognóstico; preferir apenas suporte clínico e antibióticos.",
+        correct: false,
+        explain: "Incorreto. Contrariando essa alternativa, o material destaca benefício da diálise precoce na redução da mortalidade."
+      },
+      {
+        text: "Administrar altas doses de diurético de alça até normalizar a creatinina antes de considerar diálise.",
+        correct: false,
+        explain: "Incorreto. Em presença de acidose e hipercalemia refratária, adiar TRS enquanto tenta diuréticos pode ser prejudicial; diálise é indicada."
+      },
+      {
+        text: "Somente realizar plasmaférese, sem suporte renal, pois remove a Leptospira circulante.",
+        correct: false,
+        explain: "Incorreto. Plasmaférese não é descrita como tratamento primário; antibióticos e TRS quando indicados são condutas apropriadas."
+      }
+    ]
+  },
+  {
+    q: "25) Caso Clínico: Homem de 60 anos com episódio recente de febre por arbovirose confirmado, internado com queda do débito urinário; urina apresenta hematúria, proteinúria transitória e cilindros granulosos. Hematócrito aumentado e plaquetas baixas. Qual diagnóstico e prognóstico segundo o material?",
+    choices: [
+      {
+        text: "Dengue grave com lesão renal aguda (NTA) associada à hemoconcentração e trombocitopenia, potencialmente com aumento de mortalidade; conduta de suporte hídrico é crucial.",
+        correct: true,
+        explain: "Correto. O PDF descreve que dengue grave pode apresentar proteinúria transitória, hematúria, cilindros granulosos, hemoconcentração e trombocitopenia, com LRA associada a pior prognóstico; suporte volêmico é pilar."
+      },
+      {
+        text: "Quadro típico de síndrome nefrótica primária com trombocitopenia como causa principal da proteinúria.",
+        correct: false,
+        explain: "Incorreto. Proteinúria transitória em dengue não corresponde a síndrome nefrótica primária; trombocitopenia não explica proteinúria nefrótica."
+      },
+      {
+        text: "Pneumonia bacteriana com glomerulonefrite pós-infecciosa sendo provável causa da hematúria e cilindros.",
+        correct: false,
+        explain: "Incorreto. Contexto de arbovirose, hemoconcentração e trombocitopenia orientam para dengue como causa renal aguda, não necessariamente GN pós-infecciosa por pneumonia."
+      },
+      {
+        text: "Doença crônica renal pré-existente que sofreu descompensação, sem relação com a arbovirose atual.",
+        correct: false,
+        explain: "Incorreto. História recente de arbovirose com achados clássicos (hemoconcentração, trombocitopenia) sugere dengue como causa aguda do quadro renal."
+      }
+    ]
+  },
+  {
+    q: "26) Caso Clínico: Jovem de 25 anos com malária recente tratada, apresenta proteinúria persistente e exame anatomopatológico mostra lesão mesangial proliferativa. De acordo com o material, qual conclusão é mais apropriada?",
+    choices: [
+      {
+        text: "A malária pode, em casos selecionados, levar a alterações glomerulares; embora lesões tubulares sejam mais proeminentes, glomerulonefrite proliferativa pode ocorrer ocasionalmente.",
+        correct: true,
+        explain: "Correto. O PDF menciona que, embora alterações tubulares sejam mais proeminentes na malária, pode ocorrer acometimento glomerular (variações incluindo formas proliferativas)."
+      },
+      {
+        text: "Lesão mesangial proliferativa é patognomônica e exclusiva da malária por P. vivax.",
+        correct: false,
+        explain: "Incorreto. Não é patognomônica nem exclusiva de P. vivax; o material não atribui exclusividade por espécie a essa lesão."
+      },
+      {
+        text: "Proteinúria persistente após malária implica inevitável progressão para síndrome nefrótica e necessidade imediata de imunossupressão intensa.",
+        correct: false,
+        explain: "Incorreto. O desenvolvimento de síndrome nefrótica é possível, mas não inevitável; manejo específico depende do tipo histológico e da gravidade."
+      },
+      {
+        text: "A presença de lesão mesangial proliferativa exclui qualquer contribuição tubular para a disfunção renal do paciente.",
+        correct: false,
+        explain: "Incorreto. Glomerular e tubular podem coexistir; presença de lesão glomerular não exclui disfunção tubular concomitante."
+      }
+    ]
+  },
+  {
+    q: "27) Caso Clínico: Mulher de 33 anos, grávida de 28 semanas, apresenta febre, mialgias e manchas petéquicas; sorologia indica dengue. Evolui com oligúria e creatinina de 2,1 mg/dL. Quais elementos do material orientam risco aumentado e conduta a ser adotada?",
+    choices: [
+      {
+        text: "Dengue na fase crítica com risco de vazamento plasmático e LRA; monitorização rigorosa do volume intravascular e reposição volêmica cuidadosa são essenciais, além de vigilância fetal e obstétrica.",
+        correct: true,
+        explain: "Correto. O PDF descreve que vazamento plasmático e hipoperfusão na fase crítica da dengue levam a NTA; em gestantes é crucial monitorar volemia e conduta obstétrica concomitante."
+      },
+      {
+        text: "Gestação protege contra LRA em dengue; apenas observação ambulatorial é suficiente.",
+        correct: false,
+        explain: "Incorreto. Gestação não protege; pelo contrário, vigilância é importante devido a risco materno e fetal."
+      },
+      {
+        text: "Administrar corticoides de alta dose para prevenir trombocitopenia e evitar LRA.",
+        correct: false,
+        explain: "Incorreto. Corticosteroides não são recomendados rotineiramente para prevenir LRA em dengue segundo o material."
+      },
+      {
+        text: "Tratar com terapia antiviral específica para dengue que reverte rapidamente a função renal na gestação.",
+        correct: false,
+        explain: "Incorreto. Não existe tratamento antiviral específico para dengue mencionado no PDF; manejo é de suporte."
+      }
+    ]
+  },
+  {
+    q: "28) Caso Clínico: Homem de 50 anos com histórico de febre, hemoglobinúria e oligoanúria. Biópsia renal mostra presença de cilindros de hemoglobina e hemácias degeneradas nos túbulos. Segundo o material, qual patologia e prognóstico imediato?",
+    choices: [
+      {
+        text: "Lesão tubular aguda por hemoglobinúria associada a malária grave; alterações tubulares são proeminentes e existe necessidade de tratamento antimalárico e suporte renal (diálise se indicado) para melhorar sobrevida.",
+        correct: true,
+        explain: "Correto. O PDF descreve cilindros de hemoglobina e hemácias degeneradas como achado tubular em malária grave; tratamento antimalárico e TRS quando necessário melhoram prognóstico."
+      },
+      {
+        text: "Achados indicam glomerulonefrite rapidamente progressiva que requer imunossupressão imediata.",
+        correct: false,
+        explain: "Incorreto. Achados indicam lesão tubular aguda por hemoglobinúria; imunossupressão não é a medida indicada."
+      },
+      {
+        text: "Biópsia é típica de nefropatia por IgA e exige apenas controle pressórico.",
+        correct: false,
+        explain: "Incorreto. Achados tubulares com cilindros hemoglobínicos são típicos de injúria por hemólise/hemoglobinúria, não característicos de nefropatia por IgA."
+      },
+      {
+        text: "Trata-se de doença crônica sem necessidade de intervenção urgente.",
+        correct: false,
+        explain: "Incorreto. Quadro agudo com oligoanúria e achados histológicos indica necessidade de intervenção urgente (TRS se indicado)."
+      }
+    ]
+  },
+  {
+    q: "29) Caso Clínico: Paciente com leptospirose confirmada apresenta sedimento urinário com proteinúria discreta, hematúria e leucocitúria ao internamento; após 9 dias, sedimento normalizou. Qual afirmação sobre a evolução baseada no material?",
+    choices: [
+      {
+        text: "Esses achados no sedimento urinário são típicos na admissão (~80% dos casos) e tendem a normalizar entre 7–10 dias, conforme descrito no PDF.",
+        correct: true,
+        explain: "Correto. O material afirma que sedimento alterado na fase aguda tende a normalizar entre 7 e 10 dias após admissão."
+      },
+      {
+        text: "A normalização do sedimento em 9 dias é incomum e indica provável diagnóstico alternativo.",
+        correct: false,
+        explain: "Incorreto. A normalização nesse período está descrita como esperada no PDF."
+      },
+      {
+        text: "Proteinúria discreta que persiste por 9 dias sempre evolui para DRC em 100% dos casos.",
+        correct: false,
+        explain: "Incorreto. Persistência transitória não implica progressão invariable para DRC; o material menciona possibilidade de DRC, mas não como regra absoluta."
+      },
+      {
+        text: "Leucocitúria associada a hematúria indica somente infecção do trato urinário concomitante e não tem relação com leptospirose.",
+        correct: false,
+        explain: "Incorreto. O PDF descreve que hematúria e leucocitúria fazem parte do sedimento na leptospirose aguda e tendem a normalizar, não necessariamente significando ITU concomitante."
+      }
+    ]
+  },
+  {
+    q: "30) Caso Clínico: Paciente com malária grave evolui com aumento progressivo da creatinina e necessidade de TRS. Após estabilização clínica, quais desfechos e recomendações de seguimento são compatíveis com o conteúdo do material?",
+    choices: [
+      {
+        text: "Além do tratamento antimalárico e TRS aguda, o paciente pode recuperar função renal, mas requer seguimento para avaliar possível evolução para DRC e monitorar proteinúria persistente.",
+        correct: true,
+        explain: "Correto. O PDF indica que LRA por doenças tropicais pode evoluir para recuperação, porém há possibilidade de DRC; acompanhamento é indicado."
+      },
+      {
+        text: "Uma vez submetido a TRS na fase aguda, o paciente nunca recupera função renal e permanecerá em diálise crônica.",
+        correct: false,
+        explain: "Incorreto. Nem todos os pacientes evoluem para diálise crônica; muitos recuperam função renal dependendo da gravidade e manejo."
+      },
+      {
+        text: "Após alta, não é necessário realizar qualquer acompanhamento renal, pois lesão por malária é sempre completamente reversível.",
+        correct: false,
+        explain: "Incorreto. O material alerta para possibilidade de DRC pós-LRA; o acompanhamento renal é importante."
+      },
+      {
+        text: "A única preocupação pós-TRS é exclusivamente a vigilância de recorrência parasitária; função renal não precisa ser monitorada.",
+        correct: false,
+        explain: "Incorreto. Além do controle da infecção, monitorar função renal é essencial devido ao risco de progressão para DRC."
+      }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

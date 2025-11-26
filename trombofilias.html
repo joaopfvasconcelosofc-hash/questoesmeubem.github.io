@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Trombofilias</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Trombofilias</h1>
+    <p class="lead">30 questões - Trombofilias</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão: Defina trombofilia e descreva brevemente as duas grandes categorias etiológicas reconhecidas.",
+    choices: [
+      {
+        text: "Condição de tendência à formação de trombos; pode ser hereditária (predisposição genética) ou adquirida (processos fisiológicos ou patológicos que aumentam a trombose).",
+        correct: true,
+        explain: "Trombofilia é a tendência ao desenvolvimento de trombose. As duas categorias descritas no material são trombofilias hereditárias (predisposição genética) e adquiridas (várias condições clínicas/fisiológicas que elevam o risco)."
+      },
+      {
+        text: "Doença autoimune exclusivamente associada a anticorpos antiplaquetários; sempre secundária a lúpus.",
+        correct: false,
+        explain: "Incorreto — isso descreve parcialmente um processo autoimune, mas trombofilias não são exclusivamente autoimunes nem dependem sempre de LES. A SAF é uma trombofilia adquirida, mas não é a definição geral."
+      },
+      {
+        text: "Quadro de sangramento por deficiência de fatores de coagulação que aumenta o risco de trombose por consumo.",
+        correct: false,
+        explain: "Incorreto — trombofilias referem-se à tendência à trombose, não a um quadro primário de sangramento; embora distúrbios como CIVD possam associar-se, não definem trombofilia."
+      },
+      {
+        text: "Estado fisiológico normal de maior coagulação observado apenas durante a gestação e sem impacto clínico relevante.",
+        correct: false,
+        explain: "Incorreto — a gestação é um fator de risco adquirido para trombose, mas trombofilia não é um estado fisiológico normal sem relevância; pode ter implicações clínicas importantes."
+      }
+  ]},
+  {
+    q: "2) Questão: Explique a tríade de Virchow e como seus componentes influenciam o risco de trombose venosa versus arterial.",
+    choices: [
+      {
+        text: "Tríade de Virchow: lesão endotelial, estase sanguínea e hipercoagulabilidade. Na artéria predominam lesão e aterosclerose; na veia, estase e hipercoagulabilidade têm papel maior.",
+        correct: true,
+        explain: "Correto — o material enfatiza que os componentes não contribuem igualmente: tromboembolismo arterial envolve alterações da parede (ex.: aterosclerose) e fatores de risco cardiovasculares; TEV envolve estase, imobilização e hipercoagulabilidade."
+      },
+      {
+        text: "Tríade de Virchow inclui trombocitopenia, anemia e hipoxemia; predomina sempre em artérias.",
+        correct: false,
+        explain: "Incorreto — esses itens não fazem parte da tríade de Virchow. A tríade é lesão endotelial, estase e hipercoagulabilidade."
+      },
+      {
+        text: "Tríade de Virchow refere-se apenas à predisposição genética para trombose e não considera fatores adquiridos.",
+        correct: false,
+        explain: "Incorreto — a tríade é um conceito fisiopatológico geral que inclui fatores adquiridos como imobilização, lesão e estados hipercoaguláveis."
+      },
+      {
+        text: "Tríade de Virchow consiste em inflamação, infecção e isquemia e é aplicável somente ao trombo arterial.",
+        correct: false,
+        explain: "Incorreto — os termos citados não correspondem à tríade clássica; a tríade aplica-se a mecanismos de trombose em geral, com diferenças entre leitos arterial e venoso."
+      }
+  ]},
+  {
+    q: "3) Questão: Quais exames fazem parte da avaliação inicial de um paciente com suspeita de trombofilia hereditária segundo o material?",
+    choices: [
+      {
+        text: "Hemograma, testes de triagem (TP, TTPa, tempo de trombina), função renal, função hepática e exames específicos para AT, PC, PS e resistência do FV à PCa.",
+        correct: true,
+        explain: "Correto — o material lista exatamente esses exames como avaliação inicial para suspeita de trombofilia hereditária."
+      },
+      {
+        text: "Somente exames genéticos amplos sem necessidade de triagem laboratorial inicial.",
+        correct: false,
+        explain: "Incorreto — embora testes genéticos possam ser úteis, a avaliação inicial descrita no material inclui hemograma, testes de triagem e função renal/hepática antes de exames específicos."
+      },
+      {
+        text: "Ecocardiograma, angiografia e mamografia como exames iniciais obrigatórios.",
+        correct: false,
+        explain: "Incorreto — esses exames não fazem parte da avaliação inicial de trombofilia descrita no material."
+      },
+      {
+        text: "Dosagem de hormônio tireoidiano e anticorpos antinucleares como triagem preferencial.",
+        correct: false,
+        explain: "Incorreto — TFTs e FAN não são listados como avaliação inicial para trombofilia no material; exames direcionados de coagulação e função de órgãos são priorizados."
+      }
+  ]},
+  {
+    q: "4) Questão: Sobre deficiência de antitrombina (AT): descreva seu mecanismo de ação, padrão de herança e causas adquiridas possíveis.",
+    choices: [
+      {
+        text: "AT inibe IIa, IXa, Xa, XIa e XIIa formando complexos; é autossômica dominante; causas adquiridas incluem doença hepática, uso de heparina, CIVD e síndrome nefrótica.",
+        correct: true,
+        explain: "Correto — a antitrombina é um anticoagulante natural que inibe várias serina-proteases; deficiência é autossômica dominante e pode ser adquirida por essas condições."
+      },
+      {
+        text: "AT ativa a proteína C; herança ligada ao X; causas adquiridas incluem deficiência de vitamina K apenas.",
+        correct: false,
+        explain: "Incorreto — AT não ativa a proteína C, não é ligada ao X e causas adquiridas listadas no material são doença hepática, heparina, CIVD e síndrome nefrótica."
+      },
+      {
+        text: "AT é um cofator da trombina que aumenta formação de fibrina; é recessiva e não tem formas adquiridas clinicamente relevantes.",
+        correct: false,
+        explain: "Incorreto — descrição errada do papel da AT e do padrão de herança; deficiência homozigótica parece incompatível com a vida segundo o material."
+      },
+      {
+        text: "AT atua apenas na inativação do fator VIIa; sua deficiência é sempre letal no heterozigoto.",
+        correct: false,
+        explain: "Incorreto — AT inibe múltiplos fatores (IIa, IXa, Xa, XIa, XIIa); heterozigotos são descritos (muitos casos) e a doença é clinicamente heterogênea."
+      }
+  ]},
+  {
+    q: "5) Questão: Caracterize as deficiências das proteínas C e S: ativação, função fisiológica e dificuldades diagnósticas mencionadas.",
+    choices: [
+      {
+        text: "Proteína C é dependente de vitamina K, ativada pela trombina-trombomodulina (incrementada pela ligação ao receptor endotelial), e PCa inativa Va e VIIIa; proteína S inibe tenase e protrombinase; deficiência de PS é mais difícil de diagnosticar por questões laboratoriais.",
+        correct: true,
+        explain: "Correto — essa sumarização segue o material: papel da PC/PS e as dificuldades laboratoriais especialmente para PS."
+      },
+      {
+        text: "Proteína C atua como cofator de trombina e proteína S é responsável pela lise fibrinolítica; ambas não dependem de vitamina K.",
+        correct: false,
+        explain: "Incorreto — proteína C depende de vitamina K e não é cofator da trombina; descrição imprecisa de PS."
+      },
+      {
+        text: "Deficiências de PC e PS são exclusivamente adquiridas e nunca hereditárias.",
+        correct: false,
+        explain: "Incorreto — as deficiências são herdadas como caráter autossômico dominante, embora possam também ser adquiridas."
+      },
+      {
+        text: "Proteína S é ativada pela trombomodulina e cliva Va e VIIIa; seu diagnóstico é trivial com testes rápidos.",
+        correct: false,
+        explain: "Incorreto — a ativação descrita refere-se à PC; a dosagem laboratorial da PS é notoriamente mais difícil, conforme o material."
+      }
+  ]},
+  {
+    q: "6) Questão: Explique a fisiopatologia do fator V Leiden e sua relevância epidemiológica conforme o material.",
+    choices: [
+      {
+        text: "Mutação no gene do FV retarda sua inativação pela proteína C ativada (PCa), gerando resistência à PCa; FV Leiden é causa mais comum de trombofilia hereditária no hemisfério norte e pode acometer até 50% de pacientes com TEV nessa região.",
+        correct: true,
+        explain: "Correto — o material descreve a mutação que torna o FV resistente à clivagem pela PCa e destaca a alta prevalência do FV Leiden em certas populações."
+      },
+      {
+        text: "FV Leiden é uma deficiência quantitativa do fator V que reduz o risco de trombose e é mais comum no sul do Brasil.",
+        correct: false,
+        explain: "Incorreto — FV Leiden é uma mutação funcional que aumenta risco de trombose, não reduz; prevalência geográfica mencionada no material é no hemisfério norte."
+      },
+      {
+        text: "FV Leiden causa hemorragia por incapacidade de formar o complexo protrombinase.",
+        correct: false,
+        explain: "Incorreto — a mutação causa hipercoagulabilidade (resistência à PCa), não hemorragia por perda de função do complexo protrombinase."
+      },
+      {
+        text: "FV Leiden refere-se a mutações na proteína S com impacto mínimo no risco trombótico.",
+        correct: false,
+        explain: "Incorreto — FV Leiden é uma mutação no gene do fator V, distinta de alterações nas proteínas C ou S."
+      }
+  ]},
+  {
+    q: "7) Questão: Qual é a segunda causa mais comum de trombofilia hereditária descrita no material e qual é seu mecanismo básico?",
+    choices: [
+      {
+        text: "Mutação puntiforme no gene da protrombina (G20210A), leva a níveis plasmáticos aumentados de protrombina e maior risco de trombose.",
+        correct: true,
+        explain: "Correto — o material descreve a mutação no gene da protrombina como a segunda causa mais comum, associada a níveis plasmáticos aumentados."
+      },
+      {
+        text: "Deficiência de antitrombina por deleção gênica, levando a níveis muito baixos de AT em heterozigose.",
+        correct: false,
+        explain: "Incorreto — embora deficiência de AT provoque risco, o material identifica a mutação na protrombina como a segunda causa mais comum."
+      },
+      {
+        text: "Duplicação do gene da proteína C que inibe trombose e reduz o risco de TEV.",
+        correct: false,
+        explain: "Incorreto — duplicação da PC não é descrita; a mutação da protrombina aumenta protrombina e o risco trombótico."
+      },
+      {
+        text: "Mutação no gene da fibrinogênio que causa fibrinólise exagerada e protege contra trombose.",
+        correct: false,
+        explain: "Incorreto — mutações que aumentem fibrinólise não correspondem ao que o material descreve como segunda causa mais comum."
+      }
+  ]},
+  {
+    q: "8) Questão: Na investigação laboratorial de trombofilias, por que é importante avaliar função hepática e renal além dos testes de coagulação?",
+    choices: [
+      {
+        text: "Doenças hepáticas e renais podem causar deficiência adquirida de anticoagulantes naturais (PC, PS, AT) ou alterar resultados dos testes, impactando interpretação e diagnóstico.",
+        correct: true,
+        explain: "Correto — o material ressalta que causas adquiridas de deficiência (ex.: doença hepática, síndrome nefrótica) influenciam os níveis de anticoagulantes naturais e testes."
+      },
+      {
+        text: "Porque fígado e rim são locais preferenciais de trombose e, se normais, excluem trombofilia hereditária.",
+        correct: false,
+        explain: "Incorreto — embora fígado e rim possam ser afetados por complicações, avaliação da função serve para interpretar exames e excluir causas adquiridas, não para excluir totalmente trombofilia hereditária."
+      },
+      {
+        text: "Avaliar fígado e rim é desnecessário; só se faz por protocolo hospitalar sem impacto diagnóstico.",
+        correct: false,
+        explain: "Incorreto — o material aponta função renal/hepática como parte da avaliação inicial justamente por seu impacto diagnóstico."
+      },
+      {
+        text: "Porque a presença de anormalidades hepáticas garante diagnóstico de trombofilia hereditária.",
+        correct: false,
+        explain: "Incorreto — anormalidades hepáticas podem causar déficits adquiridos; não confirmam trombofilia hereditária."
+      }
+  ]},
+  {
+    q: "9) Questão: Quais são os princípios gerais do tratamento do evento trombótico agudo em pacientes com trombofilia conforme o material?",
+    choices: [
+      {
+        text: "Uso de heparina (não-fracionada ou HBPM) seguido por anticoagulante oral; duração variável (mínimo 3 meses, podendo estender-se até 12 meses ou indefinidamente conforme local e recorrência).",
+        correct: true,
+        explain: "Correto — o material indica heparina para o evento agudo e anticoagulação oral com duração individualizada (3–12 meses ou mais em locais atípicos)."
+      },
+      {
+        text: "Tratamento apenas com aspirina em todos os casos de TEV, sem necessidade de anticoagulação plena.",
+        correct: false,
+        explain: "Incorreto — aspirina não é tratamento padrão do TEV agudo; anticoagulação plena (heparina, anticoagulantes orais) é indicada."
+      },
+      {
+        text: "Cirurgia imediata para remoção de trombo em todos os pacientes com trombofilia.",
+        correct: false,
+        explain: "Incorreto — abordagem cirúrgica não é padrão para todos; tratamento clínico anticoagulante é princípio geral."
+      },
+      {
+        text: "Uso rotineiro de fibrinolíticos em todos os eventos venosos para reduzir o risco futuro.",
+        correct: false,
+        explain: "Incorreto — fibrinolíticos são reservados a situações específicas; não são recomendados rotineiramente para todos os TEV."
+      }
+  ]},
+  {
+    q: "10) Questão: Na profilaxia primária, qual é a recomendação para familiares de 1º grau e para portadores assintomáticos conforme o material?",
+    choices: [
+      {
+        text: "Testar familiares de 1º grau; portadores assintomáticos devem receber aconselhamento sobre riscos e medidas preventivas; anticoagulação não é indicada de rotina, salvo em situações de risco (gravidez, puerpério, grandes cirurgias, uso de estrogênios).",
+        correct: true,
+        explain: "Correto — o material recomenda investigação familiar e aconselhamento; profilaxia farmacológica não é rotineira em assintomáticos, mas é indicada em riscos elevados/temporários."
+      },
+      {
+        text: "Indicar anticoagulação oral permanente para todos os familiares de 1º grau testados, mesmo que assintomáticos.",
+        correct: false,
+        explain: "Incorreto — o material não recomenda anticoagulação de rotina em portadores assintomáticos; decisão depende do contexto e riscos."
+      },
+      {
+        text: "Evitar testar familiares e não oferecer nenhuma orientação para portadores assintomáticos.",
+        correct: false,
+        explain: "Incorreto — recomenda-se testar familiares de 1º grau e oferecer aconselhamento para portadores assintomáticos."
+      },
+      {
+        text: "Recomendar uso de compostos estrogênicos para proteção contra trombose em portadoras assintomáticas.",
+        correct: false,
+        explain: "Incorreto — o material aconselha evitar estrogênios em mulheres assintomáticas com fatores de risco trombótico."
+      }
+  ]},
+  {
+    q: "11) Questão: Quais fatores devem ser considerados na decisão de instituir profilaxia secundária para trombose em pacientes com trombofilia?",
+    choices: [
+      {
+        text: "Risco de novo evento trombótico, consequências clínicas de nova trombose, risco de sangramento com anticoagulação e preferência do paciente.",
+        correct: true,
+        explain: "Correto — o material destaca esses pontos como cruciais na decisão sobre profilaxia secundária."
+      },
+      {
+        text: "Apenas idade do paciente; pacientes jovens nunca recebem profilaxia secundária.",
+        correct: false,
+        explain: "Incorreto — a decisão é multifatorial; idade é relevante, mas não a única condição e jovens também podem receber prevenção se indicados."
+      },
+      {
+        text: "Preferência do médico é o único critério relevante para manter anticoagulação indefinida.",
+        correct: false,
+        explain: "Incorreto — a preferência do paciente, junto com risco/benefício, deve ser considerada; não é decisão unicamente do médico."
+      },
+      {
+        text: "Somente a presença de trombose arterial justifica profilaxia secundária — trombose venosa não é considerada.",
+        correct: false,
+        explain: "Incorreto — a profilaxia secundária é considerada também para TEV, especialmente idiopático grave, em locais nobres ou recorrente."
+      }
+  ]},
+  {
+    q: "12) Questão: Na maioria dos casos de trombofilia hereditária que necessitam de profilaxia secundária, qual fármaco e alvo terapêutico o material recomenda?",
+    choices: [
+      {
+        text: "Cumarínicos (warfarina) mantendo INR entre 2 e 3.",
+        correct: true,
+        explain: "Correto — o material aponta que a profilaxia secundária na maioria dos casos é realizada com warfarina mantendo INR 2–3."
+      },
+      {
+        text: "Uso exclusivo de heparina de baixo peso molecular indefinidamente sem monitorização.",
+        correct: false,
+        explain: "Incorreto — HBPM é utilizada no tratamento agudo e em situações específicas, mas profilaxia secundária crônica frequentemente envolve cumarínicos com meta de INR."
+      },
+      {
+        text: "Aspirina em monoterapia como padrão para profilaxia secundária de TEV em trombofilias hereditárias.",
+        correct: false,
+        explain: "Incorreto — aspirina pode ser considerada em casos selecionados (p.ex. risco elevado na SAF assintomática), mas warfarina é geralmente usada para profilaxia secundária de TEV."
+      },
+      {
+        text: "Terapia trombolítica crônica com alteplase em baixas doses para prevenir recorrência.",
+        correct: false,
+        explain: "Incorreto — terapia trombolítica não é usada cronicamente para prevenção; riscos seriam altos e não é recomendado pelo material."
+      }
+  ]},
+  {
+    q: "13) Questão: Cite fatores adquiridos que o material lista como causas de trombofilias adquiridas.",
+    choices: [
+      {
+        text: "Síndrome antifosfolípide, malignidade e outras doenças clonais, período pós-operatório, doenças reumatológicas (ex.: LES), gestação, tratamento hormonal estrogênico e presença de cateter venoso central.",
+        correct: true,
+        explain: "Correto — o material fornece essa lista de fatores de risco adquiridos para TEV."
+      },
+      {
+        text: "Somente defeitos congênitos de fatores de coagulação sem relação com câncer ou cirurgia.",
+        correct: false,
+        explain: "Incorreto — fatores adquiridos incluem câncer e pós-operatório entre outros; não se restringem a defeitos congênitos."
+      },
+      {
+        text: "Hiperlipidemia isolada sem outros fatores, que é considerada a principal causa de trombofilias adquiridas.",
+        correct: false,
+        explain: "Incorreto — hipercolesterolemia é um fator de risco arterial, mas não é listada como principal causa de trombofilias adquiridas no material."
+      },
+      {
+        text: "Uso isolado de antiácidos e dieta rica em fibras como principais causas adquiridas.",
+        correct: false,
+        explain: "Incorreto — esses não são fatores de risco trombótico listados no material."
+      }
+  ]},
+  {
+    q: "14) Questão: Na Síndrome Antifosfolípide (SAAF), quais anticorpos são descritos no material e como a síndrome pode se apresentar clinicamente?",
+    choices: [
+      {
+        text: "Anticoagulante lúpico, anticardiolipina e anti-β2 glicoproteína I; manifestações incluem trombose arterial/venosa e perdas fetais recorrentes (entre outras complicações gestacionais).",
+        correct: true,
+        explain: "Correto — o material lista esses anticorpos e as manifestações clínicas frequentes como trombose e complicações gestacionais."
+      },
+      {
+        text: "Anticorpos anti-DNA, anti-SM e anti-histona; apresentação restrita a danos hepáticos isolados.",
+        correct: false,
+        explain: "Incorreto — esses autoanticorpos relacionam-se mais com LES e não são os anticorpos clássicos da SAAF; SAAF apresenta trombose e complicações obstétricas."
+      },
+      {
+        text: "Somente anticorpos contra plaquetas causando trombocitopenia sem trombose.",
+        correct: false,
+        explain: "Incorreto — SAAF é caracterizada por anticorpos antifosfolípides com risco trombótico; pode haver trombocitopenia, mas não é a única manifestação."
+      },
+      {
+        text: "Anticorpos anti-fator VIII causando hemofilia adquirida como principal característica.",
+        correct: false,
+        explain: "Incorreto — essa descrição corresponde a outra entidade (inibidores de fator VIII), não à SAAF."
+      }
+  ]},
+  {
+    q: "15) Questão: Descreva mecanismos fisiopatológicos propostos para os eventos trombóticos na SAAF conforme o material.",
+    choices: [
+      {
+        text: "Múltiplos mecanismos: inibição da proteína C ativada, ligação/ativação plaquetária, interação com endotélio aumentando adesão e expressão de fator tecidual, inibição da antitrombina e ativação do complemento gerando inflamação pró-trombótica.",
+        correct: true,
+        explain: "Correto — o material descreve essa heterogeneidade de mecanismos que contribuem para o estado pró-coagulante na SAAF."
+      },
+      {
+        text: "União exclusiva dos anticorpos ao fibrinogênio promovendo sua degradação enzimática como único mecanismo.",
+        correct: false,
+        explain: "Incorreto — o material descreve múltiplos mecanismos envolvendo PCa, plaquetas, endotélio, antitrombina e complemento, não apenas ligação ao fibrinogênio."
+      },
+      {
+        text: "Ativação apenas da via fibrinolítica com proteção contra trombose e sem inflamação associada.",
+        correct: false,
+        explain: "Incorreto — SAAF é pró-trombótica; ativação fibrinolítica isolada não explica as manifestações observadas."
+      },
+      {
+        text: "Apenas fenômenos de vasoconstrição sem participação do sistema imune ou coagulação.",
+        correct: false,
+        explain: "Incorreto — o material enfatiza mecanismos imuno-trombóticos complexos, não meramente vasoconstrição."
+      }
+  ]},
+  {
+    q: "16) Questão: Em pacientes com trombofilias hereditárias, quais situações clínicas aumentam significativamente o risco de trombose e justificam medidas de prevenção específicas?",
+    choices: [
+      {
+        text: "Imobilização prolongada, cirurgias de grande porte, uso de estrogênios, gestação e puerpério.",
+        correct: true,
+        explain: "Correto — o material enfatiza que esses estados aumentam risco trombótico e exigem maior vigilância."
+      },
+      {
+        text: "Atividade física intensa, dieta rica em fibras e suplementação vitamínica.",
+        correct: false,
+        explain: "Incorreto — esses fatores não são descritos como aumentadores de risco no material."
+      },
+      {
+        text: "Exposição ao frio, consumo ocasional de álcool e uso de analgésicos comuns.",
+        correct: false,
+        explain: "Incorreto — tais fatores não são apontados como relevantes para risco trombótico no conteúdo."
+      },
+      {
+        text: "Hipotermia leve e privação de sono.",
+        correct: false,
+        explain: "Incorreto — o material não menciona esses fatores como desencadeadores de trombose em trombofilias."
+      }
+    ]
+  },
+
+  {
+    q: "17) Questão: Segundo o material, o que orienta a necessidade de investigar trombofilia em um paciente após um episódio de tromboembolismo venoso?",
+    choices: [
+      {
+        text: "Quando o evento é idiopático, ocorre em idade jovem, está em localização atípica ou há forte história familiar.",
+        correct: true,
+        explain: "Correto — essas são as indicações clássicas apresentadas no material."
+      },
+      {
+        text: "Sempre que o paciente manifesta febre durante o episódio de trombose.",
+        correct: false,
+        explain: "Incorreto — febre não é critério para investigação de trombofilias."
+      },
+      {
+        text: "Exclusivamente quando o paciente tem obesidade.",
+        correct: false,
+        explain: "Incorreto — a investigação depende de fatores específicos, não apenas obesidade."
+      },
+      {
+        text: "Quando o paciente apresenta anemia leve sem outra causa identificada.",
+        correct: false,
+        explain: "Incorreto — anemia não é indicativo de trombofilia conforme o material."
+      }
+    ]
+  },
+
+  {
+    q: "18) Questão: Como o material descreve o impacto da gestação no risco de trombose e por que isso é relevante para portadoras de trombofilias?",
+    choices: [
+      {
+        text: "Gestação é estado pró-coagulante fisiológico que aumenta fatores de coagulação e reduz anticoagulantes naturais, elevando risco de TEV.",
+        correct: true,
+        explain: "Correto — o material reforça que a gestação é um dos principais estados hipercoaguláveis adquiridos."
+      },
+      {
+        text: "Gestação reduz o risco trombótico por aumento da mobilidade materna.",
+        correct: false,
+        explain: "Incorreto — ocorre justamente o contrário."
+      },
+      {
+        text: "Gestação não interfere no sistema hemostático.",
+        correct: false,
+        explain: "Incorreto — a gestação altera de forma importante o equilíbrio hemostático."
+      },
+      {
+        text: "Gestação aumenta apenas o risco arterial, não o venoso.",
+        correct: false,
+        explain: "Incorreto — o risco mais relevante é de TEV."
+      }
+    ]
+  },
+
+  {
+    q: "19) Questão: Sobre o diagnóstico laboratorial da mutação do gene da protrombina G20210A, qual o princípio fundamental citado no material?",
+    choices: [
+      {
+        text: "A mutação é identificada por método molecular, pois a atividade da protrombina pode estar normal.",
+        correct: true,
+        explain: "Correto — o material destaca que o diagnóstico requer teste molecular."
+      },
+      {
+        text: "A mutação sempre reduz a síntese de protrombina, facilitando diagnóstico por atividade.",
+        correct: false,
+        explain: "Incorreto — a mutação aumenta os níveis de protrombina."
+      },
+      {
+        text: "É diagnosticada pelo TTPa prolongado em todos os casos.",
+        correct: false,
+        explain: "Incorreto — TTPa geralmente não se altera nessa mutação."
+      },
+      {
+        text: "Pode ser diagnosticada apenas pela contagem de plaquetas.",
+        correct: false,
+        explain: "Incorreto — contagem plaquetária não identifica mutação em protrombina."
+      }
+    ]
+  },
+
+  {
+    q: "20) Questão: Por que a deficiência de proteína S apresenta maior dificuldade diagnóstica em comparação às outras trombofilias hereditárias descritas?",
+    choices: [
+      {
+        text: "Porque a proteína S circula em forma livre e ligada, e apenas a fração livre é funcional, dificultando interpretação laboratorial.",
+        correct: true,
+        explain: "Correto — é uma complexidade laboratorial armazenada no material."
+      },
+      {
+        text: "Porque a proteína S não participa da coagulação.",
+        correct: false,
+        explain: "Incorreto — proteína S é cofator essencial da proteína C."
+      },
+      {
+        text: "Porque não existe método laboratorial disponível.",
+        correct: false,
+        explain: "Incorreto — existe, mas com particularidades."
+      },
+      {
+        text: "Porque seus níveis são permanentemente estáveis, sem variações.",
+        correct: false,
+        explain: "Incorreto — os níveis variam e isso dificulta o diagnóstico."
+      }
+    ]
+  },
+
+  /* ===================== CASOS CLÍNICOS ===================== */
+
+  {
+    q: "21) Questão (Caso Clínico): Uma paciente de 24 anos, previamente hígida, apresenta TVP proximal após viagem prolongada de avião. Ela relata que a mãe teve trombose aos 32 anos e a avó faleceu por embolia pulmonar. Exames iniciais mostram TP e TTPa normais. Qual deve ser o próximo passo adequado na investigação segundo as recomendações do material?",
+    choices: [
+      {
+        text: "Solicitar avaliação de anticoagulantes naturais (AT, PC e PS) e teste para resistência à proteína C ativada.",
+        correct: true,
+        explain: "Correto — história familiar forte e evento em idade jovem justificam investigação de trombofilia."
+      },
+      {
+        text: "Apenas repetir ultrassom venoso semanalmente.",
+        correct: false,
+        explain: "Incorreto — o quadro sugere necessidade de investigação específica."
+      },
+      {
+        text: "Presumir causa exclusivamente provocada e dispensar outros exames.",
+        correct: false,
+        explain: "Incorreto — apesar do fator de risco, história familiar sugere investigação."
+      },
+      {
+        text: "Solicitar apenas hemograma.",
+        correct: false,
+        explain: "Incorreto — hemograma isolado não esclarece a etiologia trombofílica."
+      }
+    ]
+  },
+
+  {
+    q: "22) Questão (Caso Clínico): Homem de 39 anos, sem comorbidades, apresenta trombose de veia mesentérica. Nega cirurgias recentes, traumatismos ou imobilização. Não usa medicamentos. Diante da localização atípica, qual hipótese deve ser considerada conforme o material?",
+    choices: [
+      {
+        text: "Trombofilia hereditária ou síndrome antifosfolípide.",
+        correct: true,
+        explain: "Correto — tromboses em sítios incomuns sugerem investigação de trombofilia e SAF."
+      },
+      {
+        text: "Trombose relacionada exclusivamente a dieta rica em lipídios.",
+        correct: false,
+        explain: "Incorreto — não há tal relação no material."
+      },
+      {
+        text: "Infarto esplênico silencioso.",
+        correct: false,
+        explain: "Incorreto — não se correlaciona com a apresentação descrita."
+      },
+      {
+        text: "Trombose secundária a anemia ferropriva.",
+        correct: false,
+        explain: "Incorreto — não é causa reconhecida dentre as descritas."
+      }
+    ]
+  },
+
+  {
+    q: "23) Questão (Caso Clínico): Mulher de 28 anos, 12 semanas de gestação, com dois abortamentos prévios de 10 e 11 semanas. Exames mostram presença de anticorpos anticardiolipina e anti-beta2GP1 persistentemente positivos. Qual o diagnóstico mais provável?",
+    choices: [
+      {
+        text: "Síndrome Antifosfolípide.",
+        correct: true,
+        explain: "Correto — a paciente cumpre critérios laboratoriais e clínicos."
+      },
+      {
+        text: "Abortamento habitual exclusivamente hormonal.",
+        correct: false,
+        explain: "Incorreto — a presença de anticorpos define SAF."
+      },
+      {
+        text: "Uma forma leve de coagulopatia isoimune sem risco trombótico.",
+        correct: false,
+        explain: "Incorreto — SAF implica risco trombótico e obstétrico significativo."
+      },
+      {
+        text: "Trombofilia hereditária por deficiência de fibrinogênio.",
+        correct: false,
+        explain: "Incorreto — o quadro é compatível com SAF, não com hipofibrinogenemia."
+      }
+    ]
+  },
+
+  {
+    q: "24) Questão (Caso Clínico): Homem de 45 anos, com primeiro episódio de TVP sem fatores provocadores. Exames mostram antitrombina baixa, confirmada em segunda coleta. Como interpretar esse achado?",
+    choices: [
+      {
+        text: "Provável deficiência hereditária de antitrombina.",
+        correct: true,
+        explain: "Correto — AT baixa em duas coletas sugere deficiência hereditária, um dos principais fatores hereditários."
+      },
+      {
+        text: "Erro laboratorial obrigatoriamente.",
+        correct: false,
+        explain: "Incorreto — repetição confirma o achado."
+      },
+      {
+        text: "Deficiência por uso de heparina, mesmo sem uso relatado.",
+        correct: false,
+        explain: "Incorreto — não há evidência nesse cenário de heparina."
+      },
+      {
+        text: "Provável deficiência de vitamina K.",
+        correct: false,
+        explain: "Incorreto — AT não depende de vitamina K."
+      }
+    ]
+  },
+
+  {
+    q: "25) Questão (Caso Clínico): Paciente de 33 anos, em uso de anticoncepcional estrogênico, apresenta TVP. Após o término do tratamento agudo, qual conduta preventiva é recomendada para evitar recorrência conforme descrito no material?",
+    choices: [
+      {
+        text: "Suspender definitivamente o estrogênio e orientar evitar terapias hormonais estrogênicas.",
+        correct: true,
+        explain: "Correto — estrogênios aumentam risco de TEV e devem ser evitados."
+      },
+      {
+        text: "Reiniciar estrogênios em dose mais baixa.",
+        correct: false,
+        explain: "Incorreto — ainda apresenta risco aumentado."
+      },
+      {
+        text: "Manter anticoagulação por 10 anos sem reavaliação.",
+        correct: false,
+        explain: "Incorreto — duração depende do caso."
+      },
+      {
+        text: "Iniciar aspirina em alta dose para suprimir risco hormonal.",
+        correct: false,
+        explain: "Incorreto — aspirina não neutraliza risco estrogênico."
+      }
+    ]
+  },
+
+  {
+    q: "26) Questão (Caso Clínico): Mulher de 30 anos com deficiência de proteína C previamente conhecida apresenta novo evento de TVP após suspensão da profilaxia em pós-operatório recente. Qual a conduta recomendada para prevenção futura?",
+    choices: [
+      {
+        text: "Implementar profilaxia rigorosa em situações de risco, como cirurgias e imobilização.",
+        correct: true,
+        explain: "Correto — pacientes com deficiência de PC necessitam profilaxia intensificada."
+      },
+      {
+        text: "Evitar qualquer tipo de cirurgia no futuro.",
+        correct: false,
+        explain: "Incorreto — cirurgias podem ser feitas com adequada profilaxia."
+      },
+      {
+        text: "Usar apenas meias compressivas permanentemente.",
+        correct: false,
+        explain: "Incorreto — não substitui profilaxia farmacológica quando indicada."
+      },
+      {
+        text: "Administrar fibrinolítico antes de qualquer procedimento.",
+        correct: false,
+        explain: "Incorreto — fibrinolíticos não são usados como profilaxia."
+      }
+    ]
+  },
+
+  {
+    q: "27) Questão (Caso Clínico): Paciente de 41 anos com SAF apresenta trombose arterial recente. Qual estratégia terapêutica é indicada para profilaxia secundária?",
+    choices: [
+      {
+        text: "Anticoagulação com cumarínicos visando INR entre 2,5 e 3,5.",
+        correct: true,
+        explain: "Correto — SAF com trombose arterial frequentemente requer alvo de INR mais alto."
+      },
+      {
+        text: "Uso isolado de aspirina.",
+        correct: false,
+        explain: "Incorreto — não é suficiente para SAF com trombose arterial."
+      },
+      {
+        text: "Não utilizar anticoagulação devido ao risco hemorrágico.",
+        correct: false,
+        explain: "Incorreto — trombose arterial exige anticoagulação plena."
+      },
+      {
+        text: "Utilizar apenas heparina inalável.",
+        correct: false,
+        explain: "Incorreto — não existe protocolo assim no material."
+      }
+    ]
+  },
+
+  {
+    q: "28) Questão (Caso Clínico): Um jovem de 19 anos apresenta embolia pulmonar após quadro gripal e repouso prolongado no leito. Exames revelam resistência à PCa. Qual mutação é a mais provável?",
+    choices: [
+      {
+        text: "Mutação no fator V Leiden.",
+        correct: true,
+        explain: "Correto — resistência à PCa é característica do FV Leiden."
+      },
+      {
+        text: "Mutação G20210A da protrombina.",
+        correct: false,
+        explain: "Incorreto — essa mutação aumenta protrombina, mas não causa resistência à PCa."
+      },
+      {
+        text: "Deficiência congênita de fibrinogênio.",
+        correct: false,
+        explain: "Incorreto — não confere resistência à PCa."
+      },
+      {
+        text: "Deficiência de antitrombina homozigótica.",
+        correct: false,
+        explain: "Incorreto — mecanismo fisiopatológico distinto."
+      }
+    ]
+  },
+
+  {
+    q: "29) Questão (Caso Clínico): Mulher de 35 anos, com história de trombose após gestação prévia, deseja engravidar novamente. Exames mostram mutação da protrombina. Qual recomendação é feita pelo material?",
+    choices: [
+      {
+        text: "Avaliar necessidade de profilaxia durante gestação e puerpério, individualizando risco.",
+        correct: true,
+        explain: "Correto — gestação é estado de risco e portadoras devem ser avaliadas."
+      },
+      {
+        text: "Proibir gestação futura.",
+        correct: false,
+        explain: "Incorreto — gestação é possível com conduta adequada."
+      },
+      {
+        text: "Recomendar aspirina em altas doses como único método preventivo.",
+        correct: false,
+        explain: "Incorreto — profilaxia deve ser individualizada."
+      },
+      {
+        text: "Indicar anticoagulação plena por toda a gestação e puerpério em todos os casos.",
+        correct: false,
+        explain: "Incorreto — depende do risco global."
+      }
+    ]
+  },
+
+  {
+    q: "30) Questão (Caso Clínico): Paciente de 50 anos com TEV recorrente e câncer ativo apresenta novo episódio de trombose. Qual abordagem é recomendada conforme o material?",
+    choices: [
+      {
+        text: "Anticoagulação plena, preferencialmente com heparina, com manutenção enquanto houver atividade neoplásica.",
+        correct: true,
+        explain: "Correto — o material enfatiza que malignidade é fator adquirido importante e exige anticoagulação contínua."
+      },
+      {
+        text: "Evitar anticoagulação pelo risco de sangramento.",
+        correct: false,
+        explain: "Incorreto — anticoagulação é necessária apesar do risco."
+      },
+      {
+        text: "Usar apenas antiagregantes plaquetários.",
+        correct: false,
+        explain: "Incorreto — insuficiente para TEV associado ao câncer."
+      },
+      {
+        text: "Aguardar remissão oncológica para iniciar tratamento.",
+        correct: false,
+        explain: "Incorreto — deve-se tratar imediatamente."
+      }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
