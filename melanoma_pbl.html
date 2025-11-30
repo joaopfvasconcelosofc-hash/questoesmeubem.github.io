@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Melanoma</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Melanoma</h1>
+    <p class="lead">30 questões - Melanoma</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+// Fonte do conteúdo: :contentReference[oaicite:0]{index=0}
+const questions = [
+  {
+    q: "1) Questão — Sobre a epidemiologia do melanoma, qual afirmação está CORRETA considerando dados clássicos?",
+    choices: [
+      {
+        text: "A incidência aumentou 3 a 7 vezes nas últimas quatro décadas em populações caucasianas e a mortalidade permanece estável desde a década de 1990.",
+        correct: true,
+        explain: "Correto — o material descreve aumento marcado da incidência em caucasianos nas últimas décadas, com mortalidade relativamente estável desde os anos 1990, possivelmente pela detecção precoce."
+      },
+      {
+        text: "A incidência do melanoma é estável nas últimas décadas, sem aumento significativo em qualquer faixa etária.",
+        correct: false,
+        explain: "Incorreto — o PDF relata aumento da incidência (3–7x em 4 décadas) e aumento com a idade."
+      },
+      {
+        text: "Melanoma representa mais de 50% dos tumores cutâneos malignos em prevalência.",
+        correct: false,
+        explain: "Incorreto — o documento indica que melanoma corresponde a cerca de 4% dos tumores cutâneos malignos, embora cause a maioria das mortes por câncer de pele."
+      },
+      {
+        text: "A taxa de mortalidade por melanoma aumenta proporcionalmente ao número de nevos individuais do paciente.",
+        correct: false,
+        explain: "Incorreto — embora aumento do número de nevos seja fator de risco para melanoma, a mortalidade não é simplesmente proporcional ao número de nevos; a espessura do tumor (Breslow) é o principal preditor prognóstico."
+      }
+    ]
+  },
+  {
+    q: "2) Questão — Qual é o fator prognóstico local mais importante no melanoma cutâneo primário?",
+    choices: [
+      {
+        text: "Espessura vertical do tumor medida pelo índice de Breslow.",
+        correct: true,
+        explain: "Correto — o PDF enfatiza que a espessura de Breslow é o principal fator prognóstico local."
+      },
+      {
+        text: "Existência de ulceração clínica sem relação com espessura.",
+        correct: false,
+        explain: "Incorreto — a ulceração tem valor prognóstico, mas a espessura de Breslow é mais importante como fator individual."
+      },
+      {
+        text: "Número total de nevos melanocíticos do paciente.",
+        correct: false,
+        explain: "Incorreto — número de nevos é fator de risco para desenvolver melanoma, não o principal prognóstico local do tumor já estabelecido."
+      },
+      {
+        text: "Idade do paciente no diagnóstico, isoladamente.",
+        correct: false,
+        explain: "Incorreto — idade influencia prevalência e risco de tumores mais espessos em idades avançadas, mas não substitui Breslow como principal preditor local."
+      }
+    ]
+  },
+  {
+    q: "3) Questão — Com relação aos fatores de risco associados ao melanoma, assinale a alternativa que MELHOR resume os achados do material:",
+    choices: [
+      {
+        text: "Exposição solar intermitente com queimaduras na infância, presença de múltiplos nevos (especialmente nevo atípico) e antecedentes familiares com mutações de alta penetrância (ex.: CDKN2A).",
+        correct: true,
+        explain: "Correto — o PDF destaca exposição solar (queimaduras na infância), número de nevos/nevo atípico e mutações familiares (CDKN2A, CDK4) como importantes fatores de risco."
+      },
+      {
+        text: "Exclusivamente exposição crônica ao sol em locais de trabalho, sem relevância de história familiar ou nevos.",
+        correct: false,
+        explain: "Incorreto — exposição crônica é relevante em alguns tumores, mas o material enfatiza a exposição intermitente/queimaduras e outros fatores genéticos e de nevos."
+      },
+      {
+        text: "Somente história familiar é significativa; fatores ambientais não contribuem.",
+        correct: false,
+        explain: "Incorreto — tanto fatores ambientais (UV) quanto genéticos contribuem; a maioria dos melanomas é esporádica com contribuição ambiental importante."
+      },
+      {
+        text: "Nevo melanocítico congênito pequeno (<1 cm) confere alto risco de transformação ao longo da vida (>10%).",
+        correct: false,
+        explain: "Incorreto — risco relevante se refere a nevos congênitos gigantes (>20 cm); nevos pequenos têm risco muito baixo."
+      }
+    ]
+  },
+  {
+    q: "4) Questão — A regra ABCDE do melanoma é utilizada no exame clínico. Qual item abaixo descreve corretamente o componente 'D' e seu limiar prático no material?",
+    choices: [
+      {
+        text: "D de Diâmetro — lesões maiores que 6 mm merecem atenção e investigação.",
+        correct: true,
+        explain: "Correto — o PDF explica o D como diâmetro (>6 mm) como um dos critérios do ABCDE."
+      },
+      {
+        text: "D de Descoloração — qualquer perda de pigmento é o critério primário.",
+        correct: false,
+        explain: "Incorreto — o critério C refere-se a cores variadas; D é diâmetro, não descoloração."
+      },
+      {
+        text: "D de Dor — dor local é o sinal mais precoce de melanoma.",
+        correct: false,
+        explain: "Incorreto — dor não é parte da regra ABCDE; evolução e alterações visuais são mais relevantes."
+      },
+      {
+        text: "D de Derme espessada — apenas espessura palpável sem correlato com diâmetro.",
+        correct: false,
+        explain: "Incorreto — espessura é importante prognosticamente (Breslow), mas a regra D refere-se ao diâmetro (>6 mm)."
+      }
+    ]
+  },
+  {
+    q: "5) Questão — Em relação aos subtipos de melanoma, qual associação está CORRETA segundo o material?",
+    choices: [
+      {
+        text: "Melanoma de disseminação superficial é o subtipo mais comum (60–70%), frequentemente com fase radial prolongada e acometendo adultos entre 40–60 anos.",
+        correct: true,
+        explain: "Correto — o PDF descreve o melanoma superficial como o mais frequente, com idade média 40–60 e crescimento radial antes do vertical."
+      },
+      {
+        text: "Melanoma nodular é tipicamente de crescimento lento e raramente forma nódulos ulcerados.",
+        correct: false,
+        explain: "Incorreto — melanoma nodular tende a crescer verticalmente rápido, frequentemente formando nódulos ulcerados e com pior prognóstico."
+      },
+      {
+        text: "Lentigo maligno-melanoma é o subtipo que predomina em pessoas jovens (20–30 anos).",
+        correct: false,
+        explain: "Incorreto — lentigo maligno-melanoma é mais frequente em idosos (7ª década) e surge sobre lentigo maligno."
+      },
+      {
+        text: "Melanoma acral tem forte relação com exposição solar e é raro em peles escuras.",
+        correct: false,
+        explain: "Incorreto — melanoma acral tem menor relação com exposição solar e é relativamente mais comum em pessoas de pele mais escura (afro e asiáticos)."
+      }
+    ]
+  },
+  {
+    q: "6) Questão — Sobre nevo melanocítico congênito gigante (NMCG), qual alternativa reflete o risco descrito no PDF?",
+    choices: [
+      {
+        text: "NMCG (>20 cm) apresenta risco estimado de transformação em melanoma ao longo da vida entre ~5–15% (dados históricos), sendo provavelmente menor (2.5–3%).",
+        correct: true,
+        explain: "Correto — o material informa risco de 5–15% em estimativas antigas, porém indica que probabilidade real pode ser menor (2,5–3%)."
+      },
+      {
+        text: "Nevos congênitos pequenos (<1 cm) têm risco semelhante ao NMCG e devem ser manejados da mesma forma.",
+        correct: false,
+        explain: "Incorreto — risco de transformação é muito menor em nevos pequenos; as condutas diferem."
+      },
+      {
+        text: "NMCG nunca evolui para melanoma após a infância.",
+        correct: false,
+        explain: "Incorreto — transformação é mais frequente na infância, mas não é impossível depois; afirmação de 'nunca' é incorreta."
+      },
+      {
+        text: "NMCG está associado exclusivamente a melanomas do sistema nervoso central (SNC) e não cutâneos.",
+        correct: false,
+        explain: "Incorreto — embora exista risco de lesões associadas, NMCG aumenta risco de melanoma cutâneo; associação exclusiva com SNC é falsa."
+      }
+    ]
+  },
+  {
+    q: "7) Questão — Em suspeita clínica de melanoma, qual é a conduta diagnóstica inicial recomendada pelo material?",
+    choices: [
+      {
+        text: "Biópsia excisional com margens estreitas (1–2 mm) para permitir avaliação da arquitetura e microestadiamento pelo patologista.",
+        correct: true,
+        explain: "Correto — o documento recomenda biópsia excisional com margens estreitas para avaliação precisa da lesão e microestadiamento."
+      },
+      {
+        text: "Ressecção ampla imediata com margens de 2 cm sem aguardar anatomia patológica.",
+        correct: false,
+        explain: "Incorreto — a ressecção ampla é etapa terapêutica após confirmação histológica e estadiamento; biópsia diagnóstica inicial deve ser excisional com margem estreita."
+      },
+      {
+        text: "Apenas observação clínica por 3 meses se a lesão for menor que 1 cm.",
+        correct: false,
+        explain: "Incorreto — evolução e alterações justificam investigação; observar sem biópsia não é conduta indicada frente a critérios ABCDE."
+      },
+      {
+        text: "Biópsia incisional profunda como padrão inicial para todas as lesões suspeitas.",
+        correct: false,
+        explain: "Incorreto — biópsia excisional é preferida quando possível; incisional pode ser usada quando excisional impraticável, mas não é padrão para todas as lesões."
+      }
+    ]
+  },
+  {
+    q: "8) Questão — Sobre a investigação do linfonodo sentinela (LS), qual alternativa é verdadeira segundo o material?",
+    choices: [
+      {
+        text: "A pesquisa de LS é indicada principalmente para melanomas primários com espessura >1 mm e sem linfonodos clinicamente palpáveis.",
+        correct: true,
+        explain: "Correto — a indicação principal é melanoma primário >1 mm sem acometimento linfonodal clínico, conforme o PDF."
+      },
+      {
+        text: "A pesquisa de LS deve ser realizada rotineiramente em todos os melanomas in situ.",
+        correct: false,
+        explain: "Incorreto — melanomas in situ não requerem geralmente pesquisa de LS; indicações dependem da espessura e risco."
+      },
+      {
+        text: "Se houver linfonodo clinicamente acometido, ainda é necessária pesquisa de LS pré-operatória.",
+        correct: false,
+        explain: "Incorreto — quando há linfonodo clinicamente acometido, investigação de LS não é necessária; procede-se à avaliação do linfonodo clínico."
+      },
+      {
+        text: "A identificação do LS é feita exclusivamente por ultrassom, sem uso de marcadores radioativos ou corantes.",
+        correct: false,
+        explain: "Incorreto — o PDF descreve linfocintilografia pré-op e uso intra-op de tecnécio e corante azul patente para localizar o LS."
+      }
+    ]
+  },
+  {
+    q: "9) Questão — Considerando estadiamento e exames de imagem, qual conduta o material recomenda para pacientes com melanoma em estágios III e IV?",
+    choices: [
+      {
+        text: "Solicitar TC de tórax, abdome e pelve com contraste e RM de encéfalo (ou PET-scan) para avaliação de doença distante.",
+        correct: true,
+        explain: "Correto — para estágios III/IV o PDF recomenda TC tórax/abdome/pelve com contraste e imagem do encéfalo (RM) ou PET-scan conforme disponibilidade."
+      },
+      {
+        text: "Nenhum exame de imagem é necessário para estágios III e IV em pacientes assintomáticos.",
+        correct: false,
+        explain: "Incorreto — nos estágios avançados (III/IV) a imagem é indicada para busca de metástases, mesmo que assintomáticos."
+      },
+      {
+        text: "Somente radiografia de tórax é suficiente para estadiamento metastático em todos os pacientes.",
+        correct: false,
+        explain: "Incorreto — radiografia simples é insuficiente para estadiamento completo; o material recomenda TC e RM/PET em estágios altos."
+      },
+      {
+        text: "Exames de imagem são substituíveis por testes laboratoriais (marcadores sorológicos) isoladamente.",
+        correct: false,
+        explain: "Incorreto — não há substituição por marcadores sorológicos; imagem é necessária para estadiamento anatômico."
+      }
+    ]
+  },
+  {
+    q: "10) Questão — Em relação aos antígenos de diferenciação de melanócitos usados em imuno-histoquímica, qual combinação está de acordo com o material?",
+    choices: [
+      {
+        text: "HMB45 tem alta especificidade mas sensibilidade limitada; MITF é mais limitada aos melanócitos; SOX10 é útil para melanoma desmoplásico; S100 é confiável para componente fusiforme.",
+        correct: true,
+        explain: "Correto — essas descrições correspondem às observações do PDF sobre marcadores IHQ (HMB45, MITF, SOX10, S100)."
+      },
+      {
+        text: "HMB45 é altamente sensível e inespecífico, por isso não é usado na prática clínica.",
+        correct: false,
+        explain: "Incorreto — HMB45 tem alta especificidade mas sensibilidade limitada; ainda é utilizado em combinação com outros marcadores."
+      },
+      {
+        text: "SOX10 é inespecífico e nunca auxilia no diagnóstico de variantes desmoplásicas.",
+        correct: false,
+        explain: "Incorreto — o material cita SOX10 como útil em melanoma desmoplásico."
+      },
+      {
+        text: "S100 não cora componentes fusiformes de melanomas e por isso não é recomendado.",
+        correct: false,
+        explain: "Incorreto — S100 é descrito como mais confiável para componentes fusiformes."
+      }
+    ]
+  },
+  {
+    q: "11) Questão — Acerca da progressão do melanoma, diferencie crescimento radial (RGP) e crescimento vertical (VGP) conforme o material. Qual frase resume corretamente a diferença?",
+    choices: [
+      {
+        text: "Crescimento radial corresponde à disseminação intraepidérmica/derme papilar sem invasão profunda e geralmente sem metástases; crescimento vertical associa-se a nódulos dérmicos e risco de disseminação sistêmica.",
+        correct: true,
+        explain: "Correto — o PDF descreve RGP como disseminação horizontal com baixo risco metastático, e VGP como presença de nódulos dérmicos com maior risco."
+      },
+      {
+        text: "Crescimento radial indica invasão extensiva da derme profunda e alto risco de metástase imediata.",
+        correct: false,
+        explain: "Incorreto — RGP refere-se a fase horizontal superficial; invasão profunda e alto risco são características do VGP."
+      },
+      {
+        text: "VGP é sinônimo de melanoma in situ e, portanto, sem risco metastático.",
+        correct: false,
+        explain: "Incorreto — VGP implica crescimento vertical com maior risco; melanoma in situ é restrito à epiderme."
+      },
+      {
+        text: "RGP sempre evolui para VGP em menos de 3 meses em todos os casos.",
+        correct: false,
+        explain: "Incorreto — a transição temporal varia muito; nem todos os melanomas seguem um prazo curto e uniforme."
+      }
+    ]
+  },
+  {
+    q: "12) Questão — Sobre o manejo cirúrgico de um melanoma primário confirmado, qual estratégia de ampliação de margens está conforme as recomendações do PDF?",
+    choices: [
+      {
+        text: "Tumor in situ: 0,5–1 cm; até 1 mm: 1 cm; 1,01–2 mm: 1–2 cm; >2 mm: 2 cm.",
+        correct: true,
+        explain: "Correto — o documento traz exatamente essa tabela de margens de ressecção ampliada segundo a espessura tumoral."
+      },
+      {
+        text: "Sempre realizar margens de 5 cm independente da espessura tumoral.",
+        correct: false,
+        explain: "Incorreto — margens de 5 cm não são recomendadas rotineiramente; as margens dependem da espessura (Breslow)."
+      },
+      {
+        text: "Não é necessária ampliação de margens após biópsia diagnóstica excisional com 1–2 mm de margem inicial.",
+        correct: false,
+        explain: "Incorreto — após confirmação histológica, indica-se ampliação conforme espessura para tratamento definitivo."
+      },
+      {
+        text: "Para tumores >2 mm, margens de 0,5 cm são suficientes se houver boa aparência clínica.",
+        correct: false,
+        explain: "Incorreto — o material recomenda 2 cm para tumores >2 mm; 0,5 cm é insuficiente."
+      }
+    ]
+  },
+  {
+    q: "13) Questão — Em que circunstâncias a pesquisa de LS pode não ser necessária segundo as orientações presentes no material (considerando evidências e recomendações citadas)?",
+    choices: [
+      {
+        text: "Quando há linfonodo clinicamente acometido (palpável/visível) — nesse cenário a pesquisa de LS não é necessária.",
+        correct: true,
+        explain: "Correto — o PDF afirma que não é preciso realizar pesquisa de LS se linfonodo estiver clinicamente acometido."
+      },
+      {
+        text: "Em todos os pacientes com T1a (espessura <0,8 mm sem ulceração), a pesquisa de LS é mandatória.",
+        correct: false,
+        explain: "Incorreto — LS não é mandatória em melanomas muito finos (T1a); indicações dependem de critérios de risco."
+      },
+      {
+        text: "Em tumores com mais de 1 mm, a pesquisa de LS é absolutamente proibida.",
+        correct: false,
+        explain: "Incorreto — pelo contrário, espessuras >1 mm são uma das principais indicações para pesquisa de LS."
+      },
+      {
+        text: "Quando o paciente recusa cirurgia, a pesquisa de LS deve ser realizada isoladamente como substituto da ressecção primária.",
+        correct: false,
+        explain: "Incorreto — pesquisa de LS não substitui tratamento local; decisão de manejo deve seguir sequência diagnóstica/terapêutica adequada."
+      }
+    ]
+  },
+  {
+    q: "14) Questão — Em relação às situações especiais, qual afirmação sobre melanoma e gravidez está indicada pelo material?",
+    choices: [
+      {
+        text: "A gravidez pode aumentar a pigmentação dos nevos (>10% no 1º trimestre), mas não aumenta o risco nem piora o prognóstico do melanoma; em melanoma de alto risco recomenda-se adiar gravidez por ~2 anos após o diagnóstico.",
+        correct: true,
+        explain: "Correto — o PDF descreve aumento de pigmentação dos nevos na gravidez sem aumento de risco; recomenda aguardar ~2 anos em melanomas de alto risco."
+      },
+      {
+        text: "A gravidez multiplica o risco de metástase transplacentária em todos os casos, sendo contraindicado o tratamento durante a gestação.",
+        correct: false,
+        explain: "Incorreto — metástase transplacentária é rara; tratamento pode ser considerado quando necessário, sem contraindicação absoluta."
+      },
+      {
+        text: "Todos os tratamentos sistêmicos (imunoterapia e terapia-alvo) são absolutamente seguros durante a gravidez.",
+        correct: false,
+        explain: "Incorreto — muitos tratamentos têm riscos; decisões em gestação exigem avaliação cuidadosa e ponderação dos riscos/benefícios."
+      },
+      {
+        text: "Se o melanoma for diagnosticado na gravidez, sempre indicar interrupção gestacional antes de qualquer terapia.",
+        correct: false,
+        explain: "Incorreto — interrupção gestacional não é automaticamente indicada; abordagem individualizada é necessária."
+      }
+    ]
+  },
+  {
+    q: "15) Questão — Sobre terapias adjuvantes descritas no material, qual combinação/indicação está de acordo com o texto?",
+    choices: [
+      {
+        text: "Terapia adjuvante é considerada para melanoma ressecado de alto risco (estágios II e III); opções incluem IFNα para alguns estágios e ipilimumabe em contexto de estágio III.",
+        correct: true,
+        explain: "Correto — o documento menciona terapia adjuvante para estágios II/III de alto risco, citando IFNα e ipilimumabe conforme cenário."
+      },
+      {
+        text: "Não existe indicação de terapia adjuvante para nenhum paciente com melanoma ressecado, independente do estágio.",
+        correct: false,
+        explain: "Incorreto — há indicações de terapia adjuvante em pacientes com alto risco e em estágios II/III conforme listado."
+      },
+      {
+        text: "Terapia adjuvante com inibidores de checkpoint é primeira linha em melanoma estágio I recém-ressecado.",
+        correct: false,
+        explain: "Incorreto — inibidores de checkpoint são usados em doença avançada (estágio IV) ou em adjuvância para alto risco; não são rotineiros para estágio I ressecado."
+      },
+      {
+        text: "A adição de radioterapia é o padrão adjuvante para todos os melanomas resecados localmente.",
+        correct: false,
+        explain: "Incorreto — radioterapia tem indicações específicas; não é padrão adjuvante para todos os melanomas ressecados."
+      }
+    ]
+  },
+  {
+    q: "16) Questão — Qual dos seguintes achados histológicos possui maior impacto prognóstico independente em melanoma primário?",
+    choices: [
+      {
+        text: "Espessura de Breslow (medida em mm).",
+        correct: true,
+        explain: "Correto — a espessura vertical medida pelo índice de Breslow é o principal preditor prognóstico individual em melanoma primário, conforme o material."
+      },
+      {
+        text: "Presença de inflamação linfocitária peritumoral.",
+        correct: false,
+        explain: "Incorreto — infiltrado linfocitário pode ter impacto prognóstico (às vezes favorável), mas não supera a espessura de Breslow como preditor independente mais importante."
+      },
+      {
+        text: "Localização anatômica do tumor (membros vs tronco) isoladamente.",
+        correct: false,
+        explain: "Incorreto — localização influencia padrões de disseminação e prognóstico, mas é menos determinante que a espessura tumoral."
+      },
+      {
+        text: "Grau de pigmentação (mais pigmentado = pior prognóstico).",
+        correct: false,
+        explain: "Incorreto — pigmentação da lesão não é utilizada como preditor independente comparável à espessura."
+      }
+    ]
+  },
+  {
+    q: "17) Questão — Sobre o papel da taxa mitótica no estadiamento do melanoma, qual afirmação coincide com o conteúdo do PDF?",
+    choices: [
+      {
+        text: "Taxa mitótica elevada é associada a pior prognóstico e já foi usada como critério para definir T1b em versões anteriores do estadiamento.",
+        correct: true,
+        explain: "Correto — o documento descreve que maior taxa mitótica correlaciona-se com pior prognóstico e foi um critério considerado em versões prévias do TNM (para T1b)."
+      },
+      {
+        text: "Taxa mitótica não tem nenhuma correlação com risco de recidiva ou evolução do melanoma.",
+        correct: false,
+        explain: "Incorreto — existe correlação entre maior atividade mitótica e pior pronóstico; portanto a afirmação é falsa."
+      },
+      {
+        text: "Taxa mitótica é o único critério atual para indicação de pesquisa de linfonodo sentinela.",
+        correct: false,
+        explain: "Incorreto — indicação de LS depende principalmente da espessura e outros fatores (ulceração, características histológicas), não apenas da taxa mitótica."
+      },
+      {
+        text: "Taxa mitótica elevada contraindica ressecção ampla por risco de sangramento.",
+        correct: false,
+        explain: "Incorreto — a taxa mitótica não é contraindicação para ressecção ampla; é um parâmetro prognóstico, não uma limitação cirúrgica."
+      }
+    ]
+  },
+  {
+    q: "18) Questão — Em relação à biópsia excisional para suspeita de melanoma, qual prática é indicada pelo material para preservar a avaliação patológica adequada?",
+    choices: [
+      {
+        text: "Realizar excisão completa da lesão com margem estreita (1–2 mm) e evitar cauterização excessiva que prejudique avaliação histológica.",
+        correct: true,
+        explain: "Correto — o PDF recomenda biópsia excisional com margens estreitas e cuidado técnico para não comprometer a avaliação microscópica."
+      },
+      {
+        text: "Sempre realizar eletrocoagulação extensa do leito para diminuir risco de recorrência antes da análise histológica.",
+        correct: false,
+        explain: "Incorreto — eletrocoagulação extensa pode comprometer avaliação histológica e não é recomendada antes da confirmação diagnóstica."
+      },
+      {
+        text: "Painel de biópsia por agulha é preferível para todos os melanomas suspeitos pela menor morbidade.",
+        correct: false,
+        explain: "Incorreto — biópsia por agulha não permite avaliação da arquitetura e espessura adequadas; excisional é preferida quando possível."
+      },
+      {
+        text: "Realizar somente fotografia clínica e aguardar crescimento evidente antes de biópsia.",
+        correct: false,
+        explain: "Incorreto — observação sem biópsia não é indicada diante de critérios suspeitos (ABCDE); biópsia diagnóstica é necessária."
+      }
+    ]
+  },
+  {
+    q: "19) Questão — Qual é a indicação mais aceita para uso de PET-CT no estadiamento de melanoma segundo o material?",
+    choices: [
+      {
+        text: "Avaliação de doença avançada (estágios III/IV) para detecção de metástases macroscópicas e planejamento terapêutico.",
+        correct: true,
+        explain: "Correto — o PDF recomenda o uso de PET-CT/PET em investigação de doença estágio III/IV para detecção de metástases e mapeamento funcional."
+      },
+      {
+        text: "Rotina para todos os melanomas in situ ou T1 (<1 mm) sem fatores de risco adicionais.",
+        correct: false,
+        explain: "Incorreto — PET-CT não é indicado rotineiramente para melanomas muito finos/in situ; sua utilidade aumenta em doença avançada."
+      },
+      {
+        text: "Substituir completamente a linfocintilografia para localizar linfonodo sentinela em tumores primários.",
+        correct: false,
+        explain: "Incorreto — PET-CT não substitui a linfocintilografia/linfocintigrafia para mapeamento de LS; métodos nucleares e corantes permanecem padrão."
+      },
+      {
+        text: "Uso exclusivo para detecção de metástases cerebrais sem necessidade de RM cerebral.",
+        correct: false,
+        explain: "Incorreto — PET-CT tem limitação em lesões cerebrais pequenas; RM cerebral é indicada para investigação do SNC, conforme o material."
+      }
+    ]
+  },
+  {
+    q: "20) Questão — Sobre o manejo do linfonodo sentinela positivo, qual das alternativas reflete as discussões apresentadas no PDF?",
+    choices: [
+      {
+        text: "Historicamente a dissecção completa do leito linfonodal foi padrão, porém ensaios recentes mostraram que nem sempre traz benefício em sobrevida global, gerando debate sobre observação vigilante em alguns casos.",
+        correct: true,
+        explain: "Correto — o documento aborda que a dissecção completa foi prática padrão, mas evidências recentes questionam benefício em sobrevida, levando à opção de observação em pacientes selecionados."
+      },
+      {
+        text: "Linfonodo sentinela positivo exige sempre quimioterapia adjuvante sem necessidade de cirurgia adicional.",
+        correct: false,
+        explain: "Incorreto — tratamento não é simplesmente quimioterapia; conduta pode incluir dissecção, adjuvância sistêmica ou observação dependendo do contexto."
+      },
+      {
+        text: "Apenas pacientes com LS positivo e metástase macroscópica clinicamente evidente devem ser considerados para qualquer intervenção.",
+        correct: false,
+        explain: "Incorreto — LS micrometastático tem implicações prognósticas e manejo (dissecção vs observação) deve ser individualizado; não se limita apenas a metástase macroscópica."
+      },
+      {
+        text: "Dissecção completa do leito linfonodal é atualmente proibida em todo o mundo após LS positivo.",
+        correct: false,
+        explain: "Incorreto — não é proibida; sua indicação foi refinada com base em estudos; ainda pode ser indicada em casos selecionados."
+      }
+    ]
+  },
+  {
+    q: "21) Questão — Referente às terapias-alvo no melanoma, qual afirmação está alinhada com o PDF?",
+    choices: [
+      {
+        text: "Melanomas com mutação BRAF V600 podem ser tratados com inibidores de BRAF e frequentemente são combinados com inibidores de MEK para melhorar respostas e reduzir resistência.",
+        correct: true,
+        explain: "Correto — o material descreve que tumores BRAF V600 respondem a inibidores de BRAF (ex.: vemurafenibe) e combinação com inibidores de MEK melhora eficácia e tolerabilidade."
+      },
+      {
+        text: "Inibidores de BRAF são eficazes independentemente do status mutacional de BRAF.",
+        correct: false,
+        explain: "Incorreto — eficácia de inibidores de BRAF depende da presença de mutação ativadora (p. ex. V600); não são indicados em tumores BRAF selvagem."
+      },
+      {
+        text: "Terapias-alvo com BRAF/MEK não apresentam resistência tumoral ao longo do tempo.",
+        correct: false,
+        explain: "Incorreto — resistência secundária pode surgir e limita duração de resposta; por isso combinações e estratégias sequenciais são estudadas."
+      },
+      {
+        text: "Testagem de mutação BRAF não é necessária antes de iniciar terapia-alvo.",
+        correct: false,
+        explain: "Incorreto — testagem é obrigatória para selecionar pacientes que se beneficiarão desses agentes."
+      }
+    ]
+  },
+  {
+    q: "22) Questão — Em relação à imunoterapia, qual dos pontos abaixo está descrito no material como relevante para o tratamento do melanoma avançado?",
+    choices: [
+      {
+        text: "Bloqueadores de checkpoint (anti-CTLA-4, anti-PD-1) mostraram melhorar sobrevida em melanoma metastático e são opções centrais em terapia sistêmica.",
+        correct: true,
+        explain: "Correto — o PDF enfatiza que imunoterapia com inibidores de checkpoint mudou o prognóstico do melanoma metastático, melhorando sobrevida em diversos estudos."
+      },
+      {
+        text: "Imunoterapia é ineficaz em melanoma e não tem papel no tratamento moderno.",
+        correct: false,
+        explain: "Incorreto — imunoterapia é eficaz e tornou-se parte fundamental do tratamento de melanoma avançado."
+      },
+      {
+        text: "Terapia com anti-PD-1 tem piores taxas de resposta que quimioterapia convencional em melanoma metastático.",
+        correct: false,
+        explain: "Incorreto — anti-PD-1 geralmente supera quimioterapia em resposta e sobrevida em melanoma metastático."
+      },
+      {
+        text: "Eventos adversos imunes são raros e não requerem manejo específico.",
+        correct: false,
+        explain: "Incorreto — eventos adversos imunomediados são relevantes e requerem reconhecimento/gerenciamento (corticoterapia, suspensão terapêutica) conforme o documento."
+      }
+    ]
+  },
+  {
+    q: "23) Questão — Quanto ao seguimento de pacientes com melanoma ressecado, qual conduta é mencionada no PDF como razoável?",
+    choices: [
+      {
+        text: "Avaliações clínicas regulares com exame físico integrado por exames de imagem conforme risco (maior intensidade em estágios mais avançados), além de orientação para autoexame de pele.",
+        correct: true,
+        explain: "Correto — o material recomenda seguimento clínico regular com imagens conforme risco, e educação para autoexame como parte do acompanhamento."
+      },
+      {
+        text: "Nenhum seguimento clínico é necessário após ressecção local de melanoma em qualquer estágio.",
+        correct: false,
+        explain: "Incorreto — seguimento é importante, especialmente em estágios mais altos ou com risco de recidiva; afirmação é falsa."
+      },
+      {
+        text: "Exames de imagem de alta sensibilidade (PET-CT) devem ser realizados mensalmente em todos os pacientes nos primeiros 2 anos.",
+        correct: false,
+        explain: "Incorreto — vigilância por imagem deve ser estratificada por risco; exames mensais são excessivos e não recomendados rotineiramente."
+      },
+      {
+        text: "Encaminhamento ao oncogeneticista é desnecessário mesmo com história familiar sugestiva.",
+        correct: false,
+        explain: "Incorreto — presença de história familiar (suspita mutações como CDKN2A) justifica avaliação genética conforme o material."
+      }
+    ]
+  },
+  {
+    q: "24) Questão — Sobre variantes clínicas menos comuns, qual afirmação referente ao melanoma desmoplásico está de acordo com o PDF?",
+    choices: [
+      {
+        text: "Melanoma desmoplásico tende a apresentar baixa expressão de melanocítica em HMB45 e pode precisar de SOX10/S100 para diagnóstico; tem comportamento local agressivo e menor tropismo ganglionar.",
+        correct: true,
+        explain: "Correto — o documento descreve desmoplásico com baixa sensibilidade para HMB45, utilidade de SOX10/S100 e padrão de maior agressividade local com menos acometimento ganglionar."
+      },
+      {
+        text: "Melanoma desmoplásico é sempre superficial e nunca invade tecido subcutâneo.",
+        correct: false,
+        explain: "Incorreto — desmoplásico pode invadir profundamente; a afirmação é incorreta."
+      },
+      {
+        text: "HMB45 é sempre o único marcador necessário para diagnosticar melanoma desmoplásico.",
+        correct: false,
+        explain: "Incorreto — HMB45 pode falhar; SOX10 e S100 são úteis para confirmar diagnóstico."
+      },
+      {
+        text: "Desmoplásico tem melhor prognóstico que melanoma superficial por ser menos invasivo.",
+        correct: false,
+        explain: "Incorreto — desmoplásico tem comportamento local agressivo e o prognóstico depende de múltiplos fatores; não é necessariamente melhor."
+      }
+    ]
+  },
+  {
+    q: "25) Questão — Considerando melanomas em sítios não cutâneos (mucosos, acrais), o material aponta que:",
+    choices: [
+      {
+        text: "Melanomas mucosos e acrais têm menor associação com exposição UV, frequentemente apresentam biologia distinta e pior prognóstico comparado a melanomas cutâneos típicos.",
+        correct: true,
+        explain: "Correto — o PDF descreve que mucosos e acrais têm menor relação com UV, biologia diferente e geralmente prognóstico pior."
+      },
+      {
+        text: "Melanoma acral é exclusivamente uma doença de pele clara e raro em afrodescendentes.",
+        correct: false,
+        explain: "Incorreto — acral é relativamente mais comum em peles escuras; a afirmação é falsa."
+      },
+      {
+        text: "Melanomas mucosos têm excelente resposta a terapias tópicas e raramente necessitam de cirurgia ampla.",
+        correct: false,
+        explain: "Incorreto — melanomas mucosos são agressivos e frequentemente requerem abordagem cirúrgica ampla e multidisciplinar."
+      },
+      {
+        text: "Não é necessário testar mutações (p. ex. KIT, BRAF) em melanomas mucosos ou acrais.",
+        correct: false,
+        explain: "Incorreto — avaliação molecular pode ser relevante (ex.: KIT em mucosos/acrais) para orientar terapia-alvo."
+      }
+    ]
+  },
+  {
+    q: "26) Questão Clínica — Um homem de 58 anos apresenta lesão pigmentada no dorso de 1,8 cm, heterogênea, com bordas irregulares e área ulcerada. Biópsia excisional mostra melanoma de espessura 2,3 mm (Breslow) com ulceração e taxa mitótica elevada. Não há linfonodos palpáveis. Qual é a conduta diagnóstica/terapêutica inicial mais apropriada?",
+    choices: [
+      {
+        text: "Ressecção excisional ampliada com margens definitivas (2 cm) e indicação de pesquisa de linfonodo sentinela pré-operatória.",
+        correct: true,
+        explain: "Correto — para tumor >2 mm com ulceração a ressecção ampliada conforme margem recomendada (2 cm) é indicada, além de pesquisa de LS para estadiamento regional."
+      },
+      {
+        text: "Aguardar 3 meses para reavaliar crescimento antes de qualquer cirurgia adicional.",
+        correct: false,
+        explain: "Incorreto — atraso não é indicado em tumor com espessura >2 mm e ulceração; conduta é cirúrgica imediata e estadiamento."
+      },
+      {
+        text: "Iniciar quimioterapia sistêmica imediata sem realizar ressecção ampliada.",
+        correct: false,
+        explain: "Incorreto — tratamento sistêmico não substitui ressecção local; manejo inicial é cirúrgico com estadiamento."
+      },
+      {
+        text: "Realizar apenas radioterapia local, visto que há ulceração significativa.",
+        correct: false,
+        explain: "Incorreto — radioterapia não substitui ressecção cirúrgica primária em melanoma localizado; cirurgia é padrão inicial."
+      }
+    ]
+  },
+  {
+    q: "27) Questão Clínica — Mulher de 46 anos operada de melanoma primário com 1,2 mm de espessura (sem ulceração) tem pesquisa de linfonodo sentinela realizada e LS positivo com micrometástase ≤1 mm. Segundo as discussões presentes no PDF, qual é uma alternativa aceitável no manejo desse paciente?",
+    choices: [
+      {
+        text: "Discussão entre dissecção completa do leito linfonodal versus observação com vigilância por imagem e ultrassom, considerando individualização e evidências que não demonstraram benefício de sobrevida em todos os casos.",
+        correct: true,
+        explain: "Correto — o documento relata que após LS positivo a dissecção completa foi padrão, mas estudos recentes permitem considerar observação vigilante em pacientes selecionados, devendo-se individualizar."
+      },
+      {
+        text: "Realizar imediatamente quimioterapia paliativa sem considerar cirurgia regional.",
+        correct: false,
+        explain: "Incorreto — quimioterapia paliativa não é conduta padrão para micrometástase de LS; opções cirúrgicas ou observação devem ser discutidas."
+      },
+      {
+        text: "Ignorar LS positivo se micrometástase ≤1 mm, pois não tem significado prognóstico.",
+        correct: false,
+        explain: "Incorreto — LS positivo tem significado prognóstico; micrometástase pequena tem impacto, e manejo deve ser discutido; ignorar não é adequado."
+      },
+      {
+        text: "Indicar radioterapia exclusiva do leito linfonodal como padrão universal após LS positivo.",
+        correct: false,
+        explain: "Incorreto — radioterapia do leito pode ter indicações selecionadas, mas não é padrão universal substituto de dissecção ou observação."
+      }
+    ]
+  },
+  {
+    q: "28) Questão Clínica — Paciente de 72 anos com história de lesão pigmentada no antebraço, lentamente cresceu ao longo de 10 anos; ao exame, lesão extensa, com bordas irregulares; biópsia revela lentigo maligno com foco de invasão (0,7 mm). Qual é o melhor plano terapêutico com base no material?",
+    choices: [
+      {
+        text: "Ressecção ampla com margem adequada (~1 cm para espessura ≤1 mm) e avaliação histopatológica completa; pesquisa de LS não é obrigatória para espessuras ≤1 mm sem outros fatores de risco.",
+        correct: true,
+        explain: "Correto — lentigo maligno com invasão leve (0,7 mm) requer ressecção ampla com margem adequada; LS geralmente não indicado se ≤1 mm sem fatores de risco adicionais."
+      },
+      {
+        text: "Não tratar cirurgicamente por conta da idade; apenas observação clínica é suficiente.",
+        correct: false,
+        explain: "Incorreto — idade não contraindica ressecção curativa; tratamento cirúrgico é recomendado conforme risco/oncológico."
+      },
+      {
+        text: "Aplicar terapia fotodinâmica como tratamento padrão para lentigo maligno invasivo.",
+        correct: false,
+        explain: "Incorreto — terapia fotodinâmica não é padrão para lentigo maligno invasivo; ressecção cirúrgica é recomendada."
+      },
+      {
+        text: "Iniciar terapia sistêmica com inibidor de BRAF sem teste molecular prévio.",
+        correct: false,
+        explain: "Incorreto — terapia sistêmica por inibidor de BRAF requer teste de mutação; não é indicada como primeira opção para tumor <1 mm ressecável."
+      }
+    ]
+  },
+  {
+    q: "29) Questão Clínica — Homem de 35 anos com história familiar de melanoma (pai e tio materno com diagnóstico em idades jovens). Ele apresenta múltiplos nevos atípicos. Qual ação preventiva/diagnóstica é recomendada de acordo com o PDF?",
+    choices: [
+      {
+        text: "Encaminhamento para avaliação genética (considerando CDKN2A) e vigilância dermatológica intensiva com fotografias seriadas e dermatoscopia, além de educação para proteção solar.",
+        correct: true,
+        explain: "Correto — história familiar sugestiva e nevos atípicos indicam avaliar risco genético (CDKN2A) e intensificar vigilância com dermatoscopia/fotografia e medidas de prevenção UV."
+      },
+      {
+        text: "Nenhuma intervenção necessária porque história familiar não altera o risco individual.",
+        correct: false,
+        explain: "Incorreto — história familiar aumenta suspeita de síndrome hereditária; avaliação genética e vigilância são apropriadas."
+      },
+      {
+        text: "Remoção profilática de todos os nevos sem avaliação prévia por dermatoscopia.",
+        correct: false,
+        explain: "Incorreto — excisão de todos os nevos profilaticamente não é recomendada; abordagem seletiva com monitorização é preferível."
+      },
+      {
+        text: "Iniciar quimioprofilaxia oral para reduzir risco de melanoma primário.",
+        correct: false,
+        explain: "Incorreto — não há indicação de quimioprofilaxia oral para prevenção de melanoma em pacientes com nevos atípicos; foco é vigilância e prevenção UV."
+      }
+    ]
+  },
+  {
+    q: "30) Questão Clínica — Mulher de 63 anos apresenta nódulo subungueal no hálux com dor e sangramento. Biópsia revela melanoma acral lentiginoso com 3,5 mm de espessura. Não há metástases detectáveis por TC. Considerando o material, qual é a melhor conduta inicial?",
+    choices: [
+      {
+        text: "Ressecção cirúrgica ampla do local afetado (incluindo possível amputação parcial do dígito dependendo do comprometimento) com margens apropriadas e avaliação do linfonodo sentinela, visto o espessura >1 mm.",
+        correct: true,
+        explain: "Correto — melanoma acral com 3,5 mm exige ressecção ampla, que em local subungueal pode demandar amputação parcial do dígito para margens oncologicamente seguras, além de indicação de LS para estadiamento regional."
+      },
+      {
+        text: "Tratamento exclusivo com antibióticos por suspeita de onicomicose infectada.",
+        correct: false,
+        explain: "Incorreto — biópsia confirmou melanoma; antibióticos não são adequados; tratamento oncológico/cirúrgico é prioridade."
+      },
+      {
+        text: "Crioterapia local como primeira linha para lesões subungueais invasivas.",
+        correct: false,
+        explain: "Incorreto — crioterapia não é tratamento apropriado para melanoma invasivo; cirurgia é indicada."
+      },
+      {
+        text: "Somente observação, pois melanomas acrais têm comportamento indolente e raramente metastatizam.",
+        correct: false,
+        explain: "Incorreto — melanomas acrais podem ser agressivos e têm pior prognóstico; observação isolada é inadequada para tumor de 3,5 mm."
+      }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

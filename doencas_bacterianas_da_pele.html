@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Doenças Bacterianas Da Pele</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Doenças Bacterianas Da Pele</h1>
+    <p class="lead">30 questões - Doenças Bacterianas Da Pele</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão: Qual é a definição mais adequada de piodermite?",
+    choices: [
+      { text: "Infecções da pele causadas por bactérias piogênicas que provocam processos inflamatórios em diversas camadas da pele e seus anexos.", correct: true, explain: "Piodermites são infecções cutâneas por bactérias piogênicas que causam inflamação em diferentes camadas da pele e seus anexos, conforme definição do material." },
+      { text: "Infecções exclusivamente virais da epiderme que evoluem com crostas e vesículas.", correct: false, explain: "Incorreto — piodermites são de etiologia bacteriana (piogênicas), não virais." },
+      { text: "Dermatoses alérgicas crônicas com sobreinfecção fúngica predominante.", correct: false, explain: "Incorreto — trata-se de infecções bacterianas agudas ou subagudas, não primariamente reações alérgicas ou fúngicas." },
+      { text: "Quadros neoplásicos da pele que simulam infecção por pus.", correct: false, explain: "Incorreto — piodermites são infecções bacterianas, não processos neoplásicos." }
+  ]},
+  {
+    q: "2) Questão: Entre os microrganismos a seguir, quais são os principais agentes etiológicos das piodermites descritos no material?",
+    choices: [
+      { text: "Staphylococcus aureus e Streptococcus pyogenes.", correct: true, explain: "Correto — o material destaca S. aureus (estafilocócicas) e S. pyogenes (estreptocócicas) como etiologias principais." },
+      { text: "Pseudomonas aeruginosa e Candida albicans.", correct: false, explain: "Incorreto — embora possam infectar pele, o material enfatiza S. aureus e S. pyogenes como principais agentes de piodermites." },
+      { text: "Mycobacterium tuberculosis e Nocardia spp.", correct: false, explain: "Incorreto — micobactérias não são os agentes centrais das piodermites descritas neste conteúdo." },
+      { text: "Borrelia burgdorferi e Rickettsia spp.", correct: false, explain: "Incorreto — esses agentes são responsáveis por doenças sistêmicas transmitidas por vetores, não pelas piodermites abordadas." }
+  ]},
+  {
+    q: "3) Questão: Sobre a flora cutânea permanente e transitória, qual afirmação está de acordo com o conteúdo?",
+    choices: [
+      { text: "A flora permanente inclui S. epidermidis e Propionibacterium; a flora transitória frequentemente inclui S. aureus e S. pyogenes.", correct: true, explain: "Correto — a flora residente contém cocos coagulase-negativos e propionibactérias; S. aureus e S. pyogenes são representativos da flora transitória." },
+      { text: "A flora permanente é composta principalmente por gram-negativos, enquanto a transitória é exclusivamente fúngica.", correct: false, explain: "Incorreto — a flora permanente é majoritariamente gram-positiva (cocos e bastonetes), e a transitória inclui bactérias como S. aureus/S. pyogenes." },
+      { text: "A flora transitória nunca causa infecção em pele íntegra.", correct: false, explain: "Incorreto — a flora transitória pode tornar-se patogênica quando há perda da integridade cutânea." },
+      { text: "A presença de S. epidermidis indica sempre infecção significativa.", correct: false, explain: "Incorreto — S. epidermidis é comensal da flora permanente e nem sempre indica infecção." }
+  ]},
+  {
+    q: "4) Questão: Qual fator listado no material NÃO é considerado protetor natural da pele?",
+    choices: [
+      { text: "pH ácido da pele e secreção de ácidos graxos pela flora residente.", correct: false, explain: "Incorreto — pH ácido e ácidos graxos são fatores protetores mencionados." },
+      { text: "Barreira mecânica (camada córnea) e imunidade local.", correct: false, explain: "Incorreto — tanto a barreira córnea quanto a imunidade são fatores de proteção cutânea." },
+      { text: "Uso constante e indiscriminado de sabonete antisséptico que reduz a flora residente.", correct: true, explain: "Correto — o uso de antissépticos pode reduzir a flora residente e, paradoxalmente, diminuir a proteção natural da pele segundo o material." },
+      { text: "Grau adequado de hidratação da pele.", correct: false, explain: "Incorreto — hidratação adequada é um fator protetor descrito." }
+  ]},
+  {
+    q: "5) Questão: Em relação ao impetigo não bolhoso, qual característica clínica é típica segundo o material?",
+    choices: [
+      { text: "Lesões com crostas melicéricas amareladas, frequentemente ao redor do nariz e boca, sem sintomas sistêmicos.", correct: true, explain: "Correto — impetigo não bolhoso apresenta crostas amareladas (melicéricas), localização perinasal e geralmente ausência de sinais sistêmicos." },
+      { text: "Bolhas grandes superiores a 1 cm com conteúdo seroso, típicas em adultos idosos.", correct: false, explain: "Incorreto — bolhas grandes são características do impetigo bolhoso, mais em neonatos e crianças pequenas." },
+      { text: "Úlceras profundas com necrose e linfangite intensa como achado inicial.", correct: false, explain: "Incorreto — isso não descreve o impetigo não bolhoso; úlceras profundas lembram ectima ou processos mais graves." },
+      { text: "Lesões purpúricas e escurecimento cutâneo com formação de escaras desde o início.", correct: false, explain: "Incorreto — impetigo não bolhoso tipicamente tem crostas amareladas e não escaras purpúricas." }
+  ]},
+  {
+    q: "6) Questão: Qual é a principal diferença patogênica entre impetigo bolhoso e impetigo não bolhoso, conforme o conteúdo?",
+    choices: [
+      { text: "Impetigo bolhoso está associado à produção de toxinas esfoliativas (desmogleína 1) por S. aureus, causando clivagem intraepidérmica; impetigo não bolhoso é mais superficial e associada a pústulas que formam crostas.", correct: true, explain: "Correto — impetigo bolhoso resulta de toxinas esfoliativas que clivam desmogleína-1; o não bolhoso é superficial com pústulas que evoluem para crostas melicéricas." },
+      { text: "Impetigo não bolhoso afeta apenas mucosas, enquanto o bolhoso afeta somente membros inferiores.", correct: false, explain: "Incorreto — a distinção não é por localização de mucosas vs membros; é por mecanismo toxínico e apresentação em bolhas ou crostas." },
+      { text: "Impetigo bolhoso é sempre por Streptococcus pyogenes e o não bolhoso por fungos.", correct: false, explain: "Incorreto — impetigo bolhoso é causado por S. aureus produtor de toxinas; o não bolhoso envolve S. pyogenes e S. aureus, não fungos." },
+      { text: "No impetigo bolhoso há elevação de ASLO, diferente do não bolhoso.", correct: false, explain: "Incorreto — o material relata ausência de elevação de ASLO no impetigo não bolhoso; elevação de ASLO não é marcador típico do bolhoso." }
+  ]},
+  {
+    q: "7) Questão: Para o tratamento tópico do impetigo localizado, qual opção é recomendada no material como primeira escolha?",
+    choices: [
+      { text: "Mupirocina tópica aplicada 2 vezes ao dia por 10 dias.", correct: true, explain: "Correto — o material recomenda mupirocina tópica 2x/dia por 10 dias para casos localizados." },
+      { text: "Cefalexina tópica aplicada diariamente.", correct: false, explain: "Incorreto — cefalexina é um antibiótico oral; não é utilizada topicamente conforme o material." },
+      { text: "Penicilina benzatina intramuscular única dose.", correct: false, explain: "Incorreto — penicilina benzatina não é tratamento tópico e não indicado para impetigo localizado tópico." },
+      { text: "Ácido salicílico 10% em aplicação tópica diária.", correct: false, explain: "Incorreto — ácido salicílico não é tratamento de eleição para impetigo; é citado para eritrasma como queratolítico a 2%." }
+  ]},
+  {
+    q: "8) Questão: Qual das seguintes complicações está associada ao ectima, conforme o material?",
+    choices: [
+      { text: "Glomerulonefrite difusa aguda (GNDA) e possível superinfecção por S. aureus.", correct: true, explain: "Correto — o material menciona GNDA e infecção por S. aureus como possíveis complicações do ectima." },
+      { text: "Esclerodermia localizada e perda de função motora proximal.", correct: false, explain: "Incorreto — essas não são complicações descritas do ectima." },
+      { text: "Necrólise epidérmica tóxica como evolução esperada em idosos.", correct: false, explain: "Incorreto — necrólise epidérmica tóxica não é listada como complicação típica do ectima; trata-se de diagnósticos diferenciais em outros contextos." },
+      { text: "Formação de bolhas bilaterais simétricas sem risco de insuficiência renal.", correct: false, explain: "Incorreto — formação de bolhas bilaterais simétricas não caracteriza as complicações descritas para ectima." }
+  ]},
+  {
+    q: "9) Questão: Sobre foliculite e suas formas, qual afirmação está de acordo com o material?",
+    choices: [
+      { text: "Foliculite é invasão e proliferação bacteriana no infundíbulo folicular; formas superficiais (osteofoliculites) produzem pústulas e prurido, enquanto formas profundas podem levar à perda do pelo e alopecia cicatricial.", correct: true, explain: "Correto — o material descreve foliculite como infecção do folículo com variação de profundidade que influencia prognóstico e consequências como alopecia cicatricial." },
+      { text: "Foliculite sempre implica indicação cirúrgica imediata para drenagem.", correct: false, explain: "Incorreto — nem toda foliculite requer drenagem cirúrgica; isso é mais típico de abscessos e furúnculos." },
+      { text: "Osteofoliculite refere-se à destruição óssea adjacente ao folículo piloso.", correct: false, explain: "Incorreto — osteofoliculite, no material, refere-se a pústulas no infundíbulo folicular, não à destruição óssea." },
+      { text: "Foliculite profunda é sempre causada por fungos e é tratada apenas com antifúngicos.", correct: false, explain: "Incorreto — a etiologia bacteriana (S. aureus) é destacada; antifúngicos não são a terapia padrão para foliculite bacteriana." }
+  ]},
+  {
+    q: "10) Questão: Qual é a conduta inicial recomendada no tratamento de furúnculos no material?",
+    choices: [
+      { text: "Compressas mornas e, se indicado, antibioticoterapia sistêmica como cefalexina ou amoxicilina com ácido clavulânico.", correct: true, explain: "Correto — o material recomenda compressas mornas e, quando necessário, ATB sistêmica (cefalexina, cefadroxila, amox/clav)." },
+      { text: "Aplicação de permanganato de potássio a 1/100 para drenagem imediata.", correct: false, explain: "Incorreto — compressas mornas são citadas; permanganato pode ser usado como antisséptico em impetigo, não como método primário de drenagem." },
+      { text: "Tratamento exclusivo com corticóides tópicos para reduzir a inflamação antes de drenar.", correct: false, explain: "Incorreto — corticoides não são terapia indicada para furúnculo ativo e podem piorar infecções bacterianas." },
+      { text: "Desbridamento radical sem uso de antibiótico em todos os casos.", correct: false, explain: "Incorreto — desbridamento radical não é conduta rotineira para furúnculo simples; drenagem pode ser necessária e ATB em casos selecionados." }
+  ]},
+  {
+    q: "11) Questão: Em relação a carbúnculo, qual descrição coincide com o material?",
+    choices: [
+      { text: "Confluência de vários furúnculos formando uma massa profunda, frequentemente em idosos e diabéticos, com múltiplos orifícios que drenam pus.", correct: true, explain: "Correto — o carbúnculo resulta da confluência de furúnculos, é maior, profundo e típico em idosos/diabéticos." },
+      { text: "Pequena pústula superficial que não evolui para abscesso e desaparece sem tratamento.", correct: false, explain: "Incorreto — carbúnculo é extenso e profundo, não uma lesão superficial autolimitada." },
+      { text: "Lesão puramente viral caracterizada por vesículas agrupadas.", correct: false, explain: "Incorreto — carbúnculo é infecção bacteriana, não viral." },
+      { text: "Formação de placas descamativas sem componente purulento.", correct: false, explain: "Incorreto — carbúnculo tipicamente tem componente purulento e drenante." }
+  ]},
+  {
+    q: "12) Questão: Para erisipela, qual das seguintes características é típica conforme o material?",
+    choices: [
+      { text: "Placa eritematosa bem delimitada, com intenso edema e dor, frequentemente unilateral nos membros inferiores e acompanhada de linfangite.", correct: true, explain: "Correto — erisipela caracteriza-se por eritema bem delimitado, edema doloroso, geralmente unilateral em MMII, e linfangite regional." },
+      { text: "Eritema mal delimitado, com predominância de bolhas e sempre bilateral sem linfangite.", correct: false, explain: "Incorreto — erisipela tem bordas bem delimitadas; eritema mal delimitado é mais compatível com celulite." },
+      { text: "Lesões vesiculares disseminadas sem sinais flogísticos.", correct: false, explain: "Incorreto — erisipela é inflamatória com sinais flogísticos marcantes." },
+      { text: "Somente causada por bactérias gram-negativas em pacientes saudáveis.", correct: false, explain: "Incorreto — erisipela é geralmente por Streptococcus pyogenes (Gram-positivo)." }
+  ]},
+  {
+    q: "13) Questão: Qual diferença clínica essencial entre erisipela e celulite está descrita no material?",
+    choices: [
+      { text: "Erisipela é mais superficial com bordas bem delimitadas e comprometimento linfático; celulite é mais profunda, com limites menos precisos e maior risco de sistematização.", correct: true, explain: "Correto — o material diferencia erisipela (derme, bordas nítidas, linfangite) de celulite (hipoderme, limites difusos, maior potencial sistêmico)." },
+      { text: "Erisipela apresenta sempre abcesso local e celulite nunca cursa com febre.", correct: false, explain: "Incorreto — nem sempre há abscesso em erisipela; celulite pode cursar com febre e sinais sistêmicos." },
+      { text: "Erisipela é sempre bilateral e celulite sempre unilateral.", correct: false, explain: "Incorreto — erisipela tipicamente é unilateral; afirmação de bilateralidade não procede." },
+      { text: "Não há diferença clínica; os termos são intercambiáveis.", correct: false, explain: "Incorreto — o material descreve diferenças anatômicas e clínicas claras entre ambos." }
+  ]},
+  {
+    q: "14) Questão: Sobre a Síndrome da Pele Escaldada Estafilocócica (SSSS), qual item está correto segundo o material?",
+    choices: [
+      { text: "É causada por toxinas exfoliativas A e B produzidas por S. aureus, com clivagem da desmogleína 1 e acometendo predominantemente neonatos e crianças menores de 5 anos.", correct: true, explain: "Correto — SSSS é mediada por exotoxinas que clivam desmogleína-1, afetando principalmente lactentes e crianças pequenas." },
+      { text: "A fonte tóxica é sempre um foco cutâneo primário extenso localizado na pele; a toxina não se dissemina por via hematogênica.", correct: false, explain: "Incorreto — as toxinas podem se disseminar hematogenicamente; o foco não precisa estar na pele afetada." },
+      { text: "Sinal de Nikolsky é ausente e as mucosas costumam ser afetadas intensamente.", correct: false, explain: "Incorreto — sinal de Nikolsky pode estar presente e as mucosas geralmente são poupadas na SSSS." },
+      { text: "É uma doença restrita a adultos com imunossupressão e não existe forma generalizada em neonatos.", correct: false, explain: "Incorreto — SSSS atinge neonatos e crianças; existe forma generalizada (de Ritter) em neonatos." }
+  ]},
+  {
+    q: "15) Questão: Qual afirmação sobre fasciíte necrosante (gangrena estreptocócica) condiz com o material?",
+    choices: [
+      { text: "É uma infecção grave do tecido celular subcutâneo e fáscia com necrose rápida, frequentemente pós-trauma ou procedimento, e requer desbridamento cirúrgico urgente.", correct: true, explain: "Correto — o material descreve fasciíte necrosante como destruição rápida da fáscia, muitas vezes após trauma, exigindo desbridamento imediato." },
+      { text: "É uma infecção superficial autolimitada que responde apenas a compressas quentes e não necessita de antibióticos.", correct: false, explain: "Incorreto — é uma emergência cirúrgica que necessita de ATB de largo espectro e desbridamento." },
+      { text: "Não cursa com febre ou mal-estar e raramente tem bolhas ou ulcerações.", correct: false, explain: "Incorreto — o material descreve febre alta, mal-estar e evolução para bolhas, ulcerações e necrose." },
+      { text: "Nunca envolve bactérias anaeróbias e é causada exclusivamente por S. aureus.", correct: false, explain: "Incorreto — múltiplos organismos (estreptococos, anaeróbios, S. aureus) podem estar envolvidos." }
+  ]},
+  {
+    q: "16) Questão: Em pacientes com suspeita de infecção cutânea por Staphylococcus aureus resistente à meticilina (MRSA) na comunidade, qual conduta terapêutica oral inicial descrita no material é mais apropriada quando cobertura para MRSA é necessária?",
+    choices: [
+      { text: "Utilizar trimetoprim-sulfametoxazol ou doxiciclina, considerando sensibilidade local e perfil do paciente.", correct: true, explain: "Correto — o material recomenda opções orais que cobrem MRSA na comunidade, como trimetoprim-sulfametoxazol ou doxiciclina, adaptando à epidemiologia local e contraindicações do paciente." },
+      { text: "Prescrever cefalexina em dose alta, independentemente de risco para MRSA.", correct: false, explain: "Incorreto — cefalexina cobre S. aureus sensível à meticilina, mas não MRSA; não é escolha quando há risco clínico de MRSA." },
+      { text: "Iniciar fluconazol oral para ampliar espectro contra microrganismos cutâneos.", correct: false, explain: "Incorreto — fluconazol é antifúngico e não tem atividade contra bactérias como MRSA." },
+      { text: "Usar penicilina benzatina intramuscular única dose para cobertura sistêmica por 14 dias.", correct: false, explain: "Incorreto — penicilina benzatina não cobre MRSA e não é indicada nesse cenário." }
+  ]},
+  {
+    q: "17) Questão: Segundo o material, qual é o papel da cultura e do antibiograma nas piodermites?",
+    choices: [
+      { text: "São indicados em infecções extensas, recidivantes, em pacientes com comorbidades ou quando há falha terapêutica para orientar escolha antimicrobiana.", correct: true, explain: "Correto — o material orienta realizar cultura/antibiograma em casos graves, recorrentes, atípicos ou com resposta inadequada ao tratamento para guiar terapêutica adequada." },
+      { text: "Devem ser realizados rotineiramente em todos os casos de impetigo não bolhoso simples.", correct: false, explain: "Incorreto — em lesões localizadas e típicas, tratamento empírico tópico é suficiente; cultura rotineira não é necessária." },
+      { text: "São úteis apenas para identificar fungos como causa primária.", correct: false, explain: "Incorreto — cultura/antibiograma identificam bactérias e resistências; não se restringem a fungos." },
+      { text: "Substituem sempre a avaliação clínica e permitem evitar exame físico detalhado.", correct: false, explain: "Incorreto — exames microbiológicos complementam, não substituem avaliação clínica cuidadosa." }
+  ]},
+  {
+    q: "18) Questão: Qual medida preventiva para reduzir recorrência de erisipela em pacientes com linfedema crônico é mencionada no material?",
+    choices: [
+      { text: "Higiene local rigorosa, tratamento de lesões fúngicas interdigital (porta de entrada) e uso de meias de compressão quando indicado.", correct: true, explain: "Correto — o material destaca higiene, tratamento de portas de entrada como tinea pedis e controle do linfedema com compressão como estratégias preventivas." },
+      { text: "Rotina de uso diário de antibióticos profiláticos indefinidamente sem tratar portas de entrada.", correct: false, explain: "Incorreto — profilaxia antibiótica pode ser considerada em episódios recorrentes, mas não substitui medidas sobre portas de entrada e manejo do linfedema." },
+      { text: "Evitar qualquer tipo de hidratação cutânea para reduzir maceração.", correct: false, explain: "Incorreto — hidratação adequada é importante; evitar hidratação pode fragilizar a barreira cutânea." },
+      { text: "Aplicação tópica de antifúngico nas pernas diariamente como única medida preventiva.", correct: false, explain: "Incorreto — tratamento de tinea pedis é importante, mas a abordagem preventiva é multimodal, não apenas antifúngico tópico nas pernas." }
+  ]},
+  {
+    q: "19) Questão: No contexto de infecções cutâneas necrotizantes (fasciíte necrosante), qual combinação de medidas emergenciais é enfatizada no material?",
+    choices: [
+      { text: "Desbridamento cirúrgico precoce, antibioticoterapia intravenosa de amplo espectro e suporte hemodinâmico quando necessário.", correct: true, explain: "Correto — o manejo exige cirurgia urgente (desbridamento), ATB IV de largo espectro e suporte clínico (reposição volêmica, suporte hemodinâmico) conforme gravidade." },
+      { text: "Terapia com antibióticos orais de amplo espectro em monoterapia e observação por 72 horas antes de considerar cirurgia.", correct: false, explain: "Incorreto — atrasar cirurgia é perigoso; ATB oral e espera não são adequados para fasciíte necrosante." },
+      { text: "Uso isolado de curativos oclusivos e analgésicos, aguardando evolução.", correct: false, explain: "Incorreto — a doença progride rapidamente e requer intervenção cirúrgica e ATB IV, não apenas curativos." },
+      { text: "Aplicação de corticoterapia sistêmica para reduzir resposta inflamatória antes de qualquer intervenção.", correct: false, explain: "Incorreto — corticosteroides não são indicados de rotina e podem agravar infecção; abordagem é cirúrgica e antimicrobiana." }
+  ]},
+  {
+    q: "20) Questão: Sobre a relação entre infecções cutâneas estreptocócicas e glomerulonefrite pós-infecciosa, qual afirmação do material é correta?",
+    choices: [
+      { text: "Infecções por Streptococcus pyogenes na pele, como ectima e impetigo extenso, podem ser seguidas de glomerulonefrite difusa aguda (GNDA) em algumas situações.", correct: true, explain: "Correto — o material descreve que infecções cutâneas estreptocócicas, especialmente ectima e impetigo extenso, são reconhecidas como desencadeantes de GNDA." },
+      { text: "A elevação de ASLO é sempre presente e é o único critério diagnóstico para GNDA pós-piodermite.", correct: false, explain: "Incorreto — ASLO pode não se elevar após infecção cutânea; seu uso isolado não confirma GNDA." },
+      { text: "Glomerulonefrite só ocorre quando a infecção cutânea é por Staphylococcus aureus, não por estreptococos.", correct: false, explain: "Incorreto — GNDA pós-infecciosa está classicamente associada a estreptococos beta-hemolíticos do grupo A, não a S. aureus." },
+      { text: "Profilaxia antibiótica tópica impede totalmente o risco de GNDA em todo paciente com impetigo.", correct: false, explain: "Incorreto — tratamento adequado pode reduzir risco, mas não elimina completamente a possibilidade; GNDA é imunomediada e depende de vários fatores." }
+  ]},
+  {
+    q: "21) Questão clínica: Um homem de 54 anos diabético apresenta há 3 dias lesão dolorosa, eritematosa, quente e bem delimitada no dorso do pé direito, associada a febre (38,8°C) e linfangite. Refere histórico de fissura interdigitais por micoses nos últimos meses. Exame mostra eritema com edema significativo, sem coleção fluctante visível. Qual o diagnóstico mais provável e a conduta inicial correta conforme o material?",
+    choices: [
+      { text: "Erisipela por Streptococcus pyogenes; iniciar antibioticoterapia sistêmica empírica com cobertura beta-hemolíticos (ex.: penicilina) e tratar porta de entrada (tinea pedis).", correct: true, explain: "Correto — quadro compatível com erisipela (placa bem delimitada, febre, linfangite) e predisposição por porta de entrada fúngica; tratamento inclui ATB sistêmica dirigida aos estreptococos e medidas para porta de entrada." },
+      { text: "Celulite por Pseudomonas aeruginosa; iniciar ciprofloxacino oral e aguardar resposta antes de hospitalizar.", correct: false, explain: "Incorreto — Pseudomonas não é agente típico de erisipela; além disso, quadro com sinais sistêmicos em diabético pode requerer avaliação hospitalar e ATB IV conforme gravidade." },
+      { text: "Ectima gangrenoso por Pseudomonas; drenagem cirúrgica imediata é a única medida necessária.", correct: false, explain: "Incorreto — ectima gangrenoso é diferente e ocorre em pacientes neutropênicos; além disso, drenagem isolada não substitui antibioticoterapia abrangente." },
+      { text: "Herpes zoster com sobreinfecção; iniciar aciclovir oral e observar.", correct: false, explain: "Incorreto — apresentação não sugere dermátomo com vesículas típicas de zoster; erisipela/celulite bacteriana é a hipótese predominante." }
+  ]},
+  {
+    q: "22) Questão clínica: Criança de 9 meses é trazida com febre baixa, áreas de pele erodida e formação de grandes bolhas que se rompem deixando áreas eritematosas e descamativas; as mucosas estão preservadas e há sinal de Nikolsky positivo. Qual entidade é a mais compatível e qual é a base fisiopatológica descrita no material?",
+    choices: [
+      { text: "Síndrome da Pele Escaldada Estafilocócica (SSSS) por toxinas exfoliativas de S. aureus que clivam desmogleína-1; as mucosas geralmente são poupadas.", correct: true, explain: "Correto — SSSS acomete principalmente lactentes; toxinas exfoliativas A/B clivam desmogleína-1 na epiderme superficial, preservando mucosas." },
+      { text: "Pênfigo vulgar por autoanticorpos contra desmogleína-3 com comprometimento inicial de mucosas.", correct: false, explain: "Incorreto — pênfigo vulgar é doença autoimune rara em lactentes e afeta mucosas; SSSS é de origem bacteriana tóxica." },
+      { text: "Impetigo não bolhoso evoluído com bolhas extensas por Streptococcus pyogenes.", correct: false, explain: "Incorreto — impetigo não bolhoso forma crostas melicéricas; bolhas extensas em lactente sugerem SSSS por S. aureus." },
+      { text: "Reação medicamentosa tipo Stevens-Johnson com comprometimento mucocutâneo extenso.", correct: false, explain: "Incorreto — SJS envolve mucosas de forma marcante e costuma ocorrer em contexto de uso de medicação; SSSS tem carácter tóxico-infeccioso e mucosas poupadas." }
+  ]},
+  {
+    q: "23) Questão clínica: Paciente jovem com múltiplas pústulas foliculares no tronco após uso de sunga molhada e exposição ao mar; relata prurido e algumas pústulas agrupadas. Qual diagnóstico e conduta tópica inicial segundo o material?",
+    choices: [
+      { text: "Foliculite superficial provavelmente por S. aureus; higiene local e compressas mornas; se localizada, tratamento tópico com mupirocina ou uso de antissépticos locais.", correct: true, explain: "Correto — foliculite superficial relacionada a fricção e ambiente úmido pode ser manejada com medidas locais e tratamento tópico como mupirocina quando necessário." },
+      { text: "Furúnculos múltiplos exigindo antibioticoterapia sistêmica imediata sem tentativa de tratamento local.", correct: false, explain: "Incorreto — furúnculo é lesão mais profunda; múltiplas pústulas foliculares superficiais inicialmente recebem manejo tópico e medidas de higiene." },
+      { text: "Impétigo bolhoso generalizado; iniciar corticosteroides tópicos para reduzir bolhas.", correct: false, explain: "Incorreto — impetigo bolhoso não é a apresentação mais provável nesse contexto; corticóides não são indicados em infecção bacteriana ativa." },
+      { text: "Dermatofito superficial; tratar com itraconazol oral por 6 semanas.", correct: false, explain: "Incorreto — dermatofitose costuma apresentar lesão anular e descamativa, não pústulas foliculares; itraconazol oral não é escolha inicial para foliculite bacteriana." }
+  ]},
+  {
+    q: "24) Questão clínica: Mulher de 32 anos apresenta intercorrência: recentemente tratada com antibiótico oral por sinusite, agora com pápulas e crostas melicéricas ao redor do nariz e queixo, sem febre. Cultura não disponível no momento. Qual é a melhor conduta inicial segundo o material?",
+    choices: [
+      { text: "Impetigo não bolhoso; tratamento tópico com mupirocina é indicado para lesões localizadas.", correct: true, explain: "Correto — quadro clássico de impetigo não bolhoso pode ser tratado topicamente com mupirocina em lesões localizadas, mesmo após uso prévio de antibiótico para outra condição." },
+      { text: "Erisipela; iniciar penicilina benzatina IM única dose.", correct: false, explain: "Incorreto — erisipela apresenta placa eritematosa bem delimitada, geralmente com sinais sistêmicos; crostas melicéricas ao redor do orifício nasal sugerem impetigo." },
+      { text: "Sindrome de Stevens-Johnson iniciando terapia imunossupressora sistêmica.", correct: false, explain: "Incorreto — SJS cursa com lesões mucocutâneas extensas e envolvimento de mucosas; quadro atual é local e compatível com impetigo." },
+      { text: "Eritema multiforme por reação medicamentosa; suspender todo histórico de medicamentos e aguardar.", correct: false, explain: "Incorreto — eritema multiforme tem lesões alvo e não forma crostas melicéricas típicas de impetigo." }
+  ]},
+  {
+    q: "25) Questão clínica: Homem de 68 anos, com histórico de alcoolismo e diabetes mal controlado, apresenta área extensa de pele violácea com bolhas, dor intensa desproporcional ao exame cutâneo e sinais de sepse. Há relatos de trauma mínimo há 4 dias. Segundo o material, qual é a hipótese diagnóstica mais urgente e o passo imediato apropriado?",
+    choices: [
+      { text: "Fasciíte necrosante; encaminhar para avaliação cirúrgica urgente com desbridamento imediato e iniciar antibioticoterapia intravenosa de amplo espectro.", correct: true, explain: "Correto — apresentação de dor intensa desproporcional, bolhas, evolução rápida e sepse sugere fasciíte necrosante, que exige cirurgia imediata e ATB IV de largo espectro." },
+      { text: "Erisipela clássica sem risco de necrose; iniciar penicilina oral e observação ambulatorial.", correct: false, explain: "Incorreto — quadro grave com sinais sistêmicos e bolhas não é erisipela simples; requer abordagem emergencial." },
+      { text: "Trombose venosa superficial; iniciar anticoagulação e alta hospitalar.", correct: false, explain: "Incorreto — TVS não explica bolhas, dor desproporcional e sépsis; anticoagulação isolada não é adequada." },
+      { text: "Necrose por pressão crônica; iniciar cuidados de enfermagem e cremes tópicos.", correct: false, explain: "Incorreto — evolução aguda e sinais sistêmicos apontam para infecção necrosante, não úlcera de pressão crônica." }
+  ]},
+  {
+    q: "26) Questão clínica: Adolescente com múltiplas lesões ulceradas com crosta escura nas nádegas e região glútea após trauma por corte em ambiente com higiene precária; as lesões evoluíram para ulcerações profundas com bordas elevadas. Cultura mostrou Streptococcus pyogenes isolado em amostra. O material sugere qual diagnóstico e qual complicação sistêmica deve ser considerada?",
+    choices: [
+      { text: "Ectima (ectima profunda) por infecção cutânea estreptocócica; considerar risco de glomerulonefrite pós-estreptocócica como complicação.", correct: true, explain: "Correto — ectima é ulceração profunda com crosta escura por infecção cutânea bacteriana; infecções estreptocócicas cutâneas podem preceder GNDA." },
+      { text: "Ecthyma gangrenosum por Pseudomonas com alto risco de sepse gram-negativa em imunocompetente.", correct: false, explain: "Incorreto — ecthyma gangrenosum está associado a Pseudomonas em pacientes neutropênicos; aqui o agente foi S. pyogenes." },
+      { text: "Leishmaniose cutânea com possibilidade de mucocutânea se não tratada.", correct: false, explain: "Incorreto — leishmaniose tem apresentação clínica e etiologia distintas; cultura revelou S. pyogenes, apontando para ectima bacteriano." },
+      { text: "Carcinoma espinocelular primário que exige ressecção ampla imediata.", correct: false, explain: "Incorreto — evolução aguda após trauma e cultura positiva para S. pyogenes sugerem infecção, não neoplasia." }
+  ]},
+  {
+    q: "27) Questão clínica: Paciente com história de furúnculos recorrentes na região axilar apresenta agora carbúnculo com múltiplos orifícios de drenagem e febre. Tem glicemia capilar em 320 mg/dL. Segundo o material, qual a combinação terapêutica mais indicada inicialmente?",
+    choices: [
+      { text: "Drenagem cirúrgica adequada das coleções, controle glicêmico rigoroso e antibioticoterapia sistêmica guiada por cultura; avaliação para descolonização nasal se recorrência.", correct: true, explain: "Correto — carbúnculo requer drenagem, ATB sistêmica (ajustada por cultura), controle do fator de risco (diabetes) e medidas de descolonização se recorrente." },
+      { text: "Tratamento apenas com compressas quentes e antibiótico tópico, sem necessidade de intervenção cirúrgica.", correct: false, explain: "Incorreto — carbúnculo com múltiplos pontos de drenagem e febre frequentemente necessita de drenagem e ATB sistêmica." },
+      { text: "Isolamento do paciente por 14 dias e uso de antifúngico oral systemicamente.", correct: false, explain: "Incorreto — antifúngicos não são indicados; isolamento prolongado não é medida padrão para carbúnculo." },
+      { text: "Aplicação de corticosteroides sistêmicos para reduzir inflamação local e acelerar cicatrização.", correct: false, explain: "Incorreto — corticosteroides podem suprimir defesa e agravar infecção; não são recomendados nessa situação." }
+  ]},
+  {
+    q: "28) Questão clínica: Paciente internado por celulite complicada em membro inferior evolui com drenagem purulenta. Hemoculturas positivas para Streptococcus pyogenes e creatinina normal. O material descreve qual indicação para internação e como deve ser ajustada a terapia?",
+    choices: [
+      { text: "Indicação para internação inclui sinais de gravidade (febre alta, sinais sistêmicos, falha de terapia oral); iniciar antibiótico IV dirigido a estreptococos e ajustar conforme cultura/antibiograma.", correct: true, explain: "Correto — celulite com sinais sistêmicos e falha do tratamento ambulatorial justifica internação e ATB IV, ajustando conforme resultado microbiológico." },
+      { text: "Internação só é indicada se houver insuficiência renal; caso contrário, manter ATB oral em domicílio.", correct: false, explain: "Incorreto — internação depende de gravidade clínica, não apenas da função renal." },
+      { text: "Hemoculturas positivas para estreptococo não influenciam na escolha do antibiótico IV.", correct: false, explain: "Incorreto — hemoculturas ajudam a guiar terapia específica; encontrar S. pyogenes sugere cobertura por beta-lactâmicos eficazes." },
+      { text: "Reduzir dose de antibiótico por segurança e aguardar remissão espontânea sem desbridamento.", correct: false, explain: "Incorreto — reduzir terapia em infecção documentada com hemocultura positiva não é apropriado; manejo ativo é necessário." }
+  ]},
+  {
+    q: "29) Questão clínica: Recém-nascido com 10 dias de vida desenvolve pústulas generalizadas e estáletos cutâneos; história de portadora nasal de S. aureus pela mãe. Culturas do lactente e da mãe isolam S. aureus produtor de toxina exfoliativa. Qual a conduta indicada conforme o material?",
+    choices: [
+      { text: "Suspeita de SSSS (forma de Ritter); iniciar antibioticoterapia sistêmica contra S. aureus e investigar e tratar possíveis focos maternos (descolonização), além de suporte clínico.", correct: true, explain: "Correto — recém-nascidos com quadro generalizado e toxina produtora de S. aureus devem ser tratados como SSSS com ATB sistêmica e medidas para controlar fonte (mãe) e suporte." },
+      { text: "Tratar apenas com mupirocina tópica no lactente e na mãe, sem antibioticoterapia sistêmica.", correct: false, explain: "Incorreto — formas generalizadas em neonatos frequentemente requerem ATB sistêmica; apenas terapia tópica é insuficiente." },
+      { text: "Iniciar antifúngico tópico e suspender aleitamento materno definitivamente.", correct: false, explain: "Incorreto — antifúngicos não são indicados; suspensão do aleitamento não é rotina e deve ser avaliada caso a mãe seja fonte e não haja alternativa segura." },
+      { text: "Aguardar resolução espontânea pois toxina exfoliativa não causa risco sistêmico em neonatos.", correct: false, explain: "Incorreto — neonatos com SSSS podem evoluir com desidratação e sepse; espera sem tratamento é arriscada." }
+  ]},
+  {
+    q: "30) Questão clínica: Paciente adulto com lesão ulcerada no dorso da mão após mordida de cão há 5 dias, com dor, eritema e exsudato purulento. Cultura inicial pendente. Segundo orientações do material sobre infecções por mordida de animal, qual abordagem inicial é mais adequada?",
+    choices: [
+      { text: "Limpeza e irrigação vigorosa da ferida, avaliação cirúrgica para desbridamento se necessário, e antibioticoterapia empírica com cobertura para Pasteurella spp. e outras bactérias orais (ex.: amoxicilina-clavulanato).", correct: true, explain: "Correto — mordidas de animais exigem limpeza, possível desbridamento e ATB empírica que cubra Pasteurella e a flora oral do animal; amox/clav é frequentemente recomendado." },
+      { text: "Cobrir ferida com curativo oclusivo e prescrever cefalexina oral apenas para 3 dias.", correct: false, explain: "Incorreto — orientação de apenas curativo e antibioticoterapia curta com cefalexina pode não cobrir Pasteurella; abordagem mais ativa é indicada." },
+      { text: "Aplicar pomada antifúngica tópica e aguardar cultura bacteriana antes de qualquer ATB.", correct: false, explain: "Incorreto — antifúngicos tópicos não são adequados e atrasar ATB em mordidas contaminadas pode piorar prognóstico." },
+      { text: "Imediato fechamento primário da ferida sem ATB para melhor estética.", correct: false, explain: "Incorreto — fechamento primário de mordidas contaminadas aumenta risco de infecção; geralmente realiza-se limpeza e avaliação, e o fechamento deve ser criterioso." }
+  ]}
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

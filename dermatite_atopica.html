@@ -1,0 +1,932 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Dermatite atópica</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Dermatite atópica</h1>
+    <p class="lead">30 questões - Dermatite atópica</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão: Sobre a epidemiologia da dermatite atópica (DA), qual alternativa descreve corretamente sua prevalência e evolução típica?",
+    choices: [
+      {
+        text: "Afeta 15–30% das crianças e 2–10% dos adultos; a maioria dos casos tem início na infância e cerca de 70% apresentam remissão na adolescência.",
+        correct: true,
+        explain: "Correto. O PDF descreve que 15–30% das crianças e 2–10% dos adultos são afetados, a DA geralmente começa na infância (45% antes de 6 meses, 60% antes de 1 ano, 85% até 5 anos) e aproximadamente 70% apresentam remissão na adolescência."
+      },
+      {
+        text: "É mais frequente iniciar na fase adulta, com menos de 5% dos casos começando na infância.",
+        correct: false,
+        explain: "Incorreto. A DA tem início na maioria dos casos durante a infância; apenas uma pequena parcela (≈2%) tem início tardio na fase adulta."
+      },
+      {
+        text: "A prevalência é homogênea entre crianças e adultos, afetando cerca de 20% em todas as idades.",
+        correct: false,
+        explain: "Incorreto. A prevalência é maior em crianças (15–30%) do que em adultos (2–10%), conforme o material."
+      },
+      {
+        text: "A hipótese da higiene explica que a DA é exclusivamente causada por excesso de higiene e, portanto, não tem componente genético.",
+        correct: false,
+        explain: "Incorreto. Embora a 'hipótese da higiene' seja mencionada, o PDF enfatiza etiologia multifatorial com forte componente genético (história familiar, mutações como filagrina)."
+      }
+    ]
+  },
+
+  {
+    q: "2) Questão: Qual alteração genética está fortemente associada à dermatite atópica e contribui para a disfunção da barreira cutânea?",
+    choices: [
+      {
+        text: "Mutação no gene da filagrina (filaggrin) localizada no cromossomo 1q21–23.",
+        correct: true,
+        explain: "Correto. O PDF cita mutação do gene da filagrina como importante fator genético associado à DA e à disfunção da barreira epidérmica."
+      },
+      {
+        text: "Deleção no gene BRCA1 que afeta a resposta inflamatória da pele.",
+        correct: false,
+        explain: "Incorreto. BRCA1 é relacionado ao câncer de mama e não é referido no PDF como associado à DA."
+      },
+      {
+        text: "Translocação envolvendo gene TNF-α exclusivamente em cromossomo X.",
+        correct: false,
+        explain: "Incorreto. O material não descreve translocações envolvendo TNF-α nem associação cromossômica desse tipo como causa principal de DA."
+      },
+      {
+        text: "Mutação no gene da melanina que leva à hipopigmentação e predisposição à DA.",
+        correct: false,
+        explain: "Incorreto. Alterações pigmentares podem ocorrer secundariamente, mas não há evidencia no PDF de mutações do gene da melanina como causa de DA."
+      }
+    ]
+  },
+
+  {
+    q: "3) Questão: Quanto à fisiopatologia imunológica da DA, qual das alternativas descreve corretamente o perfil de linfócitos e citocinas nas fases aguda e crônica?",
+    choices: [
+      {
+        text: "Fase aguda: predomínio de linfócitos Th2 com IL-4, IL-5 e IL-13; Fase crônica: predomínio de Th1 com IL-12 e IFN-γ.",
+        correct: true,
+        explain: "Correto. O PDF descreve resposta Th2 na fase aguda (IL-4, IL-5, IL-13 que estimulam IgE) e resposta Th1 na fase crônica (IL-12 e IFN-γ)."
+      },
+      {
+        text: "Fase aguda: predomínio de Th1 com aumento de IgG; Fase crônica: predomínio de Th2 com aumento de IgE.",
+        correct: false,
+        explain: "Incorreto. É o inverso: agudo = Th2/IgE; crônico = Th1/estímulo de IgG segundo o material."
+      },
+      {
+        text: "A DA é exclusivamente mediada por células B e anticorpos, sem participação de linfócitos T.",
+        correct: false,
+        explain: "Incorreto. O PDF enfatiza o papel central de linfócitos T (Th2 e Th1) na imunopatogênese."
+      },
+      {
+        text: "A resposta imunológica é idêntica à psoríase, com predomínio de IL-17 em todas as fases.",
+        correct: false,
+        explain: "Incorreto. Embora o PDF mencione sobreposições genéticas com loci relacionados à psoríase, a DA tem predominância Th2/Th1, não IL-17 como característica principal."
+      }
+    ]
+  },
+
+  {
+    q: "4) Questão: Considerando fatores desencadeantes e agravantes da dermatite atópica, marque a alternativa que lista corretamente fatores reconhecidos no material.",
+    choices: [
+      {
+        text: "Sudorese, alérgenos (ácaros), alergia alimentar especialmente no primeiro ano, infecção por Staphylococcus aureus, estresse, substâncias irritantes e textura das roupas.",
+        correct: true,
+        explain: "Correto. O PDF lista esses fatores como desencadeantes: sudorese, alérgenos como ácaros, alergia alimentar (mais frequente no primeiro ano), S. aureus, estresse, substâncias irritantes, poeira e textura das roupas."
+      },
+      {
+        text: "Exclusivamente alergia alimentar e exposição ao látex; radiação ionizante não é mencionada.",
+        correct: false,
+        explain: "Incorreto. Embora alergia alimentar possa desencadear em lactentes, o PDF lista muitos outros fatores (sudorese, ácaros, S. aureus etc.) e não restringe a DA a apenas alimentos ou látex."
+      },
+      {
+        text: "Somente fatores genéticos importam; fatores ambientais não desempenham papel relevante.",
+        correct: false,
+        explain: "Incorreto. O material destaca que a etiologia é complexa e multifatorial, com forte influência de fatores ambientais e emocionais na forma extrínseca."
+      },
+      {
+        text: "Exposição crônica ao frio é o único fator desencadeante comprovado e universal para todos os pacientes.",
+        correct: false,
+        explain: "Incorreto. O PDF menciona que DA pode piorar com frio ou calor e fatores ambientais, mas não é o único fator desencadeante universal."
+      }
+    ]
+  },
+
+  {
+    q: "5) Questão: Qual das afirmações sobre colonização/infeção por Staphylococcus aureus na DA está de acordo com o material?",
+    choices: [
+      {
+        text: "Até 90% das peles de pacientes com DA podem estar colonizadas por S. aureus; a colonização está associada à gravidade da doença e é fator de exacerbação.",
+        correct: true,
+        explain: "Correto. O PDF relata colonização por S. aureus em 90% dos casos, com infecção recorrente em ~40% e relação entre densidade de colonização e gravidade da DA."
+      },
+      {
+        text: "S. aureus raramente coloniza pacientes com DA e não influencia a gravidade ou prurido.",
+        correct: false,
+        explain: "Incorreto. Pelo contrário, S. aureus é frequentemente implicado na exacerbação e manutenção da DA."
+      },
+      {
+        text: "A presença de S. aureus é protetora, reduzindo o risco de surtos inflamatórios.",
+        correct: false,
+        explain: "Incorreto. A colonização por S. aureus agrava inflamação e prurido; não é protetora."
+      },
+      {
+        text: "Somente Streptococcus pyogenes coloniza e agrava a DA; S. aureus não é relevante.",
+        correct: false,
+        explain: "Incorreto. O PDF menciona tanto S. aureus quanto Streptococcus pyogenes, sendo S. aureus especialmente prevalente e relevante."
+      }
+    ]
+  },
+
+  {
+    q: "6) Questão: Em relação às manifestações clínicas por faixa etária, qual padrão é característico da DA infantil (<2 anos)?",
+    choices: [
+      {
+        text: "Lesões vesico-secretantes e crostosas frequentemente na face (região malar), couro cabeludo; prurido intenso; formas podem ser localizadas ou generalizadas.",
+        correct: true,
+        explain: "Correto. O PDF descreve que nos <6 meses e até 2 anos há lesões vesico-secretantes crostosas na face (região malar) e couro cabeludo, prurido intenso e possível generalização."
+      },
+      {
+        text: "Liquenificação extensa nas dobras flexurais com pouca exsudação e predomínio de placas escamosas do tipo psoriásico.",
+        correct: false,
+        explain: "Incorreto. Liquenificação e envolvimento de dobras são mais típicos da fase pré-puberal/adolescente; na infantil as lesões são mais exsudativas e vesiculares."
+      },
+      {
+        text: "Eritema e descamação exclusivamente nas palmas e plantas com ausência de prurido.",
+        correct: false,
+        explain: "Incorreto. A DA infantil frequentemente envolve face/couro cabeludo e tem prurido intenso; acometimento exclusivo de palmas/plantas não é padrão."
+      },
+      {
+        text: "Alopecia cicatricial generalizada é a apresentação típica inicial em lactentes com DA.",
+        correct: false,
+        explain: "Incorreto. Alopecia cicatricial não é descrita como apresentação típica inicial da DA infantil no material."
+      }
+    ]
+  },
+
+  {
+    q: "7) Questão: Para diagnóstico de dermatite atópica, quais são os pilares diagnósticos citados no material?",
+    choices: [
+      {
+        text: "História clínica e exame físico; exames laboratoriais (IgE, prick, EASI e SCORAD) não são essenciais de rotina, servindo como complementares.",
+        correct: true,
+        explain: "Correto. O PDF destaca que o diagnóstico baseia-se em história e exame físico; testes como IgE, prick test, EASI e SCORAD são ferramentas complementares e não sempre utilizados rotineiramente."
+      },
+      {
+        text: "Biópsia de pele é obrigatória para confirmar o diagnóstico em todos os pacientes.",
+        correct: false,
+        explain: "Incorreto. O PDF não indica biópsia como procedimento obrigatório para diagnóstico; o diagnóstico é clínico."
+      },
+      {
+        text: "A confirmação depende exclusivamente de testes sorológicos de IgE elevados.",
+        correct: false,
+        explain: "Incorreto. Embora níveis de IgE possam estar aumentados em formas extrínsecas, o diagnóstico não depende exclusivamente desses exames."
+      },
+      {
+        text: "Teste de função pulmonar é mandatário para diferenciar DA de asma cutânea.",
+        correct: false,
+        explain: "Incorreto. Teste de função pulmonar não é mencionado como parte do diagnóstico de DA; relação com asma existe, mas não como ferramenta diagnóstica cutânea."
+      }
+    ]
+  },
+
+  {
+    q: "8) Questão: Entre as formas clínicas atípicas listadas no material, marque a alternativa correta com exemplos dessas formas.",
+    choices: [
+      {
+        text: "Eczema numular, padrão invertido, variante folicular, dermatite dos mamilos e vulva, eritrodermia e prurigo-eczema (variante papular).",
+        correct: true,
+        explain: "Correto. O PDF lista diversas formas atípicas incluindo eczema numular, padrão invertido, variante folicular, dermatite dos mamilos e vulva, eritrodermia e prurigo-eczema."
+      },
+      {
+        text: "Única forma é o prurigo nodular; todas as outras apresentações são incompatíveis com DA.",
+        correct: false,
+        explain: "Incorreto. Existem múltiplas formas atípicas, não apenas prurigo nodular; o material descreve diversas variações clínicas."
+      },
+      {
+        text: "Formas atípicas incluem apenas manifestações sistêmicas (cardíacas e renais) sem alterações cutâneas.",
+        correct: false,
+        explain: "Incorreto. As formas atípicas citadas são variações cutâneas, não manifestações sistêmicas primárias."
+      },
+      {
+        text: "Eritrodermia nunca ocorre em DA e a presença dela exclui o diagnóstico.",
+        correct: false,
+        explain: "Incorreto. Eritrodermia está listada como uma das formas atípicas possíveis em DA, podendo ocorrer em formas graves."
+      }
+    ]
+  },
+
+  {
+    q: "9) Questão: Ao considerar complicações oculares da DA, qual afirmação está correta segundo o material?",
+    choices: [
+      {
+        text: "Alterações oculares podem ocorrer e incluem ceratoconjuntivite, uveíte e catarata; a catarata é observada em cerca de 10% e se relaciona à gravidade e tempo de DA.",
+        correct: true,
+        explain: "Correto. O PDF descreve complicações oculares como ceratoconjuntivite, uveíte, catarata e fotofobia; catarata foi associada em ~10% e ligada à gravidade/duração da doença."
+      },
+      {
+        text: "Não há associação entre DA e problemas oculares; qualquer alteração ocular indica doença distinta.",
+        correct: false,
+        explain: "Incorreto. O material relata claramente associação entre DA e diversas alterações oculares."
+      },
+      {
+        text: "Somente conjuntivite bacteriana é descrita; alterações como uveíte ou catarata não estão relacionadas.",
+        correct: false,
+        explain: "Incorreto. O PDF menciona uveíte e catarata além de ceratoconjuntivite, não apenas conjuntivite bacteriana."
+      },
+      {
+        text: "A presença de catarata descarta diagnóstico de DA, pois é indicativa de doença metabólica.",
+        correct: false,
+        explain: "Incorreto. Catarata pode estar associada à DA, especialmente em formas graves e crônicas."
+      }
+    ]
+  },
+
+  {
+    q: "10) Questão: Em relação ao tratamento de manutenção e medidas gerais para DA, qual conjunto de orientações está correto?",
+    choices: [
+      {
+        text: "Uso regular de emolientes, evitar fatores desencadeantes, cuidados com banhos (evitar água muito quente), escolha adequada de vestuário e controle das unhas; medidas ambientais e dietéticas quando pertinente.",
+        correct: true,
+        explain: "Correto. O PDF enfatiza hidratação/ emolientes, evitar desencadeantes, higiene (banhos), vestuário, cuidado com unhas e ajustes ambientais e alimentares conforme necessidade."
+      },
+      {
+        text: "Evitar hidratação da pele para não aumentar oleosidade e permitir que a barreira se normalize sozinha.",
+        correct: false,
+        explain: "Incorreto. Hidratação e lubrificação da pele com emolientes são pilares do tratamento e manutenção; evitar hidratação é postura equivocada."
+      },
+      {
+        text: "Uso de esfoliantes diários e banhos quentes como medidas centrais de manutenção.",
+        correct: false,
+        explain: "Incorreto. Banhos quentes e esfoliação diária podem piorar xerose e barreira cutânea; o material recomenda cuidados para preservar a barreira."
+      },
+      {
+        text: "Apenas medidas dietéticas são suficientes para controle da DA em todos os pacientes.",
+        correct: false,
+        explain: "Incorreto. Dieta pode ter papel em alguns casos (especialmente no primeiro ano), mas não é única medida eficaz; emolientes e controle de surtos são essenciais."
+      }
+    ]
+  },
+
+  {
+    q: "11) Questão: Sobre o uso de corticosteroides tópicos (CE) na DA, assinale a alternativa correta conforme o material.",
+    choices: [
+      {
+        text: "CE são a primeira linha para surtos; sua potência e duração devem considerar a área (baixa potência para face, áreas flexurais e genital) e riscos (atrofia, estrias etc.).",
+        correct: true,
+        explain: "Correto. O PDF afirma que corticosteroides tópicos são 1ª linha para surtos, com atenção à potência e local (baixa potência em face/áreas sensíveis) e possíveis efeitos adversos."
+      },
+      {
+        text: "CE tópicos não são indicados na DA devido ao risco de atrofia; inibidores de calcineurina sempre substituem os corticoides.",
+        correct: false,
+        explain: "Incorreto. CE tópicos são 1ª linha para surtos; inibidores de calcineurina são alternativa (2ª linha) ou para áreas sensíveis/uso prolongado."
+      },
+      {
+        text: "A aplicação de CE em áreas genitais deve sempre usar as formulações de altíssima potência para garantir eficácia.",
+        correct: false,
+        explain: "Incorreto. Áreas genitais são sensíveis e exigem CE de baixa potência para minimizar riscos de atrofia e outros efeitos."
+      },
+      {
+        text: "Não há necessidade de considerar efeitos adversos locais ou sistêmicos ao prescrever CE em crianças.",
+        correct: false,
+        explain: "Incorreto. O risco de atrofia, estrias e efeitos locais (e potencialmente sistêmicos dependendo da exposição) deve ser considerado, especialmente em pediatria."
+      }
+    ]
+  },
+
+  {
+    q: "12) Questão: Sobre inibidores tópicos de calcineurina (pimecrolimo, tacrolimo) na DA, escolha a alternativa correta.",
+    choices: [
+      {
+        text: "São alternativa de segunda linha com efeito anti-inflamatório sem os efeitos colaterais típicos dos corticosteroides tópicos, úteis em áreas sensíveis (face/genital) e em terapias de manutenção.",
+        correct: true,
+        explain: "Correto. O PDF descreve pimecrolimo e tacrolimo como 2ª linha, sem os efeitos colaterais dos CE e uma opção em áreas sensíveis ou para reduzir uso crônico de corticosteroides."
+      },
+      {
+        text: "Devem ser evitados em áreas de pele sensível porque aumentam o risco de atrofia cutânea mais que os CE.",
+        correct: false,
+        explain: "Incorreto. Ao contrário, inibidores de calcineurina são preferidos em áreas sensíveis justamente por menor risco de atrofia comparado a CE."
+      },
+      {
+        text: "São indicados como primeira escolha universal para todos os surtos agudos de DA em substituição imediata aos CE.",
+        correct: false,
+        explain: "Incorreto. Embora úteis, o material os posiciona como 2ª linha; CE continuam sendo 1ª linha para surtos."
+      },
+      {
+        text: "Têm ação apenas hidratante e não possuem efeito anti-inflamatório relevante.",
+        correct: false,
+        explain: "Incorreto. Inibidores de calcineurina têm efeito anti-inflamatório importante, não são meramente hidratantes."
+      }
+    ]
+  },
+
+  {
+    q: "13) Questão: Em casos graves de DA refratária, qual imunomodulador sistêmico é descrito no material como primeira linha para DA grave recalcitrante e qual é seu principal risco?",
+    choices: [
+      {
+        text: "Ciclosporina é 1ª linha para DA grave recalcitrante; seus riscos incluem hipertensão arterial e nefrotoxicidade.",
+        correct: true,
+        explain: "Correto. O PDF indica ciclosporina (3–5 mg/kg/dia) como 1ª linha para DA grave recalcitrante, com potenciais efeitos adversos de hipertensão e nefrotoxicidade."
+      },
+      {
+        text: "Metotrexato é 1ª linha para DA grave e não apresenta toxicidade hepática nem hematológica.",
+        correct: false,
+        explain: "Incorreto. Metotrexato é citado como 3ª linha para DA grave generalizada e possui risco de mielotoxicidade e hepatotoxicidade."
+      },
+      {
+        text: "Azatioprina é primeira escolha e é isenta de risco de mielossupressão.",
+        correct: false,
+        explain: "Incorreto. Azatioprina é um agente de 2ª linha com risco de mielossupressão conforme o material; não é isenta de riscos."
+      },
+      {
+        text: "Corticosteroides sistêmicos devem ser usados indefinidamente como tratamento de manutenção em DA grave.",
+        correct: false,
+        explain: "Incorreto. Corticosteroides sistêmicos são usados por curto período em casos muito graves; uso prolongado tem efeitos adversos significativos e risco de rebote."
+      }
+    ]
+  },
+
+  {
+    q: "14) Questão: Sobre terapias biológicas e agentes mais recentes para DA, qual alternativa reflete adequadamente o conteúdo do material?",
+    choices: [
+      {
+        text: "Dupilumabe, um anticorpo monoclonal que bloqueia IL-4 e IL-13, demonstrou eficácia e segurança no tratamento da DA.",
+        correct: true,
+        explain: "Correto. O PDF cita dupilumabe como anticorpo monoclonal bloqueador de IL-4/IL-13 com eficácia e boa segurança no tratamento da DA."
+      },
+      {
+        text: "Anticorpos anti-TNF são a principal terapêutica biológica para DA e são citados como tratamento padrão.",
+        correct: false,
+        explain: "Incorreto. O PDF não descreve anti-TNF como tratamento de escolha para DA; destaca dupilumabe (IL-4/IL-13) como agente moderno eficaz."
+      },
+      {
+        text: "Não existem terapias biológicas estudadas para DA; o tratamento continua exclusivamente com tópicos e imunossupressores clássicos.",
+        correct: false,
+        explain: "Incorreto. O material menciona especificamente dupilumabe como terapia biológica eficaz."
+      },
+      {
+        text: "Vacinas anti-alérgicas são citadas como cura definitiva e recomendadas para todos os pacientes com DA.",
+        correct: false,
+        explain: "Incorreto. O PDF não afirma que vacinas anti-alérgicas curam DA nem as recomenda de forma universal."
+      }
+    ]
+  },
+
+  {
+    q: "15) Questão: Em relação ao uso de anti-histamínicos para controle do prurido na DA, qual é a afirmação mais alinhada ao material?",
+    choices: [
+      {
+        text: "Anti-histamínicos H1 têm pouco efeito direto anti-pruriginoso na DA; a principal utilidade de sedativos (1ª geração) é efeito sedante noturno.",
+        correct: true,
+        explain: "Correto. O PDF esclarece que anti-histamínicos não têm ação anti-pruriginosa significativa na DA; 1ª geração pode ser usada pelo efeito sedante."
+      },
+      {
+        text: "Anti-histamínicos H1 são sempre suficientes para controlar o prurido severo e substituem corticoterapia tópica.",
+        correct: false,
+        explain: "Incorreto. Anti-histamínicos não controlam adequadamente o prurido severo da DA e não substituem corticosteroides tópicos em surtos."
+      },
+      {
+        text: "Doxepina é contraindicada em DA por aumentar diretamente a inflamação cutânea.",
+        correct: false,
+        explain: "Incorreto. O material menciona doxepina (antidepressivo tricíclico com ação H1/H2) como opção off-label para prurido intenso em surtos graves, dose noturna 10–50 mg."
+      },
+      {
+        text: "Anti-histamínicos de segunda geração são preferíveis por seu potente efeito anti-pruriginoso e sedativo.",
+        correct: false,
+        explain: "Incorreto. Anti-histamínicos de segunda geração têm menos efeito sedativo e, segundo o PDF, anti-histamínicos não apresentam ação anti-pruriginosa significativa na DA; o efeito sedativo útil vem das drogas de 1ª geração."
+      }
+    ]
+  },
+  {
+    q: "16) Questão: Sobre a classificação entre dermatite atópica extrínseca e intrínseca, qual das alternativas está correta?",
+    choices: [
+      {
+        text: "A forma extrínseca associa-se a IgE sérica aumentada, sensibilização a aeroalérgenos e história familiar atópica; a intrínseca tem IgE normal e ausência de sensibilização alérgica detectável.",
+        correct: true,
+        explain: "Correto. A DA extrínseca (alérgica) costuma apresentar níveis elevados de IgE e testes epicutâneos/prick positivos; a forma intrínseca tem IgE normal e falta de sensibilização demonstrável, embora compartilhe disfunção de barreira e inflamação."
+      },
+      {
+        text: "A forma intrínseca é causada exclusivamente por infecções bacterianas e sempre responde apenas a antibióticos.",
+        correct: false,
+        explain: "Incorreto. A forma intrínseca não é definida por infecção bacteriana; infecções secundárias por S. aureus podem ocorrer em ambas as formas e não definem a intrínseca."
+      },
+      {
+        text: "Na forma extrínseca não há componente genético e surge apenas por exposição ambiental recente.",
+        correct: false,
+        explain: "Incorreto. A forma extrínseca geralmente tem forte componente genético (história familiar) além da sensibilização ambiental."
+      },
+      {
+        text: "Diferença entre as formas depende exclusivamente do exame histopatológico mostrando células diferentes.",
+        correct: false,
+        explain: "Incorreto. A distinção baseia-se em características imunológicas (IgE/sensibilização) e clínica, não apenas em achados histopatológicos específicos."
+      }
+    ]
+  },
+
+  {
+    q: "17) Questão: Qual é o papel e a indicação da fototerapia (UVB) no manejo da dermatite atópica conforme descrito no material?",
+    choices: [
+      {
+        text: "Fototerapia UVB de banda estreita é uma opção eficaz para formas moderadas a graves generalizadas ou refratárias que não respondem adequadamente a terapias tópicas, devendo-se monitorar efeitos adversos.",
+        correct: true,
+        explain: "Correto. O PDF menciona fototerapia (principalmente UVB de banda estreita) como alternativa para DA moderada a grave generalizada, quando medidas tópicas e outras terapias não controlam a doença; requer monitorização."
+      },
+      {
+        text: "Fototerapia é contraindicada em todos os pacientes com DA por aumentar sempre o risco de infecção secundária.",
+        correct: false,
+        explain: "Incorreto. Fototerapia não é contraindicada universalmente; pode ser útil em casos selecionados. Risco de infecção não é razão absoluta para sua proibição."
+      },
+      {
+        text: "A terapia com UV é curativa e elimina a necessidade de emolientes ou tratamentos tópicos de manutenção.",
+        correct: false,
+        explain: "Incorreto. Fototerapia pode reduzir inflamação e surtos, mas não substitui medidas de manutenção como emolientes; não é considerada curativa definitiva."
+      },
+      {
+        text: "Fototerapia é a primeira linha em lactentes com menos de 1 ano de idade.",
+        correct: false,
+        explain: "Incorreto. Fototerapia geralmente não é indicada em lactentes; é uma opção para crianças mais velhas e adultos com doença generalizada e refratária."
+      }
+    ]
+  },
+
+  {
+    q: "18) Questão: Considerando alergia alimentar no contexto da DA, qual conduta está alinhada com o material para lactentes com suspeita de exacerbação por alimento?",
+    choices: [
+      {
+        text: "Investigar alergia alimentar na presença de história sugestiva (surtos associados à introdução de alimentos, sintomas sistêmicos) usando testes e, se necessário, dieta de eliminação supervisionada, evitando exclusões arbitrárias.",
+        correct: true,
+        explain: "Correto. O PDF recomenda investigação dirigida por história clínica e uso criterioso de testes e dietas de eliminação, principalmente no primeiro ano de vida; exclusões alimentares sem indicação podem ser prejudiciais."
+      },
+      {
+        text: "Indicar dietas de eliminação empiricamente para todos os lactentes com DA, sem necessidade de testes ou supervisão, para acelerar melhora.",
+        correct: false,
+        explain: "Incorreto. Exclusões alimentares indiscriminadas não são recomendadas; devem ser baseadas em história, testes e orientadas por especialista/nutricionista."
+      },
+      {
+        text: "Alergia alimentar é sempre a causa primária da DA em crianças; portanto, o encaminhamento para imunoterapia oral imediata é obrigatório.",
+        correct: false,
+        explain: "Incorreto. Embora alergias alimentares possam agravar DA em alguns lactentes, elas não são causa primária em todos os casos e imunoterapia oral não é indicação rotineira para DA."
+      },
+      {
+        text: "Testes cutâneos (prick) e IgE sérica têm sensibilidade perfeita; um resultado negativo exclui totalmente alergia alimentar.",
+        correct: false,
+        explain: "Incorreto. Testes têm limitações; um resultado negativo reduz a probabilidade mas não exclui 100% em todos os contextos clínicos; a correlação clínica é essencial."
+      }
+    ]
+  },
+
+  {
+    q: "19) Questão: Sobre medidas tópicas que atuam na barreira cutânea, qual das alternativas descreve corretamente suas propriedades e uso?",
+    choices: [
+      {
+        text: "Emolientes e hidratantes restauram lipídios da camada córnea, reduzem xerose e prurido, devem ser usados de forma continuada como base do tratamento e aplicados imediatamente após o banho.",
+        correct: true,
+        explain: "Correto. O material enfatiza emolientes como pilar do tratamento de manutenção: restauração lipídica, prevenção de perda transepidérmica e aplicação preferencial logo após o banho para aprisionar a umidade."
+      },
+      {
+        text: "Produtos com álcool e fragrâncias são recomendados porque removem detritos e melhoram a absorção de cremes terapêuticos.",
+        correct: false,
+        explain: "Incorreto. Produtos com álcool e fragrâncias são irritantes e podem piorar a DA; o material recomenda evitar substâncias irritantes."
+      },
+      {
+        text: "Óleos e pomadas nunca devem ser utilizados em áreas flexurais por aumentar risco de foliculite fatal.",
+        correct: false,
+        explain: "Incorreto. Embora a textura do veículo precise ser adequada (pomadas podem ser mais oclusivas), não há indicação de que causem foliculite fatal; escolha do veículo depende da área e tolerância."
+      },
+      {
+        text: "Aplicar esfoliantes agressivos diariamente melhora a eficácia dos emolientes a longo prazo.",
+        correct: false,
+        explain: "Incorreto. Esfoliação agressiva danifica a barreira cutânea e piora a xerose; o PDF contraindica práticas que agridam a pele."
+      }
+    ]
+  },
+
+  {
+    q: "20) Questão: Em relação ao manejo de surto infectado por Staphylococcus aureus na pele com DA, qual conduta está de acordo com as recomendações do material?",
+    choices: [
+      {
+        text: "Tratar infecções secundárias clinicamente significativas com antibióticos sistêmicos dirigidos (por exemplo, antiestafilocócicos) e considerar medidas locais; colonização sem sinais de infecção não requer antibiótico sistêmico rotineiro.",
+        correct: true,
+        explain: "Correto. O PDF orienta tratar infecções secundárias com antibióticos sistêmicos quando há sinais clínicos de infecção; colonização isolada não justifica antibioterapia sistêmica rotineira."
+      },
+      {
+        text: "Prescrever antibiótico sistêmico profilático em todos os pacientes com DA para prevenir colonização por S. aureus.",
+        correct: false,
+        explain: "Incorreto. Uso profilático de antibióticos não é recomendado rotineiramente; deve-se tratar infecções demonstráveis para evitar resistência."
+      },
+      {
+        text: "A presença de pústulas implica sempre em cirurgia para drenagem extensa antes de iniciar antimicrobianos.",
+        correct: false,
+        explain: "Incorreto. A drenagem é indicada para abscessos localizados, mas pústulas e impetigo geralmente são tratadas com antibióticos tópicos ou sistêmicos conforme a extensão; cirurgia não é sempre necessária."
+      },
+      {
+        text: "Antissépticos tópicos e banhos com soluções queratolíticas são a única medida necessária e substituem antibióticos em infecções manifestas.",
+        correct: false,
+        explain: "Incorreto. Antissépticos podem ajudar em medidas locais, mas infecções manifestas muitas vezes requerem antibiótico sistêmico; antissépticos não substituem terapia adequada quando indicada."
+      }
+    ]
+  },
+
+  /* CASOS CLÍNICOS - devem ser detalhados e com perguntas clínicas */
+  {
+    q: "21) Questão (Caso clínico): Paciente do sexo feminino, 8 meses, primeira visita devido a erupção cutânea que começou aos 3 meses. História de prurido intenso, noites agitadas, e piora com introdução de alimentos sólidos. Ao exame, dermatite exsudativa e crostosa na face malar e couro cabeludo, além de eritema nas superfícies extensora dos membros. Amamentada até 6 meses; mãe com rinite alérgica. Nível sérico de IgE elevado. Considerando este quadro, qual a melhor conduta inicial diagnóstica e terapêutica?",
+    choices: [
+      {
+        text: "Realizar anamnese dirigida para alimentos suspeitos, testes de alergia quando indicado, iniciar medidas gerais (emolientes diários, banho suave) e tratar surtos com corticoide tópico de baixa potência conforme área; evitar exclusões alimentares sem evidência.",
+        correct: true,
+        explain: "Correto. Em lactentes com quadro compatível, investigar alergia alimentar com base na história, usar emolientes como base do tratamento e tratar surtos com corticoide tópico apropriado; exclusões alimentares só com evidência e supervisão."
+      },
+      {
+        text: "Iniciar imediatamente antibiótico sistêmico de amplo espectro e suspender aleitamento materno por 2 semanas para reduzir IgE materna transmitida.",
+        correct: false,
+        explain: "Incorreto. Não há indicação de antibiótico sistêmico sem sinais de infecção; suspender aleitamento não reduz IgE da criança e não é recomendado; ações devem ser direcionadas conforme história e sinais clínicos."
+      },
+      {
+        text: "Prescrever tacrolimo tópico de alta dose em todo o corpo como primeira linha para lactentes para evitar corticosteroides.",
+        correct: false,
+        explain: "Incorreto. Inibidores de calcineurina podem ser usados em áreas sensíveis ou como alternativa, mas corticoides tópicos de baixa potência continuam sendo primeira linha para surtos; tacrolimo não é indicado em dosagem 'alta' para todo o corpo em lactentes sem avaliação."
+      },
+      {
+        text: "Realizar biópsia cutânea imediata para excluir dermatoses geneticamente determinantes antes de qualquer tratamento.",
+        correct: false,
+        explain: "Incorreto. Diagnóstico é clínico; biópsia não é rotina inicial e não deve preceder medidas terapêuticas básicas e investigação alérgica dirigida."
+      }
+    ]
+  },
+
+  {
+    q: "22) Questão (Caso clínico): Homem de 34 anos com história de dermatite atópica desde a infância apresenta piora progressiva nos últimos 6 meses com placas liquenificadas nas dobras flexurais (antecubital e poplítea), prurido insone e episódios recorrentes de impetiginização tratados ocasionalmente com antibiótico tópico. Já tentou emolientes e corticoterapia intermitente com melhora parcial. Qual a conduta mais apropriada neste momento?",
+    choices: [
+      {
+        text: "Avaliar gravidade (EASI/SCORAD), considerar otimizar adesão às medidas de barreira e programas de manutenção com emolientes, terapia tópica controlada (potência adequada), avaliar colonização/infeção e, diante de refratariedade e impacto na qualidade de vida, considerar fototerapia ou imunomoduladores sistêmicos como ciclosporina ou encaminhar para terapia biológica se indicado.",
+        correct: true,
+        explain: "Correto. Para adulto com DA crônica liquenificada refratária, reavaliar gravidade, otimizar cuidados tópicos, tratar infecções secundárias quando presentes e considerar terapias de segunda linha (fototerapia, ciclosporina) ou biológicos dependendo da resposta e comorbidades."
+      },
+      {
+        text: "Indicar uso contínuo de corticoide sistêmico por tempo indefinido para manutenção do controle.",
+        correct: false,
+        explain: "Incorreto. Corticoide sistêmico contínuo tem alto risco de efeitos adversos e não é recomendado como terapia de manutenção; alternativas sistêmicas ou biológicas devem ser consideradas para doença grave/refratária."
+      },
+      {
+        text: "Encaminhar para tratamento exclusivamente com antibiótico oral diário para prevenir colonização por S. aureus.",
+        correct: false,
+        explain: "Incorreto. Antibiótico diário profilático não é rotina; tratar infecções demonstradas e considerar medidas de descolonização em casos selecionados, mas não como estratégia única para controle inflamatório."
+      },
+      {
+        text: "Interromper emolientes e aplicar sabonete desengordurante para remover biofilme e melhorar penetração de corticoide tópico.",
+        correct: false,
+        explain: "Incorreto. Emolientes são pilar de manutenção; sabonetes desengordurantes podem agravar a barreira cutânea. A estratégia correta é preservar a barreira e tratar inflamação adequadamente."
+      }
+    ]
+  },
+
+  {
+    q: "23) Questão (Caso clínico): Adolescente de 15 anos com DA moderada apresenta queixas de olhos pruriginosos, sensação de areia, fotofobia e visão embaçada intermitente. Ao exame, há dermatite periocular e ceratoconjuntivite. Considerando as complicações oculares da DA, qual é a conduta mais adequada?",
+    choices: [
+      {
+        text: "Encaminhar ao oftalmologista para avaliação da córnea, iniciar manejo da pele periocular com terapia tópica de baixa potência e evitar corticóide tópico de alta potência na pálpebra; abordar inflamação ocular com tratamento oftalmológico específico.",
+        correct: true,
+        explain: "Correto. Complicações oculares (ceratoconjuntivite, uveíte, catarata) exigem avaliação oftalmológica; tratar pele periocular com cuidado (CE de baixa potência ou inibidor de calcineurina) e coordenação com oftalmologia para tratamento ocular."
+      },
+      {
+        text: "Prescrever corticoide oftálmico de alta potência sem avaliação oftalmológica e suspender todo tratamento dérmico até melhora ocular.",
+        correct: false,
+        explain: "Incorreto. Uso de corticoide oftálmico deve ser guiado por oftalmologista; suspender tratamento dérmico pode piorar a condição cutânea. Coordenação multidisciplinar é necessária."
+      },
+      {
+        text: "Descartar relação entre pele e olhos; tratar apenas com colírio antibiótico por 3 dias.",
+        correct: false,
+        explain: "Incorreto. Há associação entre DA e complicações oculares; tratamento apenas com antibiótico por curto período sem avaliar inflamação ou dano corneano é inadequado."
+      },
+      {
+        text: "Realizar cirurgia profilática de catarata imediata para prevenir perda visual a longo prazo.",
+        correct: false,
+        explain: "Incorreto. Catarata não é indicativa de cirurgia profilática imediata; abordagem envolve avaliação e condutas terapêuticas adequadas antes de considerar intervenção cirúrgica."
+      }
+    ]
+  },
+
+  {
+    q: "24) Questão (Caso clínico): Mulher de 28 anos, gestante no 2º trimestre, tem histórico de DA moderada controlada com emolientes e corticoide tópico de baixa potência intermitente. Procura orientação sobre segurança das terapias. Qual é a melhor orientação?",
+    choices: [
+      {
+        text: "Manter emolientes como base do tratamento; utilizar corticoide tópico de baixa potência quando necessário; evitar exposição desnecessária a imunossupressores sistêmicos e discutir risco/benefício de agentes mais potentes com dermatologista e obstetra.",
+        correct: true,
+        explain: "Correto. Em gestantes, emolientes são seguros e corticoides tópicos de baixa potência podem ser usados quando necessário; imunossupressores sistêmicos e biológicos exigem avaliação cuidadosa entre especialistas considerando risco/benefício."
+      },
+      {
+        text: "Interromper imediatamente todos os tratamentos tópicos e sistêmicos, pois qualquer exposição tem risco teratogênico absoluto.",
+        correct: false,
+        explain: "Incorreto. Muitas terapias tópicas (emolientes e corticoides de baixa potência) são consideradas seguras; interromper sem avaliação pode causar piora desnecessária."
+      },
+      {
+        text: "Iniciar ciclosporina em dose completa como primeira escolha para prevenir surtos na gravidez.",
+        correct: false,
+        explain: "Incorreto. Ciclosporina tem riscos e não é primeira escolha de rotina na gravidez para controle de DA leve/moderada; abordagem conservadora e interdisciplinar é preferível."
+      },
+      {
+        text: "Substituir todos os emolientes por produtos não testados e fazer dieta de eliminação extrema para proteger o feto.",
+        correct: false,
+        explain: "Incorreto. Não se recomenda substituição por produtos não testados ou dietas de eliminação sem indicação; medidas seguras e comprovadas devem ser priorizadas."
+      }
+    ]
+  },
+
+  {
+    q: "25) Questão (Caso clínico): Paciente adulto com DA grave generalizada e história de insuficiência renal crônica controlada procura tratamento por perda importante de qualidade de vida. Está em uso de vários tópicos sem resposta. Qual agente sistêmico deve ser evitado e qual alternativa é preferível conforme o material?",
+    choices: [
+      {
+        text: "Evitar ciclosporina por risco de nefrotoxicidade; considerar metotrexato ou azatioprina com monitorização adequada, ou avaliar indicação de terapias biológicas conforme perfil do paciente.",
+        correct: true,
+        explain: "Correto. Em paciente com insuficiência renal, ciclosporina apresenta risco significativo de nefrotoxicidade e deve ser evitada; outras opções sistêmicas (metotrexato, azatioprina) ou biológicos podem ser considerados com monitorização e avaliação de riscos."
+      },
+      {
+        text: "Iniciar ciclosporina sem ajustes, pois seu perfil renal é neutro e é a melhor opção para todos os pacientes com DA grave.",
+        correct: false,
+        explain: "Incorreto. Ciclosporina é nefrotóxica e contraindicada ou usada com extrema cautela em insuficiência renal; não é apropriada sem considerar riscos."
+      },
+      {
+        text: "Prescrever altas doses de corticosteroide sistêmico indefinidamente como substituto seguro para ciclosporina neste contexto renal.",
+        correct: false,
+        explain: "Incorreto. Corticosteroides sistêmicos por tempo prolongado têm efeitos adversos importantes e não são recomendação para manutenção de DA grave; uso temporário pode ser considerado em crises, mas não indefinidamente."
+      },
+      {
+        text: "Recomendar exclusivamente medidas tópicas e dissuadir qualquer terapia sistêmica mesmo que a doença seja incapacitante.",
+        correct: false,
+        explain: "Incorreto. Em DA grave com impacto significativo na qualidade de vida, terapias sistêmicas ou biológicas podem ser apropriadas; a decisão deve considerar comorbidades e riscos."
+      }
+    ]
+  },
+
+  {
+    q: "26) Questão (Caso clínico): Criança de 4 anos com histórico de DA apresenta múltiplas pústulas e áreas de crostas amareladas em região perioral e membros, febrícula e linfadenopatia inguinal local. Culturas revelam Staphylococcus aureus sensível a oxacilina. Qual a melhor abordagem terapêutica?",
+    choices: [
+      {
+        text: "Iniciar antibiótico sistêmico oral apropriado (antiestafilocócico), tratar lesões tópicas quando indicado, otimizar cuidados da barreira e avaliar necessidade de medidas de descolonização; evitar antibióticos tópicos isoladamente se extensa infecção.",
+        correct: true,
+        explain: "Correto. Infecções secundárias com sinais sistêmicos e cultura positiva para S. aureus sensível justificam antibiótico sistêmico dirigido; além disso, otimizar cuidados da pele e considerar descolonização em casos recorrentes."
+      },
+      {
+        text: "Usar apenas emolientes e esperar resolução espontânea, pois antibióticos não alteram curso de impetigo em DA.",
+        correct: false,
+        explain: "Incorreto. Infecções bacterianas com sinais locais e sistêmicos requerem tratamento antimicrobiano apropriado; esperar sem tratamento pode agravar quadro."
+      },
+      {
+        text: "Iniciar antifúngico oral empírico porque a descrição clínica é típica de micoses secundárias.",
+        correct: false,
+        explain: "Incorreto. Achados são compatíveis com impetigo bacteriano por S. aureus; antifúngicos não são indicados sem evidência de fungo."
+      },
+      {
+        text: "Realizar internação imediata para drenagem cirúrgica extensiva de todas as áreas acometidas sem uso inicial de antimicrobianos.",
+        correct: false,
+        explain: "Incorreto. Drenagem cirúrgica não é indicada para impetigo ou pústulas superficiais generalizadas; internação e cirurgia são reservadas a abscessos ou celulites extensas com indicação específica."
+      }
+    ]
+  },
+
+  {
+    q: "27) Questão (Caso clínico): Paciente adulto com DA apresenta prurigo nodular crônico em antebraços e pernas após anos de coçar intenso. As lesões são nódulos pruriginosos hiperpigmentados e de difícil controle com terapias tópicas usuais. Qual estratégia terapêutica pode ser discutida segundo o material?",
+    choices: [
+      {
+        text: "Fototerapia, inibidores tópicos de calcineurina em áreas selecionadas, além de considerar tratamentos sistêmicos (antidepressivos sedativos ou imunomoduladores) para reduzir prurido e promover reepitelização.",
+        correct: true,
+        explain: "Correto. Prurigo nodular pode requerer abordagens multimodais: fototerapia, inibidores tópicos, tratamentos sistêmicos para controle do prurido (como antidepressivos) e medidas comportamentais para reduzir o ciclo coçar-lesão."
+      },
+      {
+        text: "Indicar apenas esfoliação mecânica agressiva para remover o tecido nodular, sem outras terapias.",
+        correct: false,
+        explain: "Incorreto. Esfoliação agressiva agrava a barreira e o prurido; estratégias conservadoras e terapêuticas demonstradas são preferíveis."
+      },
+      {
+        text: "Prescrição exclusiva de antibiótico tópico como única medida para prurigo nodular crônico.",
+        correct: false,
+        explain: "Incorreto. Prurigo nodular crônico resulta de comportamento de coçar e inflamação; antibióticos tópicos não tratam a causa subjacente a menos que haja infecção secundária."
+      },
+      {
+        text: "Uso contínuo de corticosteroide sistêmico de alta dose por tempo indeterminado para reduzir os nódulos.",
+        correct: false,
+        explain: "Incorreto. Corticosteroides sistêmicos a longo prazo têm riscos significativos e não são recomendação para manejo crônico de prurigo nodular; abordagens locais, fototerapia e tratamento do prurido são preferíveis."
+      }
+    ]
+  },
+
+  {
+    q: "28) Questão (Caso clínico): Paciente de 22 anos refere piora de DA durante períodos de maior sudorese pós-exercício, com prurido intenso e aparecimento de pequenas pápulas urticariformes. Quais medidas preventivas e terapêuticas são adequadas?",
+    choices: [
+      {
+        text: "Recomendar banho curto e morno após exercícios, uso de roupas respiráveis, aplicação de emolientes após banho, evitar vestuário sintético junto à pele e, se necessário, anti-histamínicos sedativos para reduzir prurido noturno; ajustar tratamento anti-inflamatório tópico conforme a gravidade.",
+        correct: true,
+        explain: "Correto. Sudorese pode desencadear surtos; medidas comportamentais (banho imediato, roupas respiráveis) e manutenção com emolientes são indicadas; anti-histamínicos podem ajudar no sintoma noturno, e terapia tópica deve ser ajustada conforme inflamação."
+      },
+      {
+        text: "Prescrever banhos longos e quentes antes do exercício para dessensibilizar a pele ao suor.",
+        correct: false,
+        explain: "Incorreto. Banhos longos e quentes pioram a barreira cutânea e a xerose; não são recomendados como medida preventiva."
+      },
+      {
+        text: "Iniciar uso crônico de antibiótico oral para prevenir surtos relacionados à sudorese.",
+        correct: false,
+        explain: "Incorreto. Antibióticos não previnem surtos induzidos por suor; abordagem é evitar o gatilho e controlar a inflamação subjacente."
+      },
+      {
+        text: "Interromper atividade física por completo, pois exercício é absolutamente contraindicado em DA.",
+        correct: false,
+        explain: "Incorreto. Não é necessário evitar exercício; recomenda-se medidas práticas (banho após exercício, roupas apropriadas) em vez de cessação completa da atividade física."
+      }
+    ]
+  },
+
+  {
+    q: "29) Questão (Caso clínico): Criança de 2 anos, com histórico familiar de atopia, apresenta prurido intenso, lesões em tronco e dobras, e teste de contato positivo para perfume presente em sabonete. Os cuidadores desejam orientações práticas para reduzir estímulos irritantes em casa. Quais recomendações são mais apropriadas?",
+    choices: [
+      {
+        text: "Substituir sabonetes perfumados por syndet (sistema de limpeza suave) sem fragrância, usar água morna em banhos curtos, aplicar emolientes após o banho, optar por roupas de algodão, evitar lã e tecidos sintéticos próximos à pele, e manter unhas curtas para reduzir trauma por coçar.",
+        correct: true,
+        explain: "Correto. Essas medidas reduzem exposição a irritantes e preservam a barreira cutânea; o material enfatiza escolha de produtos suaves, banhos curtos, emolientes e vestuário adequado."
+      },
+      {
+        text: "Aconselhar banhos diários longos com sabão perfumado para 'limpar' melhor a pele e reduzir alérgenos.",
+        correct: false,
+        explain: "Incorreto. Banhos longos com sabão perfumado pioram a xerose e retiram lipídios protetores; devem ser evitados em favor de limpeza suave."
+      },
+      {
+        text: "Deixar a criança sem roupas dentro de casa para arejar a pele e evitar contato com roupas potencialmente irritantes.",
+        correct: false,
+        explain: "Incorreto. Exposição sem roupas não é prática e pode expor a outros irritantes; vestuário adequado em algodão é preferível; medidas ambientais devem ser sensatas."
+      },
+      {
+        text: "Aplicar óleo essencial diretamente na pele como substituto de emolientes para efeito anti-inflamatório natural.",
+        correct: false,
+        explain: "Incorreto. Óleos essenciais podem ser irritantes e sensibilizantes na pele atópica; não são substitutos seguros para emolientes formulados."
+      }
+    ]
+  },
+
+  {
+    q: "30) Questão (Caso clínico): Paciente adulta com DA grave refratária foi avaliada para terapia biológica. Entre os pontos a considerar antes de iniciar dupilumabe, qual é a abordagem correta?",
+    choices: [
+      {
+        text: "Avaliar contraindicações e comorbidades, confirmar refratariedade a terapias tópicas e sistêmicas convencionais, discutir possíveis efeitos adversos e monitorização, e considerar vacinas e rastreio de infecções antes do início, além de acompanhar resposta clínica e necessidade de manter emolientes.",
+        correct: true,
+        explain: "Correto. Iniciar terapia biológica exige avaliação completa: confirmar indicação, revisar terapêuticas anteriores, avaliar risco infeccioso, status vacinal e planejar monitorização; emolientes devem continuar como terapia de suporte."
+      },
+      {
+        text: "Iniciar dupilumabe imediatamente sem avaliação prévia porque é sempre seguro e cura a DA permanentemente.",
+        correct: false,
+        explain: "Incorreto. Dupilumabe é eficaz mas não isento de riscos e não garante cura permanente; avaliação prévia e acompanhamento são necessários."
+      },
+      {
+        text: "Substituir todas as outras terapias de manutenção abruptamente por dupilumabe sem período de sobreposição.",
+        correct: false,
+        explain: "Incorreto. A transição terapêutica deve ser planejada; manutenção de emolientes e ajuste gradual de outras terapias são práticas comuns conforme resposta clínica."
+      },
+      {
+        text: "Dupilumabe é contraindicada se houver história de asma concomitante, por aumentar risco respiratório.",
+        correct: false,
+        explain: "Incorreto. Dupilumabe é usado também em asma tipo 2 e pode beneficiar condições atópicas concomitantes; a presença de asma não é contraindicação automática."
+      }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

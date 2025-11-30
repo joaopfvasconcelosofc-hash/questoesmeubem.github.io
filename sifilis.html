@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Sífilis</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Sífilis</h1>
+    <p class="lead">30 questões - Sífilis</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    "q": "1) Questão: Sobre a epidemiologia da sífilis, qual afirmação está correta para os padrões descritos no material?",
+    "choices": [
+      {
+        "text": "A sífilis tem maior prevalência em indivíduos entre 20 e 29 anos, não confere imunidade ao infectado e é doença exclusivamente humana.",
+        "correct": true,
+        "explain": "O material descreve que a sífilis apresenta maior prevalência em jovens de 20-29 anos, não confere imunidade e é patógeno exclusivo do ser humano (parasita obrigatório)."
+      },
+      {
+        "text": "A sífilis é uma zoonose com reservatórios animais e confere imunidade duradoura após infecção.",
+        "correct": false,
+        "explain": "Incorreto: o material afirma ser patógeno exclusivo do ser humano e que a infecção não confere imunidade."
+      },
+      {
+        "text": "A sífilis é uma doença que raramente apresenta formas latentes e quase sempre é clínica e fácil de identificar sem exames.",
+        "correct": false,
+        "explain": "Incorreto: o texto ressalta aumento de formas latentes (mascaramento por antibióticos) e que muitas formas só são detectadas por exames."
+      },
+      {
+        "text": "A transmissão ocorre somente por transfusão sanguínea e nunca por via sexual ou vertical.",
+        "correct": false,
+        "explain": "Incorreto: o material descreve transmissão por via sexual, vertical (transplacentária) e, mais raramente, por transfusão ou inoculação acidental."
+      }
+    ]
+  },
+  {
+    "q": "2) Questão: Qual é a característica morfológica do agente etiológico Treponema pallidum destacada no material?",
+    "choices": [
+      {
+        "text": "Espiroqueta em formato de saca-rolha, com afinidade reduzida por corantes, identificada em microscopia de campo escuro.",
+        "correct": true,
+        "explain": "Correto: o material cita o formato de saca-rolha e a identificação por microscopia de campo escuro devido à baixa afinidade por corantes."
+      },
+      {
+        "text": "Cocorado Gram-positivo em pares, facilmente corável pelo método de Gram.",
+        "correct": false,
+        "explain": "Incorreto: Treponema não é coccoide nem Gram-positivo; tem baixa afinidade por corantes e é visualizado em campo escuro."
+      },
+      {
+        "text": "Bacilo gram-negativo com esporos, cultivável em meio artificial padrão.",
+        "correct": false,
+        "explain": "Incorreto: Treponema pallidum é não cultivável em meios artificiais e não forma esporos."
+      },
+      {
+        "text": "Levedura pleomórfica, com reprodução por brotamento, isolada facilmente em cultura de fungos.",
+        "correct": false,
+        "explain": "Incorreto: isso descreve fungos; Treponema é uma espiroqueta bacteriana, não uma levedura."
+      }
+    ]
+  },
+  {
+    "q": "3) Questão: Considerando a história natural da sífilis descrita, qual intervalo de incubação e média é apresentada?",
+    "choices": [
+      {
+        "text": "Incubação de 3 a 90 dias, com média de 21 dias.",
+        "correct": true,
+        "explain": "Correto: o material especifica incubação entre 3 e 90 dias, com média de 21 dias."
+      },
+      {
+        "text": "Incubação de 7 a 14 dias, com média de 10 dias.",
+        "correct": false,
+        "explain": "Incorreto: valores diferentes dos citados no material."
+      },
+      {
+        "text": "Incubação de 6 meses a 2 anos, com média de 1 ano.",
+        "correct": false,
+        "explain": "Incorreto: esses números se relacionam a estágios tardios; não correspondem à incubação inicial mencionada."
+      },
+      {
+        "text": "Incubação sempre menor que 48 horas em infecções sexualmente adquiridas.",
+        "correct": false,
+        "explain": "Incorreto: o material indica um período bem mais prolongado (3–90 dias)."
+      }
+    ]
+  },
+  {
+    "q": "4) Questão: Qual achado clínico define classicamente o cancro duro (lesão primária) na sífilis primária conforme o conteúdo?",
+    "choices": [
+      {
+        "text": "Úlcera única, indolor, com base e bordas infiltradas em rampa, fundo limpo e discreta serosidade; geralmente sem cicatriz após cura.",
+        "correct": true,
+        "explain": "Correto: isso reflete exatamente a descrição do cancro duro no material: indolor, único, bordas infiltradas, fundo limpo e tende a não deixar cicatriz."
+      },
+      {
+        "text": "Lesão múltipla, dolorosa, com fundo purulento e tendência a fistulização, com linfonodos supurativos.",
+        "correct": false,
+        "explain": "Incorreto: essa descrição se aproxima do cancro mole ou infecções bacterianas supurativas; o cancro duro tem adenopatia indolor e não supurativa."
+      },
+      {
+        "text": "Lesão eritematosa pruriginosa que aparece somente nas palmas e plantas.",
+        "correct": false,
+        "explain": "Incorreto: palmas e plantas estão mais associadas à sífilis secundária; o cancro primário não tem esse padrão."
+      },
+      {
+        "text": "Múltiplas pústulas dolorosas com exsudato hemorrágico, típicas do cancro duro.",
+        "correct": false,
+        "explain": "Incorreto: cancro duro não é pústula nem doloroso; pústulas e lesões dolorosas aparecem em outras variantes ou infecções."
+      }
+    ]
+  },
+  {
+    "q": "5) Questão: Sobre adenopatia associada ao cancro duro, qual característica é ressaltada no material?",
+    "choices": [
+      {
+        "text": "Adenopatia satélite, não supurativa, indolor, frequentemente bilateral, sem sinais inflamatórios na pele suprajacente; normalmente vários linfonodos aumentados.",
+        "correct": true,
+        "explain": "Correto: o material descreve adenopatia satélite, indolor, não supurativa, e normalmente múltiplos linfonodos aumentados."
+      },
+      {
+        "text": "Adenopatia dolorosa, supurativa e unilateral com eritema extenso da pele sobrejacente.",
+        "correct": false,
+        "explain": "Incorreto: adenopatia supurativa e dolorosa é característica de outras doenças (ex: cancro mole), não do cancro duro."
+      },
+      {
+        "text": "Ausência total de adenomegalia em todos os casos de cancro duro.",
+        "correct": false,
+        "explain": "Incorreto: o cancro duro frequentemente associa adenopatia satélite, embora possa variar."
+      },
+      {
+        "text": "Adenopatia generalizada isolada sem linfonodo predominante e com tendência à fistulização precoce.",
+        "correct": false,
+        "explain": "Incorreto: o material descreve um linfonodo que frequentemente se destaca em tamanho, mas sem tendência à fistulização; não é típica a fistulização precoce."
+      }
+    ]
+  },
+  {
+    "q": "6) Questão: Quais manifestações cutâneas são características da sífilis secundária, de acordo com o material?",
+    "choices": [
+      {
+        "text": "Roséola sifilítica com máculas eritematosas simétricas no tronco e raízes dos membros, que podem tornar-se papulosas e acometer palmas e plantas, com descamação periférica (colarete de Biett).",
+        "correct": true,
+        "explain": "Correto: o texto descreve roséola sifilítica com essas características, incluindo acometimento de palmas e plantas e o colarete de Biett."
+      },
+      {
+        "text": "Erupção purpúrica dolorosa exclusivamente localizada nas nádegas, sem acometimento palmar.",
+        "correct": false,
+        "explain": "Incorreto: a sífilis secundária costuma ter erupções difusas e características citadas; não se restringe às nádegas nem é tipicamente purpúrica dolorosa."
+      },
+      {
+        "text": "Pápulas pruriginosas isoladas apenas no rosto que persistem por anos sem regressão.",
+        "correct": false,
+        "explain": "Incorreto: as lesões da sífilis secundária têm distribuição mais ampla e em geral regridem; prurido não é característico principal."
+      },
+      {
+        "text": "Formação de crostas espessas no tronco sem envolvimento das mucosas ou escalpelização (rupióide) em todos os casos.",
+        "correct": false,
+        "explain": "Incorreto: lesões rupióides (crostas espessas) são uma variante de sífilis maligna precoce, associada a imunossupressão/HIV, não ocorre em todos os casos."
+      }
+    ]
+  },
+  {
+    "q": "7) Questão: A sífilis maligna precoce (rupial ou pustuloulcerativa) descrita no material tem quais características clínicas e associações?",
+    "choices": [
+      {
+        "text": "Lesões destrutivas com crostas espessas (rupióide), dolorosas, disseminadas no rosto e couro cabeludo, associadas a sintomas sistêmicos e frequentemente relacionada à coinfecção por HIV.",
+        "correct": true,
+        "explain": "Correto: o material descreve a sífilis maligna precoce com crostas espessas, lesões dolorosas, sintomas sistêmicos e associação com HIV."
+      },
+      {
+        "text": "Lesões assintomáticas localizadas exclusivamente em palmas e plantas sem relação com estado imunitário do paciente.",
+        "correct": false,
+        "explain": "Incorreto: essa descrição não corresponde à sífilis maligna; essas lesões costumam ser dolorosas e associadas a imunossupressão."
+      },
+      {
+        "text": "Eritema migratório e artrite sem alterações cutâneas, típico e exclusivo da sífilis maligna.",
+        "correct": false,
+        "explain": "Incorreto: sífilis maligna tem manifestações cutâneas graves, não apenas manifestações articulares sem lesões cutâneas."
+      },
+      {
+        "text": "Úlcera indolor única na genitália com adenopatia supurativa precoce, classicamente encontrada na sífilis maligna.",
+        "correct": false,
+        "explain": "Incorreto: úlcera indolor com adenopatia não supurativa é cancro duro; adenopatia supurativa e úlceras dolorosas sugerem outras etiologias."
+      }
+    ]
+  },
+  {
+    "q": "8) Questão: Sobre a sífilis tardia e suas manifestações, qual alternativa melhor descreve as possibilidades clínicas apresentadas no material?",
+    "choices": [
+      {
+        "text": "Pode surgir de 2 meses até 30 anos após a infecção inicial e incluir sífilis benigna com gomas (lesões gomosas), manifestações cutâneas destrutivas, alterações ósseas, viscerais, neurológicas e cardiovasculares, sem ser contagiosa.",
+        "correct": true,
+        "explain": "Correto: o material descreve amplo espectro na sífilis tardia, incluindo gomas, manifestações ósseas, viscerais, neurossífilis e sífilis cardiovascular; essas formas não são contagiosas."
+      },
+      {
+        "text": "A sífilis tardia sempre se limita à pele e nunca afeta órgãos internos ou sistema nervoso.",
+        "correct": false,
+        "explain": "Incorreto: o texto cita lesões viscerais, neurológicas e cardiovasculares na sífilis tardia."
+      },
+      {
+        "text": "Manifestações tardias aparecem obrigatoriamente antes de 6 meses e são sempre autolimitadas.",
+        "correct": false,
+        "explain": "Incorreto: manifestações tardias podem aparecer muitos anos após a infecção e não são autolimitadas."
+      },
+      {
+        "text": "Na sífilis tardia, as gomas são altamente contagiosas e desaparecem espontaneamente sem tratamento.",
+        "correct": false,
+        "explain": "Incorreto: gomas não são contagiosas e não tendem a involuir espontaneamente; costumam causar destruição local se não tratadas."
+      }
+    ]
+  },
+  {
+    "q": "9) Questão: Qual é a descrição das manifestações cardiovasculares da sífilis tardia conforme o material?",
+    "choices": [
+      {
+        "text": "Lesão limitada aos grandes vasos — especialmente a porção ascendente da aorta — levando à dilatação da aorta e possível insuficiência/ regurgitação aórtica; pode haver gomas no septo interventricular ou parede livre do VE.",
+        "correct": true,
+        "explain": "Correto: o material destaca acometimento da aorta ascendente com dilatação e regurgitação aórtica, além da possibilidade de gomas cardíacas."
+      },
+      {
+        "text": "Acometimento exclusivo das pequenas artérias periféricas com síndrome isquêmica aguda das extremidades.",
+        "correct": false,
+        "explain": "Incorreto: o acometimento típico é da aorta de grande calibre, não de pequenas artérias periféricas exclusivamente."
+      },
+      {
+        "text": "Endocardite com vegetações valvulares altamente infecciosas semelhantes à endocardite bacteriana aguda em todos os casos de sífilis tardia.",
+        "correct": false,
+        "explain": "Incorreto: o padrão na sífilis cardiovascular é mais de degeneração e dilatação da aorta, não vegetações como em endocardite bacteriana aguda."
+      },
+      {
+        "text": "Miocardite difusa com necrose miocárdica extensa como a manifestação mais comum e característica.",
+        "correct": false,
+        "explain": "Incorreto: a lesão mais característica é da aorta e valva aórtica; miocardite difusa extensa não é a manifestação predominante descrita."
+      }
+    ]
+  },
+  {
+    "q": "10) Questão: Quais métodos diretos de diagnóstico são citados no material como úteis para demonstrar o agente etiológico?",
+    "choices": [
+      {
+        "text": "Microscopia de campo escuro, impregnação pela prata, método da tinta da China, imunofluorescência direta e PCR (reação em cadeia da polimerase).",
+        "correct": true,
+        "explain": "Correto: esses métodos diretos aparecem no material como formas de demonstrar o Treponema pallidum diretamente."
+      },
+      {
+        "text": "Cultura em ágar sangue e coloração de Gram como métodos diretos confiáveis para Treponema pallidum.",
+        "correct": false,
+        "explain": "Incorreto: Treponema não é cultivável em meios artificiais padrão; cultura em ágar não é método diagnóstico citado."
+      },
+      {
+        "text": "Sorologia VDRL isolada como método direto para visualizar o agente no microscópio.",
+        "correct": false,
+        "explain": "Incorreto: VDRL é um teste sorológico não treponêmico, não método direto de visualização do agente."
+      },
+      {
+        "text": "Exame citológico de Papanicolaou sempre detecta Treponema pallidum com alta sensibilidade e é o método direto de escolha.",
+        "correct": false,
+        "explain": "Incorreto: o material não indica Papanicolaou como método direto adequado para demonstrar o Treponema."
+      }
+    ]
+  },
+  {
+    "q": "11) Questão: Sobre provas sorológicas, como o material diferencia testes não-treponêmicos e treponêmicos e suas limitações?",
+    "choices": [
+      {
+        "text": "Testes não-treponêmicos (ex.: VDRL, RPR) detectam anticorpos direcionados a antígenos lipídicos e são úteis para monitoramento, mas suscetíveis a falsos-positivos; testes treponêmicos (ex.: FTA-ABS, TPPA) detectam anticorpos específicos e servem para confirmação, podendo permanecer positivos indefinidamente.",
+        "correct": true,
+        "explain": "Correto: o material descreve exatamente essa distinção e as limitações, incluindo falsos-positivos e permanência de testes treponêmicos."
+      },
+      {
+        "text": "Testes não-treponêmicos confirmam a infecção definitiva para toda a vida, enquanto treponêmicos são apenas usados para triagem inicial.",
+        "correct": false,
+        "explain": "Incorreto: é o inverso — treponêmicos são usados para confirmação e podem permanecer positivos por longos períodos; não-treponêmicos são úteis para triagem e monitoramento."
+      },
+      {
+        "text": "Não existe chance de falso-positivo nos testes não-treponêmicos, sendo estes altamente específicos.",
+        "correct": false,
+        "explain": "Incorreto: o material lista várias causas de falso-positivos para testes não-treponêmicos (ex.: infecções virais, gravidez, doenças autoimunes, vacinas, entre outros)."
+      },
+      {
+        "text": "Testes treponêmicos geralmente negativam rapidamente após tratamento, enquanto VDRL permanece positivo para a vida.",
+        "correct": false,
+        "explain": "Incorreto: os testes treponêmicos podem permanecer positivos por toda a vida; já os títulos não-treponêmicos (VDRL) tendem a declinar após tratamento."
+      }
+    ]
+  },
+  {
+    "q": "12) Questão: Quais condições podem causar falso-positivos em testes não-treponêmicos (VDRL/RPR) conforme listado no material?",
+    "choices": [
+      {
+        "text": "Mononucleose, pneumonia viral, hepatite, herpes simples, zóster, sarampo, vacinas, gravidez, artrite reumatoide, LES, doença de Chagas (AHAI/ PAN?), tireoidite, hanseníase, tuberculose, leptospirose, malária e calazar.",
+        "correct": true,
+        "explain": "Correto: o material lista uma ampla gama de causas de falso-positivo em testes não-treponêmicos, incluindo as mencionadas acima."
+      },
+      {
+        "text": "Somente infecções bacterianas agudas causam falso-positivos; doenças virais nunca interferem.",
+        "correct": false,
+        "explain": "Incorreto: muitas doenças virais e outras condições imunes podem causar falso-positivos, conforme o material."
+      },
+      {
+        "text": "Falsos-positivos só ocorrem em caso de contaminação laboratorial e não têm relação com condições do paciente.",
+        "correct": false,
+        "explain": "Incorreto: o material dá várias causas clínicas para falsos-positivos além de possíveis problemas laboratoriais."
+      },
+      {
+        "text": "Vacinações nunca causam falso-positivo em testes não-treponêmicos.",
+        "correct": false,
+        "explain": "Incorreto: o material inclui vacinações entre possíveis causas de falso-positivos."
+      }
+    ]
+  },
+  {
+    "q": "13) Questão: O fenômeno da prozona, citado no material, refere-se a qual mecanismo e em que situação pode ocorrer?",
+    "choices": [
+      {
+        "text": "Fenômeno físico-químico causado por excesso de anticorpos que formam imunocomplexos solúveis, levando a resultado falso-negativo em testes não-treponêmicos, e pode ocorrer no secundarismo precoce.",
+        "correct": true,
+        "explain": "Correto: a prozona é um fenômeno em que excesso de anticorpos impede a formação de precipitado/aglutinação, causando falso-negativo; está associada ao secundarismo precoce."
+      },
+      {
+        "text": "Fenômeno de reatividade cruzada entre vírus diferentes que sempre aumenta a sensibilidade do teste VDRL.",
+        "correct": false,
+        "explain": "Incorreto: a prozona não é reatividade cruzada viral; refere-se ao excesso de anticorpos causando falso-negativo."
+      },
+      {
+        "text": "Reação de biossíntese do treponema que eleva a produção de lipídios e aumenta o título do VDRL sem relação com anticorpos.",
+        "correct": false,
+        "explain": "Incorreto: a prozona é fenômeno imunológico relacionado a anticorpos no soro, não à biossíntese do agente."
+      },
+      {
+        "text": "Fenômeno laboratorial que diminui a especificidade do teste treponêmico FTA-ABS por contaminação por proteínas plasmáticas.",
+        "correct": false,
+        "explain": "Incorreto: a prozona é clássica em testes não-treponêmicos e causa falso-negativos, não se refere primordialmente ao FTA-ABS."
+      }
+    ]
+  },
+  {
+    "q": "14) Questão: Qual é o tratamento recomendado no material para sífilis primária, secundária e latente recente em adultos não grávidas?",
+    "choices": [
+      {
+        "text": "Penicilina benzatina 2.400.000 UI em dose única (dose única IM).",
+        "correct": true,
+        "explain": "Correto: o material indica penicilina benzatina 2.400.000 UI em dose única para sífilis primária, secundária e latente recente."
+      },
+      {
+        "text": "Doxiciclina 100 mg VO 12/12h por 3 dias como primeira escolha para todos os casos, inclusive gestantes.",
+        "correct": false,
+        "explain": "Incorreto: doxiciclina é alternativa em não grávidas, por 14 dias (ou 15 conforme o slide), não é para gestantes e não por apenas 3 dias."
+      },
+      {
+        "text": "Cefalexina oral por 7 dias em dose única como tratamento de primeira linha.",
+        "correct": false,
+        "explain": "Incorreto: cefalexina não é listada como tratamento de escolha no material; esquemas alternativos incluem doxiciclina, tetraciclina, ceftriaxona, amoxicilina+probenecida."
+      },
+      {
+        "text": "Azitromicina única dose oral é o tratamento padrão e obrigatório para todas as formas de sífilis.",
+        "correct": false,
+        "explain": "Incorreto: azitromicina tem alguma atividade in vitro mas não é recomendado como tratamento de rotina; não é descrita como padrão no material."
+      }
+    ]
+  },
+  {
+    "q": "15) Questão: Em relação à Reação de Jarisch-Herxheimer descrita no material, qual afirmação é correta?",
+    "choices": [
+      {
+        "text": "É reação inflamatória que pode ocorrer nas primeiras 24 horas após a primeira dose de penicilina, com febre, cefaleia, mialgia, artralgia e aumento transitório da infiltração/edema das lesões, regredindo em 12–24 horas.",
+        "correct": true,
+        "explain": "Correto: o material descreve essa reação pós-tratamento inicial com os sintomas e tempo de regressão mencionados."
+      },
+      {
+        "text": "É tipo de reação alérgica tardia à penicilina que surge 2 semanas após o tratamento e não melhora sem descontinuação do antibiótico.",
+        "correct": false,
+        "explain": "Incorreto: Jarisch-Herxheimer é reação aguda nas primeiras horas após início do tratamento, não uma alergia tardia."
+      },
+      {
+        "text": "Reação rara que indica falência terapêutica imediata e exige troca imediata do antibiótico para vancomicina.",
+        "correct": false,
+        "explain": "Incorreto: não é sinal de falência terapêutica; costuma regredir espontaneamente e não indica troca de antibiótico para vancomicina."
+      },
+      {
+        "text": "Fenômeno exclusivamente observado em gestantes tratados com penicilina, contraindicado em todos os outros pacientes.",
+        "correct": false,
+        "explain": "Incorreto: ocorre em qualquer indivíduo tratado (especialmente nas fases precoces) e não é contraindicação ao tratamento; deve-se monitorar, especialmente em gestantes por risco de reações fetais, mas não é exclusivo deles."
+      }
+    ]
+  },
+  {
+    "q": "16) Questão: Qual o manejo laboratorial e clínico indicado no material para diagnóstico e seguimento de paciente com VDRL reagente e teste treponêmico não reagente?",
+    "choices": [
+      {
+        "text": "Repetir o teste não-treponêmico em diluições para excluir fenômeno de prozona e solicitar teste treponêmico confirmatório; considerar histórico clínico e tratamento prévio antes de diagnosticá-la como sífilis ativa.",
+        "correct": true,
+        "explain": "Correto: o material recomenda investigar prozona, repetir títulos não-treponêmicos e usar testes treponêmicos para confirmar; histórico de tratamentos prévios é essencial para interpretação."
+      },
+      {
+        "text": "Interpretar como confirmação imediata de sífilis primária e iniciar penicilina sem necessidade de confirmação adicional.",
+        "correct": false,
+        "explain": "Incorreto: a combinação VDRL reagente + treponêmico não reagente exige investigação adicional (prozona, problemas laboratoriais) e correlação clínica antes de tratar."
+      },
+      {
+        "text": "Tratar como sífilis terciária apenas se o paciente relatar sintomas neurológicos, sem necessidade de novos exames sorológicos.",
+        "correct": false,
+        "explain": "Incorreto: classificação por estágio requer correlação com história e exames; não se baseia apenas em sintomas neurológicos ou em um único padrão sorológico."
+      },
+      {
+        "text": "Considerar o resultado falso-positivo obrigatório e dispensar qualquer acompanhamento se o paciente for assintomático.",
+        "correct": false,
+        "explain": "Incorreto: embora falsos-positivos existam, o material orienta a investigação apropriada e não descartar acompanhamento apenas por ausência de sintomas."
+      }
+    ]
+  },
+  {
+    "q": "17) Questão: No pré-natal, quais condutas específicas relacionadas à sífilis o material destaca como essenciais para prevenção da sífilis congênita?",
+    "choices": [
+      {
+        "text": "Triagem sorológica no início do pré-natal e repetição no terceiro trimestre; tratamento imediato com penicilina benzatina da gestante e investigação/tratamento do(s) parceiro(s).",
+        "correct": true,
+        "explain": "Correto: o material ressalta a necessidade de rastreio precoce e repetição, tratamento imediato com penicilina para gestantes e abordagem dos parceiros para prevenir transmissão vertical."
+      },
+      {
+        "text": "Aguardar resultado de testes treponêmicos antes de tratar a gestante, tratando apenas após confirmação por FTA-ABS.",
+        "correct": false,
+        "explain": "Incorreto: o manejo da gestante prioriza tratamento imediato diante de testes não-treponêmicos reagentes para reduzir risco de transmissão fetal; não se deve aguardar confirmações que atrasem terapia."
+      },
+      {
+        "text": "Indicar azitromicina em dose única como alternativa segura para todas as gestantes alérgicas à penicilina sem necessidade de dessensibilização.",
+        "correct": false,
+        "explain": "Incorreto: azitromicina não é considerada alternativa segura na gravidez para prevenir sífilis congênita; a dessensibilização à penicilina é a conduta quando há alergia verdadeira."
+      },
+      {
+        "text": "Somente testar no parto, pois tratamento durante a gestação não altera o risco de sífilis congênita.",
+        "correct": false,
+        "explain": "Incorreto: testar apenas no parto é insuficiente; tratamento adequado durante a gestação reduz o risco de transmissão vertical."
+      }
+    ]
+  },
+  {
+    "q": "18) Questão: Qual o esquema terapêutico indicado no material para sífilis latente tardia ou de duração desconhecida em adultos não grávidas?",
+    "choices": [
+      {
+        "text": "Penicilina benzatina 2.400.000 UI por via intramuscular, semanalmente por 3 semanas (total 3 doses).",
+        "correct": true,
+        "explain": "Correto: para latente tardia ou de duração desconhecida o esquema recomendado no material é penicilina benzatina 2.400.000 UI IM semanal por 3 doses."
+      },
+      {
+        "text": "Penicilina benzatina em dose única de 2.400.000 UI apenas, sendo suficiente para todos os estágios latentes.",
+        "correct": false,
+        "explain": "Incorreto: dose única é indicada para sífilis recente (primária/ secundária/ latente recente); latente tardia requer 3 doses semanais."
+      },
+      {
+        "text": "Doxiciclina 100 mg por 7 dias como alternativa preferencial para todos com latência tardia.",
+        "correct": false,
+        "explain": "Incorreto: doxiciclina é alternativa quando penicilina não é possível em não grávidas, mas esquema para latente tardia exige 28 dias e não 7; a penicilina é preferida."
+      },
+      {
+        "text": "Ceftriaxona IM única dose de 1 g como tratamento padrão para latente tardia.",
+        "correct": false,
+        "explain": "Incorreto: ceftriaxona pode ser alternativa em esquemas específicos, mas não é indicada como dose única padrão para latente tardia."
+      }
+    ]
+  },
+  {
+    "q": "19) Questão: Conforme o material, qual a conduta frente a gestante com alergia à penicilina que necessita tratamento para sífilis?",
+    "choices": [
+      {
+        "text": "Encaminhar para dessensibilização à penicilina e tratar com penicilina benzatina, pois é a única terapia comprovadamente eficaz para prevenir sífilis congênita.",
+        "correct": true,
+        "explain": "Correto: o material enfatiza que gestantes alérgicas à penicilina devem ser dessensibilizadas e tratadas com penicilina, já que outras drogas não garantem proteção fetal."
+      },
+      {
+        "text": "Administrar doxiciclina por 14 dias como alternativa segura na gravidez.",
+        "correct": false,
+        "explain": "Incorreto: doxiciclina é contraindicada na gravidez; a dessensibilização e tratamento com penicilina são indicados."
+      },
+      {
+        "text": "Prescrever azitromicina em dose única e monitorar sorologia no pós-parto sem dessensibilizar.",
+        "correct": false,
+        "explain": "Incorreto: azitromicina não é alternativa confiável para prevenir sífilis congênita; dessensibilização é preferível."
+      },
+      {
+        "text": "Adiar qualquer tratamento até o término da gestação para evitar riscos à mãe.",
+        "correct": false,
+        "explain": "Incorreto: adiar tratamento aumenta risco de transmissão fetal; tratamento durante a gestação com penicilina é essencial."
+      }
+    ]
+  },
+  {
+    "q": "20) Questão: Sobre o seguimento após tratamento, qual parâmetro sorológico o material aponta como usado para avaliar resposta terapêutica e em que tempo espera-se queda do título?",
+    "choices": [
+      {
+        "text": "Queda do título do teste não-treponêmico (VDRL/RPR) por pelo menos duas diluições em 6 a 12 meses para sífilis primária/ secundária; seguimento com testes treponêmicos não é útil para avaliar resposta.",
+        "correct": true,
+        "explain": "Correto: o material descreve que a redução de títulos em testes não-treponêmicos é utilizada para monitorar resposta, com expectativa de queda em 6–12 meses; testes treponêmicos permanecem positivos."
+      },
+      {
+        "text": "Normalização imediata dos testes treponêmicos (FTA-ABS) em 1 mês é esperado e é o principal marcador de cura.",
+        "correct": false,
+        "explain": "Incorreto: testes treponêmicos frequentemente permanecem positivos por anos e não são usados para monitorar resposta terapêutica."
+      },
+      {
+        "text": "Aumento do título do VDRL em duas diluições 1 mês após tratamento indica cura completa.",
+        "correct": false,
+        "explain": "Incorreto: aumento de títulos após tratamento pode sugerir falha ou reinfecção; cura é indicada por queda dos títulos, não por aumento."
+      },
+      {
+        "text": "Avaliar exclusivamente por ausência de sintomas clínicos, sem necessidade de repetição sorológica.",
+        "correct": false,
+        "explain": "Incorreto: acompanhamento sorológico é recomendado para confirmar resposta ao tratamento, não apenas avaliação clínica."
+      }
+    ]
+  },
+  // Clinical cases start here
+  {
+    "q": "21) Questão: Caso clínico 1 — Paciente do sexo feminino, 24 anos, apresenta úlcera genital indolor única, com bordas infiltradas e fundo limpo há 3 semanas. Exame de linfonodos inguinais revela aumento bilateral, indolor, sem sinais de flogose. VDRL reagente em título 1:8 e teste treponêmico positivo. Qual a conduta mais apropriada segundo o material?",
+    "choices": [
+      {
+        "text": "Diagnosticar sífilis primária e tratar com penicilina benzatina 2.400.000 UI IM dose única; orientar rastreamento e tratamento de parceiros.",
+        "correct": true,
+        "explain": "Correto: a apresentação clínica e sorológica são compatíveis com sífilis primária; o tratamento de escolha é penicilina benzatina dose única, com abordagem de parceiros."
+      },
+      {
+        "text": "Prescrever doxiciclina 100 mg VO 12/12h por 7 dias e não tratar parceiros por ser provável infecção limitada.",
+        "correct": false,
+        "explain": "Incorreto: doxiciclina é alternativa apenas em não grávidas quando penicilina não pode ser usada e por período mais longo; além disso, portas de entrada sexual exigem tratamento de parceiros."
+      },
+      {
+        "text": "Considerar cancro mole e tratar com azitromicina única dose oral sem testes adicionais.",
+        "correct": false,
+        "explain": "Incorreto: cancro mole causa úlcera dolorosa e adenopatia supurativa; a sorologia e quadro são compatíveis com sífilis primária, não cancro mole."
+      },
+      {
+        "text": "Solicitar apenas PCR para Treponema e aguardar resultado para iniciar tratamento definitivo.",
+        "correct": false,
+        "explain": "Incorreto: tratamento não deve ser retardado quando quadro clínico e sorologia sugerem sífilis primária; iniciar penicilina é recomendado."
+      }
+    ]
+  },
+  {
+    "q": "22) Questão: Caso clínico 2 — Homem, 32 anos, HIV positivo (CD4 280, em TARV), apresenta lesões crateriformes com crostas espessas no rosto e febre. História de perda ponderal. VDRL fortemente reagente. Qual hipótese e conduta, conforme o material?",
+    "choices": [
+      {
+        "text": "Sífilis maligna precoce (rupial) associada à imunossupressão por HIV; iniciar penicilina benzatina e avaliar para coinfecções e necessidade de internação/terapia adjuvante.",
+        "correct": true,
+        "explain": "Correto: sífilis maligna precoce (rupial) é mais frequente em coinfecção por HIV e apresenta crostas espessas e sintomas sistêmicos; tratamento com penicilina e avaliação clínica completa são indicados."
+      },
+      {
+        "text": "Tratar como herpes zoster com antivirais orais e evitar antibióticos por risco de resistência.",
+        "correct": false,
+        "explain": "Incorreto: quadro e sorologia apontam para sífilis maligna; tratamento antiviral seria inadequado e atrasaria terapia necessária."
+      },
+      {
+        "text": "Indicar cirurgia para remoção das lesões antes de qualquer terapia medicamentosa.",
+        "correct": false,
+        "explain": "Incorreto: manejo é essencialmente medicamentoso; cirurgia não é primeira linha."
+      },
+      {
+        "text": "Prescrever corticosteroide sistêmico isoladamente para reduzir inflamação e observar resposta.",
+        "correct": false,
+        "explain": "Incorreto: corticosteroides isolados sem antibiótico não tratam a infecção e podem agravar condição em pacientes com infecção ativa."
+      }
+    ]
+  },
+  {
+    "q": "23) Questão: Caso clínico 3 — Mulher grávida de 28 semanas com VDRL 1:64 e teste treponêmico positivo. Nega alergias medicamentosas. Qual a conduta imediata recomendada pelo material?",
+    "choices": [
+      {
+        "text": "Iniciar penicilina benzatina 2.400.000 UI IM em esquema apropriado conforme estágio (provavelmente dose única se recente) e rastrear/ tratar parceiros; acompanhar títulos sorológicos pós-tratamento.",
+        "correct": true,
+        "explain": "Correto: gestante com sorologia positiva deve ser tratada prontamente com penicilina; o esquema depende do estágio, e acompanhamento sorológico e tratamento de parceiros são necessários."
+      },
+      {
+        "text": "Administrar doxiciclina por 14 dias por ser eficaz e seguro na gravidez.",
+        "correct": false,
+        "explain": "Incorreto: doxiciclina é contraindicada na gravidez; penicilina é a escolha segura e eficaz para prevenir sífilis congênita."
+      },
+      {
+        "text": "Aguardar até o terceiro trimestre para tratar, já que tratamento precoce pode provocar Jarisch-Herxheimer com risco fetal irreversível.",
+        "correct": false,
+        "explain": "Incorreto: não se deve adiar o tratamento por medo de Jarisch-Herxheimer; riscos de transmissão fetal são maiores sem tratamento."
+      },
+      {
+        "text": "Prescrever azitromicina oral em dose única para evitar injeções intramusculares durante a gestação.",
+        "correct": false,
+        "explain": "Incorreto: azitromicina não é alternativa confiável para prevenir sífilis congênita; penicilina é recomendada."
+      }
+    ]
+  },
+  {
+    "q": "24) Questão: Caso clínico 4 — Recém-nascido cujos pais foram tratados parcialmente na gestação; RN assintomático, mas VDRL quantitativo do recém-nascido está 1:16 e o título materno mais recente é 1:4. Segundo o material, qual interpretação e conduta mais apropriada?",
+    "choices": [
+      {
+        "text": "Indica provável infecção congênita (título do RN quatro vezes maior que o materno); iniciar avaliação e tratamento do recém-nascido com esquema recomendado (penicilina) e investigação clínica complementar.",
+        "correct": true,
+        "explain": "Correto: título do RN ≥4x título materno sugere infecção congênita e requer tratamento e investigação, mesmo que assintomático."
+      },
+      {
+        "text": "Considerar resultado compatível com anticorpos maternos passivos e dispensar tratamento; apenas observar clinicamente.",
+        "correct": false,
+        "explain": "Incorreto: se título do RN é significativamente maior que o materno, não se trata apenas de passagem de anticorpos maternos; tratamento é indicado."
+      },
+      {
+        "text": "Iniciar tratamento apenas se o RN apresentar sinais clínicos; títulos isolados não influenciam decisão terapêutica.",
+        "correct": false,
+        "explain": "Incorreto: títulos sorológicos comparativos entre mãe e RN são usados para decisão terapêutica independentemente de sintomas."
+      },
+      {
+        "text": "Aguardar até retorno ambulatorial em 48 horas para repetir VDRL do RN antes de qualquer intervenção.",
+        "correct": false,
+        "explain": "Incorreto: diante de indicação sorológica clara de infecção congênita, tratamento não deve ser adiado; repetir exame pode atrasar terapia."
+      }
+    ]
+  },
+  {
+    "q": "25) Questão: Caso clínico 5 — Paciente de 45 anos com história de sífilis tratada há 20 anos apresenta aneurisma de aorta ascending e insuficiência aórtica progressiva. VDRL não-treponêmico atual é não reagente; testes treponêmicos são positivos. Qual conclusão clínica e conduta sugerida pelo material?",
+    "choices": [
+      {
+        "text": "Compatível com sífilis cardiovascular tardia como sequela de infecção antiga; avaliar clinicamente e para complicações cardiovasculares, contudo testes não-treponêmicos podem ser não reativos; manejo cardiológico cirúrgico/ clínico conforme necessidade.",
+        "correct": true,
+        "explain": "Correto: manifestações cardiovasculares podem surgir anos após infecção e testes treponêmicos podem permanecer positivos enquanto não-treponêmicos podem ser negativos; conduta envolve avaliação cardiológica e tratamento das complicações."
+      },
+      {
+        "text": "Descartar relação com sífilis por VDRL não reagente e buscar exclusivamente causas ateroscleróticas sem considerar história prévia.",
+        "correct": false,
+        "explain": "Incorreto: história de sífilis antiga e testes treponêmicos positivos apontam para sequela tardia possível; não se deve descartar sem avaliação adequada."
+      },
+      {
+        "text": "Iniciar penicilina benzatina imediatamente para tratamento da aneurisma, aguardando melhora sem necessidade de intervenção cirúrgica.",
+        "correct": false,
+        "explain": "Incorreto: penicilina não reverte alterações estruturais já estabelecidas da aorta; manejo pode demandar intervenção cardíaca além de avaliar atividade infecciosa."
+      },
+      {
+        "text": "Prescrever imunossupressores para reduzir inflamação da aorta e evitar cirurgia.",
+        "correct": false,
+        "explain": "Incorreto: imunossupressão não é tratamento para sífilis cardiovascular; avaliação e manejo cardiovascular são necessários."
+      }
+    ]
+  },
+  {
+    "q": "26) Questão: Caso clínico 6 — Homem de 29 anos, com úlceras orais mucosas difusas, febre e linfadenopatia generalizada, há 6 semanas. Secreção de base das lesões e exsudato mucoso. Sorologia: VDRL 1:32, treponêmico positivo. Qual estágio da sífilis e quais são as implicações clínicas segundo o material?",
+    "choices": [
+      {
+        "text": "Sífilis secundária indicada por lesões mucocutâneas difusas e adenopatia generalizada; requer tratamento com penicilina benzatina e acompanhamento sorológico subsequente.",
+        "correct": true,
+        "explain": "Correto: quadro com múltiplas lesões mucosas, febre, linfadenopatia e títulos elevados é típico de sífilis secundária; tratamento e seguimento são necessários."
+      },
+      {
+        "text": "Sífilis primária, pois há úlcerações locais únicas sendo típico desse estágio.",
+        "correct": false,
+        "explain": "Incorreto: primária tende a apresentar úlcera única indolor e adenopatia regional; quadro difuso e sistêmico indica secundarismo."
+      },
+      {
+        "text": "Sífilis terciária por apresentar adenopatia extensa e exsudato crônico.",
+        "correct": false,
+        "explain": "Incorreto: terciarismo ocorre anos depois e com manifestações como gomas, cardiovasculares ou neurológicas; não é o quadro descrito."
+      },
+      {
+        "text": "Infecção por HSV disseminada, pois sífilis nunca causa lesões mucosas.",
+        "correct": false,
+        "explain": "Incorreto: sífilis secundária frequentemente tem lesões mucosas; não se deve confundir com HSV sem consideração sorológica e clínica."
+      }
+    ]
+  },
+  {
+    "q": "27) Questão: Caso clínico 7 — Paciente com sífilis latente recente tratada corretamente com penicilina há 6 meses apresenta queda menor que duas diluições no título do VDRL. Está assintomático. Segundo o material, qual deve ser a interpretação e conduta?",
+    "choices": [
+      {
+        "text": "Pode indicar resposta subótima ao tratamento ou reinfecção; investigar adesão, avaliar possibilidade de reinfecção e considerar retratamento se não houver explicação plausível ou se houver aumento de título posteriormente.",
+        "correct": true,
+        "explain": "Correto: ausência de queda adequada nos títulos pode sugerir falha terapêutica ou reinfecção; a conduta inclui investigar causas, adesão, reinfecção e considerar retratamento conforme contexto."
+      },
+      {
+        "text": "Considerar cura completa, dispensando acompanhamento sorológico adicional.",
+        "correct": false,
+        "explain": "Incorreto: queda inadequada dos títulos exige investigação e acompanhamento; não se assume cura imediata."
+      },
+      {
+        "text": "Iniciar tratamento com antimicrobianos de amplo espectro sem repetir sorologia para descartar outras infecções bacterianas.",
+        "correct": false,
+        "explain": "Incorreto: não há indicação de antimicrobianos de amplo espectro sem evidência; repetir sorologia e avaliar contexto são medidas mais adequadas."
+      },
+      {
+        "text": "Tratar com uma única dose adicional de penicilina benzatina rotineiramente em todos os casos onde os títulos não cairam o suficiente em 6 meses.",
+        "correct": false,
+        "explain": "Incorreto: retratamento deve ser baseado em investigação e contexto clínico; não é automática a administração de dose adicional sem justificativa."
+      }
+    ]
+  },
+  {
+    "q": "28) Questão: Caso clínico 8 — Recém-nascido com icterícia, hepatomegalia, petéquias e ossos radiologicamente com lesões periostais. Mãe com tratamento inadequado durante a gestação. Qual o diagnóstico provável e a abordagem indicada pelo material?",
+    "choices": [
+      {
+        "text": "Sífilis congênita sintomática — iniciar tratamento imediato com penicilina cristalina/aqueosa IV ou procaína conforme protocolo neonatal e realizar avaliação completa (hemograma, radiografia, LCR, função hepática).",
+        "correct": true,
+        "explain": "Correto: sinais como hepatomegalia, petéquias e lesões ósseas indicam sífilis congênita sintomática; tratamento parenteral com penicilina e investigação abrangente são recomendados."
+      },
+      {
+        "text": "Icterícia fisiológica do RN — apenas fototerapia indicada e sem necessidade de investigação infecciosa.",
+        "correct": false,
+        "explain": "Incorreto: presença de hepatomegalia, petéquias e alterações ósseas sugere patologia infecciosa; mera fototerapia sem investigação é inadequada."
+      },
+      {
+        "text": "Septicemia bacteriana indiferenciada, tratar apenas com cefalosporina e não considerar sífilis por ser rara.",
+        "correct": false,
+        "explain": "Incorreto: embora septicemia deva ser considerada, sinais descritos e história materna de tratamento inadequado orientam fortemente para sífilis congênita; penicilina é tratamento específico."
+      },
+      {
+        "text": "Deficiência metabólica congênita como primeira hipótese, sem necessidade de sorologia materna/neonatal.",
+        "correct": false,
+        "explain": "Incorreto: quadro e contexto materno sugerem infecção congênita; avaliação sorológica e tratamento específico são prioritários."
+      }
+    ]
+  },
+  {
+    "q": "29) Questão: Caso clínico 9 — Paciente com suspeita de neurossífilis: cefaleia crônica, alterações cognitivas leves e alteração do reflexo pupilar (Argyll Robertson). VDRL no soro reagente. Qual a melhor estratégia diagnóstica e terapêutica conforme o material?",
+    "choices": [
+      {
+        "text": "Realizar punção lombar para VDRL/FTA-ABS no LCR e, se confirmado neurossífilis, tratar com penicilina cristalina endovenosa em esquema recomendado; acompanhamento neurológico é necessário.",
+        "correct": true,
+        "explain": "Correto: suspeita de neurossífilis exige avaliação do LCR; tratamento com penicilina cristalina IV é indicado se confirmado ou altamente suspeito, conforme protocolo."
+      },
+      {
+        "text": "Negar avaliação do LCR e tratar apenas com penicilina benzatina IM como para sífilis sistêmica devido à sua melhor penetração no SNC.",
+        "correct": false,
+        "explain": "Incorreto: penicilina benzatina não alcança concentrações adequadas no LCR; neurossífilis requer penicilina cristalina IV."
+      },
+      {
+        "text": "Prescrever corticosteroides e antivirais empíricos sem realizar punção lombar.",
+        "correct": false,
+        "explain": "Incorreto: corticosteroides/antivirais não substituem avaliação diagnóstica do LCR ou tratamento específico com penicilina IV."
+      },
+      {
+        "text": "Aguardar evolução por 6 meses para confirmar deterioração antes de intervir, pois neurossífilis progride lentamente.",
+        "correct": false,
+        "explain": "Incorreto: atraso no diagnóstico e tratamento pode causar dano neurológico permanente; investigação e tratamento precoces são recomendados."
+      }
+    ]
+  },
+  {
+    "q": "30) Questão: Caso clínico 10 — Homem de 38 anos com úlcera genital única indolor tratada empiricamente com amoxicilina por um clínico semanas antes; atualmente assintomático. Em triagem de rotina VDRL não reagente e treponêmico positivo. Qual a interpretação mais provável e a conduta recomendada segundo o material?",
+    "choices": [
+      {
+        "text": "Possível sífilis tratada parcialmente (ou infecção antiga) com negativização do VDRL; correlacionar com história de tratamento recente, realizar anamnese detalhada e considerar tratamento se há evidência clínica de infecção ativa ou títulos elevados prévios.",
+        "correct": true,
+        "explain": "Correto: antibióticos inapropriados podem mascarar a sorologia, levando a VDRL não reagente; teste treponêmico positivo e história indicam necessidade de avaliação detalhada e possível retratamento conforme contexto."
+      },
+      {
+        "text": "Descartar sífilis definitivamente por VDRL não reagente e não indicar qualquer seguimento.",
+        "correct": false,
+        "explain": "Incorreto: VDRL pode ser negativo após tratamento parcial ou por prozona; avaliação adicional e correlação clínica são necessárias."
+      },
+      {
+        "text": "Iniciar imediatamente ciclo de antivirais para herpes genitálico sem considerar sífilis.",
+        "correct": false,
+        "explain": "Incorreto: apesar de herpes ser uma possibilidade, a sorologia e história exigem investigação de sífilis e não substituem por antivirais sem justificativa."
+      },
+      {
+        "text": "Tratar com uma única dose de cefalexina oral e dar alta sem orientação a parceiros.",
+        "correct": false,
+        "explain": "Incorreto: cefalexina não é terapia eficaz para sífilis; abordagem de parceiros é parte essencial do controle."
+      }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>

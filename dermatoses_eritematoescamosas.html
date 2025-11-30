@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quiz — Dermatoses Eritematoescamosas</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9d4edd; --muted:#94a3b8; --ok:#16a34a; --err:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+  }
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(180deg,#071020,#081426); color:#e6eef8; margin:0; padding:24px;}
+  header{display:flex; gap:16px; align-items:center; margin-bottom:18px;}
+  h1{font-size:20px; margin:0;}
+  p.lead{margin:0; color:var(--muted); font-size:14px;}
+  .container{display:grid; gap:12px; max-width:980px; margin:0 auto;}
+  .card{background:var(--card); border-radius:12px; padding:14px; box-shadow:0 6px 18px rgba(2,6,23,0.6); border:1px solid rgba(255,255,255,0.03);}
+  .qhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .qnum{font-weight:600; color:var(--accent);}
+  .question{font-size:16px; margin-bottom:8px;}
+  .options{display:flex; flex-direction:column; gap:8px;}
+  label.option{background:var(--glass); padding:10px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:10px; border:1px solid transparent;}
+  input[type="radio"]{accent-color:var(--accent); width:18px; height:18px;}
+  label.option:hover{border-color:rgba(157,78,221,0.2);}
+  .explain{margin-top:10px; padding:10px; border-radius:8px; background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04)); color:#f3e8ff; display:none; border-left:4px solid var(--accent);}
+  .explain.ok{border-left-color:var(--ok);}
+  .explain.err{border-left-color:var(--err);}
+  .meta{font-size:13px; color:var(--muted); margin-top:6px;}
+  footer{max-width:980px; margin:20px auto 60px; color:var(--muted); font-size:13px; text-align:center;}
+  button{background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.06);}
+  .scorecard{display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+  .pill{background:rgba(255,255,255,0.04); padding:6px 10px; border-radius:999px; color:var(--muted); font-weight:600;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Quiz Interativo — Dermatoses Eritematoescamosas</h1>
+    <p class="lead">30 questões - Dermatoses Eritematoescamosas</p>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="scorecard">
+      <div class="pill" id="answeredCount">Respondidas: 0 / 20</div>
+      <div class="pill" id="progressCorrect">Corretas: 0</div>
+    </div>
+  </div>
+</header>
+
+<main class="container" id="quiz"></main>
+
+<footer class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <strong>Como usar</strong>
+      <div class="meta">Selecione uma alternativa para ver a explicação. Pode mudar de resposta a qualquer momento.</div>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button id="showAll">Mostrar explicações</button>
+      <button class="ghost" id="reset">Reiniciar quiz</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+
+const questions = [
+  {
+    q: "1) Questão: Qual a prevalência aproximada da dermatite seborréica em adultos e qual é a relação entre sexos descrita no material?",
+    choices: [
+      {
+        text: "Prevalência 3-5% em adultos; discreta predileção por homens sobre mulheres.",
+        correct: true,
+        explain: "O PDF descreve prevalência de 3-5% em adultos e informa H > M de forma discreta, portanto essa alternativa é correta. :contentReference[oaicite:1]{index=1}"
+      },
+      {
+        text: "Prevalência >20% em adultos; predomínio claro em mulheres.",
+        correct: false,
+        explain: "Incorreto: o material relata prevalência de 3-5% e predomínio discreto masculino, não >20% nem predomínio feminino. :contentReference[oaicite:2]{index=2}"
+      },
+      {
+        text: "Prevalência 0,5% em adultos; igualdade entre sexos.",
+        correct: false,
+        explain: "Incorreto: prevalência citada no PDF é 3-5%, e há discreto predomínio masculino, não igualdade e nem 0,5%. :contentReference[oaicite:3]{index=3}"
+      },
+      {
+        text: "Prevalência desconhecida; acomete apenas crianças e idosos.",
+        correct: false,
+        explain: "Incorreto: o PDF fornece estimativa de prevalência em adultos e descreve formas em lactentes e adultos (4ª-6ª década), não é limitada a crianças/idosos. :contentReference[oaicite:4]{index=4}"
+      }
+    ]
+  },
+  {
+    q: "2) Questão: Sobre a patogenia da dermatite seborréica, qual das opções melhor descreve o papel das leveduras do gênero Malassezia segundo o material?",
+    choices: [
+      {
+        text: "Malassezia é provavelmente envolvida: aumento da contagem em pacientes, melhora com redução da população fúngica e relato de reprodução de alterações em modelos animais.",
+        correct: true,
+        explain: "O PDF apresenta evidências que suportam papel de Malassezia (maior quantidade em indivíduos com DS, melhora com redução da população e reprodução de alterações em animais), embora não se considere única causa. :contentReference[oaicite:5]{index=5}"
+      },
+      {
+        text: "Malassezia é definitivamente a causa primária, não há controvérsia na literatura.",
+        correct: false,
+        explain: "Incorreto: o material afirma que a participação de Malassezia não está totalmente estabelecida e pode ser secundária; não a define como causa única. :contentReference[oaicite:6]{index=6}"
+      },
+      {
+        text: "Malassezia não tem relação alguma com dermatite seborréica.",
+        correct: false,
+        explain: "Incorreto: o PDF lista várias evidências que sugerem associação entre Malassezia e DS, portanto não é correta a afirmação de ausência total de relação. :contentReference[oaicite:7]{index=7}"
+      },
+      {
+        text: "Malassezia é exclusiva de pacientes com imunodeficiência e não é encontrada na população saudável.",
+        correct: false,
+        explain: "Incorreto: Malassezia é uma levedura comumente encontrada; o PDF menciona aumento em DS e maior prevalência de DS em imunodeprimidos, mas não que Malassezia seja exclusiva desses pacientes. :contentReference[oaicite:8]{index=8}"
+      }
+    ]
+  },
+  {
+    q: "3) Questão: Qual das alterações na dinâmica epidérmica é mencionada no material como característica da dermatite seborréica?",
+    choices: [
+      {
+        text: "Aumento do número de mitoses e aceleração do trânsito epidérmico com presença de núcleos na camada córnea.",
+        correct: true,
+        explain: "Correto: o PDF descreve aumento do número de mitoses e do trânsito epidérmico, com presença de núcleos na camada córnea como alteração histológica/epidérmica. :contentReference[oaicite:9]{index=9}"
+      },
+      {
+        text: "Diminuição da renovação epidérmica e hipoproliferação com afinamento da epiderme.",
+        correct: false,
+        explain: "Incorreto: o material descreve aumento, não diminuição, do turnover epidérmico. :contentReference[oaicite:10]{index=10}"
+      },
+      {
+        text: "Queratinização completa sem retenção de núcleos corneanos.",
+        correct: false,
+        explain: "Incorreto: o PDF menciona núcleos na camada córnea (paraceratose), não queratinização completa sem núcleos. :contentReference[oaicite:11]{index=11}"
+      },
+      {
+        text: "Formação de bolhas subepidérmicas com necrose epidérmica.",
+        correct: false,
+        explain: "Incorreto: não há descrição de bolhas subepidérmicas ou necrose na patologia típica de DS no material. :contentReference[oaicite:12]{index=12}"
+      }
+    ]
+  },
+  {
+    q: "4) Questão: Sobre fatores predisponentes para dermatite seborréica, qual conjunto abaixo está alinhado com as informações do PDF?",
+    choices: [
+      {
+        text: "Ser homem, predisposição genética, distúrbios neurológicos (p.ex. Parkinson), estresse, uso de produtos oleosos, calor e imunodeficiências (AIDS).",
+        correct: true,
+        explain: "Correto: o PDF lista como fatores predisponentes ser homem, genética, distúrbios neurológicos, estresse, produtos engordurantes, calor e imunodeficiências como AIDS. :contentReference[oaicite:13]{index=13}"
+      },
+      {
+        text: "Exposição crônica ao frio, dieta pobre em carboidratos e uso de anti-histamínicos.",
+        correct: false,
+        explain: "Incorreto: o material associa calor/umidade e alimentos condimentados/excesso de carboidratos, não frio nem especificamente anti-histamínicos. :contentReference[oaicite:14]{index=14}"
+      },
+      {
+        text: "Exercício aeróbico diário intenso e dieta rica em fibras são fatores de risco principais.",
+        correct: false,
+        explain: "Incorreto: o PDF não descreve exercício ou dieta rica em fibras como fatores predisponentes; menciona obesidade e diabetes, mas não exercício. :contentReference[oaicite:15]{index=15}"
+      },
+      {
+        text: "Higiene excessiva isolada é o principal fator causal segundo o material.",
+        correct: false,
+        explain: "Incorreto: higiene excessiva não é destacada como fator causal principal no PDF; são citados diversos fatores endógenos e exógenos. :contentReference[oaicite:16]{index=16}"
+      }
+    ]
+  },
+  {
+    q: "5) Questão: Nas formas em lactentes, qual descrição clínica corresponde ao quadro conhecido como crosta láctea segundo o PDF?",
+    choices: [
+      {
+        text: "Escamo-crostas aderentes amareladas no couro cabeludo, base eritematosa, podendo atingir sobrancelhas e centro facial; cabelos agrupados em tufos na pseudotínea amiantácea.",
+        correct: true,
+        explain: "Correto: o material descreve exatamente essas características: escamo-crostas amareladas aderentes no couro cabeludo, pseudotínea amiantácea e envolvimento facial. :contentReference[oaicite:17]{index=17}"
+      },
+      {
+        text: "Bolhas tensas difusas pelo corpo com síndrome necrótica epidérmica.",
+        correct: false,
+        explain: "Incorreto: crosta láctea não apresenta bolhas tensas nem necrólise epidérmica; é caracterizada por escamas/crostas aderentes. :contentReference[oaicite:18]{index=18}"
+      },
+      {
+        text: "Lesões purpúricas com febre e comprometimento sistêmico.",
+        correct: false,
+        explain: "Incorreto: a forma infantil geralmente tem bom estado geral e ausência de sintomas sistêmicos, não purpura com febre. :contentReference[oaicite:19]{index=19}"
+      },
+      {
+        text: "Lesões exclusivamente palmoplantares pruriginosas.",
+        correct: false,
+        explain: "Incorreto: crosta láctea afeta couro cabeludo e face, não é restrita a palmas/plantas. :contentReference[oaicite:20]{index=20}"
+      }
+    ]
+  },
+  {
+    q: "6) Questão: Considerando o diagnóstico histopatológico da dermatite seborréica, qual das seguintes constatações é mencionada no material?",
+    choices: [
+      {
+        text: "Dermatite espongiótica de padrão subagudo, paraceratose 'em ombro' e infiltrado linfo-histiocitário esparso na derme superficial.",
+        correct: true,
+        explain: "Correto: o PDF descreve dermatite espongiótica subaguda, paraceratose em ombro, acantose psoriasiforme moderada e infiltrado linfo-histiocitário esparso. :contentReference[oaicite:21]{index=21}"
+      },
+      {
+        text: "Epidermólise bolhosa com necrose subepidérmica e neutrófilos intravasculares maciços.",
+        correct: false,
+        explain: "Incorreto: tal descrição não consta para DS no material; a descrição correta é de espongiose e paraceratose, não bolhas e necrose subepidérmica. :contentReference[oaicite:22]{index=22}"
+      },
+      {
+        text: "Inflamação granulomatosa profunda com presença de micobactérias.",
+        correct: false,
+        explain: "Incorreto: granulomas e micobactérias não são característicos da DS conforme o PDF. :contentReference[oaicite:23]{index=23}"
+      },
+      {
+        text: "Atrofia epidérmica com perda de anexos e infiltrado eosinofílico denso.",
+        correct: false,
+        explain: "Incorreto: essa descrição não corresponde ao padrão histológico descrito no material para DS. :contentReference[oaicite:24]{index=24}"
+      }
+    ]
+  },
+  {
+    q: "7) Questão: Qual a conduta terapêutica inicial recomendada para dermatite seborréica do lactente conforme o PDF?",
+    choices: [
+      {
+        text: "Orientações gerais (controle de umidade, roupas de algodão, exposição solar controlada) e remoção mecânica das crostas com óleo mineral/vaselina; hidrocortisona 1% ou cetoconazol tópico se necessário.",
+        correct: true,
+        explain: "Correto: o PDF recomenda medidas gerais e remoção mecânica das crostas; tratamentos tópicos incluem hidrocortisona 1%, tacrolimo 0,03% (pode irritar) e cetoconazol creme. :contentReference[oaicite:25]{index=25}"
+      },
+      {
+        text: "Isolamento do lactente e início imediato de terapia antifúngica oral por 6 meses.",
+        correct: false,
+        explain: "Incorreto: o material indica manejo conservador e tratamentos tópicos; terapia oral prolongada não é conduta de rotina em lactentes. :contentReference[oaicite:26]{index=26}"
+      },
+      {
+        text: "Uso de isotretinoína sistêmica de baixa dose em todos os casos.",
+        correct: false,
+        explain: "Incorreto: isotretinoína não é indicada para crosta láctea em lactentes; o PDF não recomenda isso. :contentReference[oaicite:27]{index=27}"
+      },
+      {
+        text: "Aplicação de agentes queratolíticos potentes diariamente sem acompanhamento.",
+        correct: false,
+        explain: "Incorreto: o material sugere remoção mecânica suave e uso de produtos tópicos apropriados; queratolíticos potentes não são recomendados sem critério. :contentReference[oaicite:28]{index=28}"
+      }
+    ]
+  },
+  {
+    q: "8) Questão: Para dermatite seborréica do adulto com envolvimento do couro cabeludo, qual esquema tópico o PDF indica como prática comum de tratamento e manutenção?",
+    choices: [
+      {
+        text: "Shampoo com cetoconazol 2% ou ciclopirox 1% ou pitirionato de zinco 1% ou sulfeto de selênio 2,5% com uso diário e manutenção 2-3x/semana.",
+        correct: true,
+        explain: "Correto: o PDF descreve uso de shampoos antifúngicos (cetoconazol, ciclopirox, pitirionato de zinco, sulfeto de selênio) com regime inicial diário e manutenção 2-3 vezes por semana. :contentReference[oaicite:29]{index=29}"
+      },
+      {
+        text: "Shampoo apenas com ácido salicílico sem antifúngico e sem necessidade de manutenção.",
+        correct: false,
+        explain: "Incorreto: embora ácido salicílico esteja listado entre agentes tópicos, o PDF enfatiza shampoos antifúngicos e manutenção subsequente; não recomenda ácido salicílico isolado como única conduta. :contentReference[oaicite:30]{index=30}"
+      },
+      {
+        text: "Aplicação rotineira de corticosteroides de alta potência no couro cabeludo por tempo indeterminado.",
+        correct: false,
+        explain: "Incorreto: o PDF recomenda corticóides tópicos (preferivelmente de baixa potência para face; uso criterioso e suspender após melhora), não uso contínuo de alta potência no couro cabeludo sem limitação. :contentReference[oaicite:31]{index=31}"
+      },
+      {
+        text: "Nenhum tratamento tópico; indicação de somente fototerapia em todos os casos.",
+        correct: false,
+        explain: "Incorreto: fototerapia é citada para alguns casos (principalmente em outras dermatoses); para DS do couro cabeludo o material descreve shampoos e antifúngicos tópicos. :contentReference[oaicite:32]{index=32}"
+      }
+    ]
+  },
+  {
+    q: "9) Questão: Em casos graves ou refratários de dermatite seborréica, quais antifúngicos orais e esquemas o PDF menciona como opções?",
+    choices: [
+      {
+        text: "Itraconazol (200 mg/dia por 7 dias → 200 mg a cada 15 dias por 3 meses), terbinafina (250 mg/dia por 4-6 semanas) e fluconazol (150-300 mg/sem por 4 semanas) são citados como opções.",
+        correct: true,
+        explain: "Correto: o material lista esses esquemas como opções em casos graves ou refratários. :contentReference[oaicite:33]{index=33}"
+      },
+      {
+        text: "Griseofulvina oral por 12 meses como primeira escolha para todos os casos graves.",
+        correct: false,
+        explain: "Incorreto: o PDF não recomenda griseofulvina como primeira escolha para DS; lista itraconazol, terbinafina e fluconazol para casos graves. :contentReference[oaicite:34]{index=34}"
+      },
+      {
+        text: "Uso de antibiótico oral de largo espectro por 6 meses sem antifúngico.",
+        correct: false,
+        explain: "Incorreto: antibióticos sistêmicos de largo espectro não são a recomendação principal; o PDF destaca antifúngicos orais para casos refratários. :contentReference[oaicite:35]{index=35}"
+      },
+      {
+        text: "Tratamento homeopático padronizado como único recomendado pelo material em casos graves.",
+        correct: false,
+        explain: "Incorreto: o material descreve terapias antifúngicas orais e tópicas; não recomenda homeopatia como tratamento padrão para casos graves. :contentReference[oaicite:36]{index=36}"
+      }
+    ]
+  },
+  {
+    q: "10) Questão: Em relação à pitiríase rósea de Gibert, qual das asserções abaixo descreve corretamente a lesão inicial clássica (medalhão)?",
+    choices: [
+      {
+        text: "Placa única eritematoescamosa arredondada/oval com bordas levemente elevadas, centro amarelado descamativo e colarete descamativo interno em relação à borda, geralmente no tronco.",
+        correct: true,
+        explain: "Correto: o PDF define o 'medalhão' como placa única com essas características, frequentemente no tronco e com colarete descamativo. :contentReference[oaicite:37]{index=37}"
+      },
+      {
+        text: "Múltiplas pústulas dolorosas primárias nas palmas das mãos com adenomegalia.",
+        correct: false,
+        explain: "Incorreto: pitiríase rósea classica inicia com um medalhão e depois maculas/placas, não com pústulas palmares dolorosas e adenomegalia. :contentReference[oaicite:38]{index=38}"
+      },
+      {
+        text: "Úlcera única necrótica com bordas elevadas e base purulenta no rosto.",
+        correct: false,
+        explain: "Incorreto: essa descrição não corresponde ao medalhão da pitiríase rósea. :contentReference[oaicite:39]{index=39}"
+      },
+      {
+        text: "Lesão hipocrômica localizada nas extremidades com descamação mínima.",
+        correct: false,
+        explain: "Incorreto: o medalhão é eritematoescamoso com colarete descamativo, não hipocrômico com descamação mínima nas extremidades. :contentReference[oaicite:40]{index=40}"
+      }
+    ]
+  },
+  {
+    q: "11) Questão: Qual a faixa etária e o padrão sazonal geralmente associados à pitiríase rósea segundo o PDF?",
+    choices: [
+      {
+        text: "10-35 anos (jovens saudáveis), sazonalidade no outono e primavera.",
+        correct: true,
+        explain: "Correto: o material descreve predomínio em 10-35 anos e associação sazonal mais comum no outono e primavera. :contentReference[oaicite:41]{index=41}"
+      },
+      {
+        text: "Maioria após 65 anos, sem sazonalidade definida.",
+        correct: false,
+        explain: "Incorreto: o PDF aponta para adultos jovens (10-35 anos) e sazonalidade em outono/primavera, não predominância em idosos. :contentReference[oaicite:42]{index=42}"
+      },
+      {
+        text: "Exclusiva da infância antes dos 2 anos e mais comum no verão.",
+        correct: false,
+        explain: "Incorreto: pitiríase rósea típica ocorre em jovens (10-35 anos), não exclusivamente em lactentes, e são mencionadas outono/primavera. :contentReference[oaicite:43]{index=43}"
+      },
+      {
+        text: "Distribuição etária indiferente, mas fortemente ligada à imunossupressão severa.",
+        correct: false,
+        explain: "Incorreto: embora etiologia possa ter componente infeccioso (HHV), o PDF não a vincula fortemente à imunossupressão como fator principal; predominância é em jovens saudáveis. :contentReference[oaicite:44]{index=44}"
+      }
+    ]
+  },
+  {
+    q: "12) Questão: Após o aparecimento do medalhão na pitiríase rósea, qual é a evolução típica das lesões secundárias descrita no PDF?",
+    choices: [
+      {
+        text: "Nas 1-2 semanas seguintes surgem múltiplas lesões menores com eixo paralelo às linhas de Langer, formando padrão em 'árvore de Natal' no tronco; duração total 4-8 semanas.",
+        correct: true,
+        explain: "Correto: o PDF descreve crescimento centrífugo do medalhão, seguido por múltiplas lesões menores alinhadas com linhas de Langer e duração média de 4-8 semanas. :contentReference[oaicite:45]{index=45}"
+      },
+      {
+        text: "Rápida transformação em úlceras necróticas e progressão para comprometimento sistêmico em 48 horas.",
+        correct: false,
+        explain: "Incorreto: pitiríase rósea é autolimitada e não progride para úlceras necróticas sistêmicas; evolução típica é benigna em semanas. :contentReference[oaicite:46]{index=46}"
+      },
+      {
+        text: "Desaparecimento espontâneo do medalhão sem aparecimento de outras lesões em todos os casos.",
+        correct: false,
+        explain: "Incorreto: em geral surgem múltiplas lesões secundárias após 1-2 semanas; nem sempre há desaparecimento isolado do medalhão. :contentReference[oaicite:47]{index=47}"
+      },
+      {
+        text: "Evolução crônica por anos exigindo tratamento sistêmico contínuo.",
+        correct: false,
+        explain: "Incorreto: o PDF descreve curso subagudo e autolimitado (4-8 semanas), não evolução crônica por anos na maioria dos casos. :contentReference[oaicite:48]{index=48}"
+      }
+    ]
+  },
+  {
+    q: "13) Questão: Quais medicamentos são citados no material como capazes de provocar uma erupção semelhante à pitiríase rósea (quadro PR-símile)?",
+    choices: [
+      {
+        text: "Isoniazida, metronidazol, captopril, isotretinoína, omeprazol e inibidores da enzima conversora de angiotensina (IECA).",
+        correct: true,
+        explain: "Correto: o PDF lista esses medicamentos como associados a quadros PR-símile. :contentReference[oaicite:49]{index=49}"
+      },
+      {
+        text: "Paracetamol, insulina, levotiroxina, e anticoncepcionais orais combinados.",
+        correct: false,
+        explain: "Incorreto: esses fármacos não são mencionados no PDF como causadores de quadro PR-símile; a lista do material é diferente. :contentReference[oaicite:50]{index=50}"
+      },
+      {
+        text: "Vacina tríplice viral como causa exclusiva de pitiríase rósea.",
+        correct: false,
+        explain: "Incorreto: o PDF não estabelece vacinas como causa exclusiva; menciona medicamentos específicos que podem gerar quadro semelhante. :contentReference[oaicite:51]{index=51}"
+      },
+      {
+        text: "Antibióticos tópicos como único agente implicado em PR-símile.",
+        correct: false,
+        explain: "Incorreto: o material lista vários medicamentos sistêmicos (ex.: isoniazida, metronidazol, captopril, isotretinoína, omeprazol, IECA), não antibióticos tópicos isolados. :contentReference[oaicite:52]{index=52}"
+      }
+    ]
+  },
+  {
+    q: "14) Questão: Na pitiríase rósea, qual é a indicação de tratamento citada para pacientes assintomáticos e qual conduta para prurido discreto conforme o PDF?",
+    choices: [
+      {
+        text: "Não requer tratamento porque é autolimitada (1-2 meses); para prurido discreto antihistamínico sedante e, se eczematização, corticóide tópico.",
+        correct: true,
+        explain: "Correto: o PDF enfatiza que a doença é autolimitada e normalmente assintomática; prurido leve pode ser tratado com anti-histamínico sedativo e corticóide se eczematizada. :contentReference[oaicite:53]{index=53}"
+      },
+      {
+        text: "Tratamento sistêmico com antifúngicos por 3 meses em todos os casos.",
+        correct: false,
+        explain: "Incorreto: pitiríase rósea é geralmente autolimitada e não requer antifúngicos sistêmicos de rotina. :contentReference[oaicite:54]{index=54}"
+      },
+      {
+        text: "Cirurgia excisional do medalhão como primeira linha.",
+        correct: false,
+        explain: "Incorreto: cirurgia não é indicada; a conduta é expectante e sintomática. :contentReference[oaicite:55]{index=55}"
+      },
+      {
+        text: "Imunossupressão sistêmica imediata para prevenir recidivas.",
+        correct: false,
+        explain: "Incorreto: o PDF não recomenda imunossupressão para pitiríase rósea; doença é autolimitada e benign a. :contentReference[oaicite:56]{index=56}"
+      }
+    ]
+  },
+  {
+    q: "15) Questão: Quais variantes clínicas da pitiríase rósea o material menciona que podem dificultar o diagnóstico?",
+    choices: [
+      {
+        text: "Formas urticariformes, pustulares e vesiculares, além da forma invertida (mais comum em crianças).",
+        correct: true,
+        explain: "Correto: o PDF relata essas variantes (urticariforme, pustular, vesicular) que podem dificultar diagnóstico e menciona a forma invertida em crianças. :contentReference[oaicite:57]{index=57}"
+      },
+      {
+        text: "Apenas forma bolhosa com necrose característica e acometimento exclusivo de mucosas.",
+        correct: false,
+        explain: "Incorreto: o material não descreve forma bolhosa necrótica ou acometimento exclusivo de mucosas como variantes típicas. :contentReference[oaicite:58]{index=58}"
+      },
+      {
+        text: "Apenas manifestações vasculíticas com púrpura extensa nas extremidades.",
+        correct: false,
+        explain: "Incorreto: púrpura vasculítica não é descrita como variante típica que dificulte o diagnóstico no PDF. :contentReference[oaicite:59]{index=59}"
+      },
+      {
+        text: "Somente lesões foliculares isoladas sem colarete descamativo.",
+        correct: false,
+        explain: "Incorreto: embora variantes existam, a ausência do colarete descamativo e apresentação exclusivamente folicular não são descritas como a norma que compõe as variantes citadas. :contentReference[oaicite:60]{index=60}"
+      }
+    ]
+  },
+  {
+    q: "16) Questão: Qual a indicação de uso de tacrolimo tópico na dermatite seborréica conforme descrito no material?",
+    choices: [
+      {
+        text: "Tacrolimo tópico 0,03-0,1% pode ser usado em face e dobras quando corticóides devem ser evitados, porém pode provocar irritação local.",
+        correct: true,
+        explain: "Correto: o PDF menciona tacrolimo tópico como alternativa para áreas sensíveis (face/dóbulas) com observação sobre possível irritação local. :contentReference[oaicite:0]{index=0}"
+      },
+      {
+        text: "Tacrolimo oral é o tratamento de escolha para formas extensas em adultos jovens.",
+        correct: false,
+        explain: "Incorreto: o material descreve tacrolimo tópico, não uso sistêmico oral como tratamento de escolha. :contentReference[oaicite:1]{index=1}"
+      },
+      {
+        text: "Tacrolimo tópico é contra-indicado em lactentes com crosta láctea por risco de toxicidade sistêmica.",
+        correct: false,
+        explain: "Incorreto: o PDF não descreve tacrolimo tópico como absoluto contraindicação em lactentes; indica-se cautela e preferência por medidas conservadoras; não afirma toxicidade sistêmica rotineira. :contentReference[oaicite:2]{index=2}"
+      },
+      {
+        text: "Tacrolimo tópico deve ser usado diariamente por tempo indeterminado como manutenção em couro cabeludo.",
+        correct: false,
+        explain: "Incorreto: tacrolimo é sugerido para áreas faciais/dóbulas; o esquema de manutenção contínua no couro cabeludo não está indicado no material. :contentReference[oaicite:3]{index=3}"
+      }
+    ]
+  },
+  {
+    q: "17) Questão: Sobre o sulfeto de selênio em xampus para dermatite seborréica, qual afirmação descreve corretamente seu papel conforme o PDF?",
+    choices: [
+      {
+        text: "Sulfeto de selênio 2,5% é um agente terapêutico útil em shampoos para controle do couro cabeludo, com esquema inicial seguido de manutenção 2-3x/semana.",
+        correct: true,
+        explain: "Correto: o PDF lista sulfeto de selênio entre os agentes de shampoo eficazes, com uso inicial e manutenção conforme resposta. :contentReference[oaicite:4]{index=4}"
+      },
+      {
+        text: "Sulfeto de selênio não tem efeito sobre Malassezia e é apenas queratolítico.",
+        correct: false,
+        explain: "Incorreto: o material inclui sulfeto de selênio entre agentes que ajudam no controle, implicando efeito sobre floração/descamação associada; não é descrito apenas como queratolítico sem efeito sobre leveduras. :contentReference[oaicite:5]{index=5}"
+      },
+      {
+        text: "Sulfeto de selênio é contraindicado em pacientes com histórico de acne.",
+        correct: false,
+        explain: "Incorreto: o PDF não relaciona contraindicação a acne para sulfeto de selênio. :contentReference[oaicite:6]{index=6}"
+      },
+      {
+        text: "Sulfeto de selênio é administrado oralmente para formas graves de dermatite seborréica.",
+        correct: false,
+        explain: "Incorreto: o agente é utilizado topicamente em xampus; o PDF não menciona uso oral para sulfeto de selênio. :contentReference[oaicite:7]{index=7}"
+      }
+    ]
+  },
+  {
+    q: "18) Questão: Em relação à associação entre dermatite seborréica e doenças neurológicas, o material apresenta qual conclusão principal?",
+    choices: [
+      {
+        text: "Há associação observada, especialmente com doença de Parkinson e outras doenças neurológicas, sugerindo fatores neuroendócrinos na patogênese.",
+        correct: true,
+        explain: "Correto: o PDF destaca associação entre DS e doenças neurológicas (ex.: Parkinson), sugerindo contribuição de fatores neurológicos/neuroendócrinos. :contentReference[oaicite:8]{index=8}"
+      },
+      {
+        text: "Não existe qualquer associação entre dermatite seborréica e doenças neurológicas.",
+        correct: false,
+        explain: "Incorreto: o material descreve claramente aumento de DS em pacientes com doenças neurológicas, especialmente Parkinson. :contentReference[oaicite:9]{index=9}"
+      },
+      {
+        text: "A associação se dá por transmissão direta de Malassezia do sistema nervoso central.",
+        correct: false,
+        explain: "Incorreto: não há evidência de transmissão direta de Malassezia do SNC; a relação é epidemiológica e patogenética (neuroendócrina) e não de infecção direta do SNC descrita no PDF. :contentReference[oaicite:10]{index=10}"
+      },
+      {
+        text: "A presença de doença neurológica exclui o diagnóstico de dermatite seborréica.",
+        correct: false,
+        explain: "Incorreto: doença neurológica é fator associado/ predisponente, não exclusão diagnóstica; pelo contrário, pode aumentar probabilidade de DS. :contentReference[oaicite:11]{index=11}"
+      }
+    ]
+  },
+  {
+    q: "19) Questão: Sobre o uso de corticosteroides tópicos na dermatite seborréica facial, qual precaução o material enfatiza?",
+    choices: [
+      {
+        text: "Usar corticóides de baixa potência por curto período, evitando uso prolongado na face para reduzir risco de atrofia e telangiectasias.",
+        correct: true,
+        explain: "Correto: o PDF recomenda corticóides tópicos com cautela na face — preferir baixa potência e uso limitado para evitar efeitos adversos cutâneos. :contentReference[oaicite:12]{index=12}"
+      },
+      {
+        text: "Corticóides de alta potência são seguros para uso crônico na face sem monitorização.",
+        correct: false,
+        explain: "Incorreto: o material contraria uso prolongado/alta potência na face devido a risco de atrofia e outros efeitos adversos. :contentReference[oaicite:13]{index=13}"
+      },
+      {
+        text: "Corticóides tópicos não têm qualquer papel terapêutico na dermatite seborréica.",
+        correct: false,
+        explain: "Incorreto: o PDF descreve papel dos corticóides tópicos em controle de inflamação, mas com limitações quanto à potência/duração, especialmente em face. :contentReference[oaicite:14]{index=14}"
+      },
+      {
+        text: "Aplicar corticóide tópico em face diariamente por meses previne recidivas sem efeitos colaterais.",
+        correct: false,
+        explain: "Incorreto: uso prolongado diário na face não é recomendado; risco de efeitos adversos é explicitado no material. :contentReference[oaicite:15]{index=15}"
+      }
+    ]
+  },
+  {
+    q: "20) Questão: Em pacientes adultos com crosta amarelada muito adherente no couro cabeludo e prurido intenso, qual é o passo inicial de manejo sugerido pelo PDF?",
+    choices: [
+      {
+        text: "Aplicação local de óleo mineral/vaselina para amolecer e remoção mecânica suave das crostas, seguido de tratamento tópico conforme necessidade.",
+        correct: true,
+        explain: "Correto: o material recomenda amolecer e remover mecanicamente as crostas com óleo/vaselina como primeira ação, antes de terapias tópicas. :contentReference[oaicite:16]{index=16}"
+      },
+      {
+        text: "Iniciar imediatamente antifúngico oral em dose total sem fase de tratamento tópico.",
+        correct: false,
+        explain: "Incorreto: terapia oral é reservada a casos graves/refratários; abordagem inicial enfatizada no PDF é tópica e mecânica. :contentReference[oaicite:17]{index=17}"
+      },
+      {
+        text: "Excisão cirúrgica do couro cabeludo para remoção das crostas.",
+        correct: false,
+        explain: "Incorreto: remoção cirúrgica não é indicada; PDF recomenda métodos conservadores e tópicos. :contentReference[oaicite:18]{index=18}"
+      },
+      {
+        text: "Uso de compressas frias para remover crostas sem outros tratamentos.",
+        correct: false,
+        explain: "Incorreto: compressas frias não são propostas como método isolado de remoção; óleo e remoção mecânica suave são as medidas citadas. :contentReference[oaicite:19]{index=19}"
+      }
+    ]
+  },
+  {
+    q: "21) Questão (Caso clínico 1): Paciente masculino de 62 anos com doença de Parkinson apresenta prurido e placas eritemato-escamosas oleosas em região retroauricular, glabela e couro cabeludo há meses. Refere piora com estresse e calor. Ao exame há placas eritematosas com escamas amareladas aderentes; bom estado geral. Qual a conduta inicial mais apropriada segundo o material?",
+    choices: [
+      {
+        text: "Iniciar shampoo antifúngico (cetoconazol 2% ou sulfeto de selênio) com higiene local, associar curta pauta de corticosteroide tópico de baixa potência na face se necessário e orientar medidas gerais.",
+        correct: true,
+        explain: "Correto: o PDF recomenda shampoos antifúngicos para couro cabeludo, medidas gerais e uso criterioso de corticóide tópico de baixa potência nas áreas faciais se houver inflamação significativa. A associação com Parkinson reforça predisposição, não mudança na conduta inicial. :contentReference[oaicite:20]{index=20}"
+      },
+      {
+        text: "Solicitar biópsia imediata para descartar carcinoma basocelular e iniciar isotretinoína sistêmica.",
+        correct: false,
+        explain: "Incorreto: a apresentação é típica de dermatite seborréica; biópsia e isotretinoína não são conduta inicial recomendada pelo material. :contentReference[oaicite:21]{index=21}"
+      },
+      {
+        text: "Iniciar fluconazol oral por 6 meses sem terapia tópica prévia.",
+        correct: false,
+        explain: "Incorreto: antifúngicos orais são opção para casos graves/refratários; conduta inicial indicada é tópica e medidas gerais. :contentReference[oaicite:22]{index=22}"
+      },
+      {
+        text: "Encaminhar para neurologia para ajuste imediato da medicação antiparkinsoniana como única medida.",
+        correct: false,
+        explain: "Incorreto: embora ajuste neurológico possa influenciar quadro, o PDF sugere manejo dermatológico local inicial (shampoo, medidas gerais); não se indica apenas ajuste neurológico como única intervenção. :contentReference[oaicite:23]{index=23}"
+      }
+    ]
+  },
+  {
+    q: "22) Questão (Caso clínico 2): Lactente de 3 meses trazido por mãe refere-se placas crostosas amareladas no couro cabeludo desde 2 semanas de vida; bebê amamenta bem, sem febre, crescimento adequado. Qual a melhor abordagem inicial conforme o PDF?",
+    choices: [
+      {
+        text: "Instruções para remover crostas com óleo mineral/vaselina e escovação suave; manter higiene, evitar substâncias irritantes; utilizar hidrocortisona 1% apenas se inflamação significativa e persistente.",
+        correct: true,
+        explain: "Correto: o material descreve essa conduta conservadora inicial para crosta láctea, com remoção mecânica após amolecimento e uso tópico de baixa potência apenas se necessário. :contentReference[oaicite:24]{index=24}"
+      },
+      {
+        text: "Iniciar antifúngico oral e isolar o lactente por risco de contágio.",
+        correct: false,
+        explain: "Incorreto: a documentação recomenda manejo conservador e tópicos; isolamento e antifúngicos orais não são indicados rotineiramente em lactentes saudáveis. :contentReference[oaicite:25]{index=25}"
+      },
+      {
+        text: "Aplicar ácido salicílico 20% diariamente em couro cabeludo do lactente para queratólise agressiva.",
+        correct: false,
+        explain: "Incorreto: ácidos queratolíticos agressivos não são recomendados para lactentes; o PDF enfatiza métodos suaves. :contentReference[oaicite:26]{index=26}"
+      },
+      {
+        text: "Suspender amamentação imediatamente por risco de transmissão materno-fetal.",
+        correct: false,
+        explain: "Incorreto: crosta láctea não contraindica amamentação; PDF não recomenda suspensão da amamentação. :contentReference[oaicite:27]{index=27}"
+      }
+    ]
+  },
+  {
+    q: "23) Questão (Caso clínico 3): Paciente de 28 anos com início há 10 dias de uma única placa eritematosa ovalada de 6 cm no dorso seguida, após uma semana, por múltiplas máculas eritemato-escamosas alinhadas ao longo das linhas de Langer no tronco; pouco pruriginoso. Histórico de uso recente de isoniazida para tuberculose. Qual hipótese diagnóstica e conduta indicada segundo o PDF?",
+    choices: [
+      {
+        text: "Pitiríase rósea precipitada por fármaco (PR-símile) possivelmente associada ao uso de isoniazida; considerar relação medicamentosa e manejo expectante com sintomáticos (antihistamínico) e correção se medicação for essencial discutir risco/benefício.",
+        correct: true,
+        explain: "Correto: quadro é compatível com pitiríase rósea e o PDF relaciona alguns fármacos (incluindo isoniazida) a quadros PR-símile. A conduta é principalmente expectante e sintomática, e avaliar necessidade de manter o fármaco conforme risco/benefício. :contentReference[oaicite:28]{index=28}"
+      },
+      {
+        text: "Iniciar antifúngico tópico por suspeita de tinea corporis disseminada e interromper isoniazida imediatamente.",
+        correct: false,
+        explain: "Incorreto: padrão e história são mais sugestivos de pitiríase rósea/PR-símile; tinea tende a ser anelado com borda ativa e prurido variável. Interromper medicação antituberculosa requer avaliação cuidadosa, não é decisão rotineira imediata. :contentReference[oaicite:29]{index=29}"
+      },
+      {
+        text: "Tratar com corticóide sistêmico por 6 semanas para acelerar resolução.",
+        correct: false,
+        explain: "Incorreto: pitiríase rósea é autolimitada e o uso rotineiro de corticóide sistêmico não é recomendado; tratamento é sintomático local quando necessário. :contentReference[oaicite:30]{index=30}"
+      },
+      {
+        text: "Diagnosticar como psoríase guttata e iniciar fototerapia ultravioleta imediatamente.",
+        correct: false,
+        explain: "Incorreto: embora psoríase guttata possa ter início súbito com múltiplas pápulas, o antecedente de 'medalhão' e a relação temporal com uso de fármacos favorecem pitiríase rósea; fototerapia não é conduta rotineira inicial para PR. :contentReference[oaicite:31]{index=31}"
+      }
+    ]
+  },
+  {
+    q: "24) Questão (Caso clínico 4): Mulher de 35 anos relata erupção recente de numerosas máculas eritemato-descamativas no tronco e membros precedidas por febre e quadro respiratório há 3 semanas. Lesões têm padrão em 'árvore de Natal'. Estado geral preservado. Qual o prognóstico e manejo conforme o material?",
+    choices: [
+      {
+        text: "Provável pitiríase rósea pós-viral com evolução autolimitada (4-8 semanas); manejo expectante e sintomático (anti-histamínico para prurido, corticoide tópico se eczematizada).",
+        correct: true,
+        explain: "Correto: o PDF descreve associação com infecção viral em muitos casos, padrão em 'árvore de Natal' e curso autolimitado; tratamento é sintomático. :contentReference[oaicite:32]{index=32}"
+      },
+      {
+        text: "Evolução crônica e progressiva para psoríase grave, requerendo imunobiológico imediato.",
+        correct: false,
+        explain: "Incorreto: pitiríase rósea tem curso subagudo e autolimitado; não há indicação de imunobiológicos de primeira linha para esse quadro segundo o PDF. :contentReference[oaicite:33]{index=33}"
+      },
+      {
+        text: "Isolamento por 6 semanas e terapia com antivirais sistêmicos como padrão.",
+        correct: false,
+        explain: "Incorreto: o material não recomenda isolamento nem antivirais sistêmicos de rotina; manejo é normalmente conservador. :contentReference[oaicite:34]{index=34}"
+      },
+      {
+        text: "Tratamento com antibiótico de amplo espectro por risco de sobreinfecção bacteriana universalmente presente.",
+        correct: false,
+        explain: "Incorreto: não há indicação de antibioticoterapia empírica para pitiríase rósea; indicar antibiótico somente se houver infecção bacteriana comprovada. :contentReference[oaicite:35]{index=35}"
+      }
+    ]
+  },
+  {
+    q: "25) Questão (Caso clínico 5): Homem HIV positivo com CD4 baixo apresenta dermatite extensa, pruriginosa, com escamas oleosas e eritema que afeta face, tórax e áreas flexurais; piora progressiva apesar de xampus antifúngicos tópicos. Qual a melhor próxima etapa terapêutica conforme as opções do PDF?",
+    choices: [
+      {
+        text: "Considerar antifúngico oral (ex.: itraconazol ou terbinafina) para formas extensas/refratárias, além de otimizar cuidados locais e avaliar terapia antirretroviral e condição imunológica.",
+        correct: true,
+        explain: "Correto: o PDF indica antifúngicos orais (itraconazol, terbinafina, fluconazol) como opções em casos graves/refratários, especialmente em pacientes imunossuprimidos, e ressalta importância de avaliar contexto imunológico. :contentReference[oaicite:36]{index=36}"
+      },
+      {
+        text: "Prescrever somente emolientes e aguardar 12 meses para reavaliar.",
+        correct: false,
+        explain: "Incorreto: em paciente imunossuprimido com falha do tratamento tópico, terapia sistêmica é uma opção citada no PDF; aguardar sem intensificar manejo pode não ser apropriado. :contentReference[oaicite:37]{index=37}"
+      },
+      {
+        text: "Internar e iniciar corticosteroide sistêmico por tempo indeterminado.",
+        correct: false,
+        explain: "Incorreto: corticóides sistêmicos não são descritos como tratamento de escolha para DS extensa em immunossuprimidos; antifúngicos orais são citados como alternativa. :contentReference[oaicite:38]{index=38}"
+      },
+      {
+        text: "Prescrever óleos vegetais por via oral para modular flora cutânea.",
+        correct: false,
+        explain: "Incorreto: o PDF não recomenda suplementos orais de óleos vegetais como tratamento principal para DS extensa em pacientes imunossuprimidos. :contentReference[oaicite:39]{index=39}"
+      }
+    ]
+  },
+  {
+    q: "26) Questão (Caso clínico 6): Paciente de 40 anos refere lesões escamosas no couro cabeludo responsivas parcialmente a shampoos, mas com áreas eritematosas e queda local de cabelo em placas; há suspeita de dermatite seborréica com componente secundário. Que investigação/conduta adicional o material sugere considerar?",
+    choices: [
+      {
+        text: "Avaliar presença de inflamação secundária (sobretudo se há alopecia localizada) e considerar tratamento tópico anti-inflamatório associado e investigar outras causas de alopecia se persistir.",
+        correct: true,
+        explain: "Correto: o PDF sugere avaliar complicações e considerar terapias associadas (antifúngicos + anti-inflamatórios tópicos) e investigação de outras etiologias de alopecia se houver perda de cabelo localizada persistente. :contentReference[oaicite:40]{index=40}"
+      },
+      {
+        text: "Assumir sempre que alopecia é cicatricial e proceder a enxertia capilar imediata.",
+        correct: false,
+        explain: "Incorreto: perda de cabelo associada à DS nem sempre é cicatricial e não se indica enxertia imediata; investigar e tratar causa inflamatória primeiro conforme o PDF. :contentReference[oaicite:41]{index=41}"
+      },
+      {
+        text: "Realizar cultura para micobactérias de rotina em todas as placas alopeciantes.",
+        correct: false,
+        explain: "Incorreto: cultura para micobactérias não é recomendação de rotina no contexto descrito; o PDF foca em abordagem antisséptica/antifúngica e investigação dirigida se houver sinais sugestivos. :contentReference[oaicite:42]{index=42}"
+      },
+      {
+        text: "Iniciar terapêutica com corticosteroide intralesional em todo o couro cabeludo repetidamente sem investigação.",
+        correct: false,
+        explain: "Incorreto: corticóide intralesional pode ser considerado em alopecias inflamatórias selecionadas, mas não é conduta generalizada sem investigação; o PDF recomenda abordagem criteriosa. :contentReference[oaicite:43]{index=43}"
+      }
+    ]
+  },
+  {
+    q: "27) Questão (Caso clínico 7): Paciente apresenta lesões eritemato-escamosas em pregas axilares e inguinais, com prurido e odor leve. Áreas úmidas e oleosas. Teste de KOH da borda da lesão: negativo para hifas. Qual hipótese e conduta inicial baseada no material?",
+    choices: [
+      {
+        text: "Dermatite seborréica invertida (forma invertida) ou intertrigo seborréico; tratar com antifúngicos tópicos e medidas de higiene/controle da umidade; considerar corticosteroide tópico de baixa potência se inflamação marcante.",
+        correct: true,
+        explain: "Correto: o PDF descreve formas invertidas que acometem dobras e recomenda terapias tópicas, controle de umidade e corticoide tópico se necessário. Resultado de KOH negativo não exclui DS; moldar a terapêutica conforme quadro. :contentReference[oaicite:44]{index=44}"
+      },
+      {
+        text: "Diagnóstico certo de psoríase vulgar e iniciar metotrexato imediatamente.",
+        correct: false,
+        explain: "Incorreto: psoríase pode afetar dobras, mas quadro e local com oleosidade e negativa KOH sugerem DS invertida; metotrexato sistêmico não é conduta inicial sem confirmação. :contentReference[oaicite:45]{index=45}"
+      },
+      {
+        text: "Indicação de cirurgia local para excisão das placas.",
+        correct: false,
+        explain: "Incorreto: cirurgia não é tratamento para intertrigo/DS invertida; manejo tópico e medidas locais são preferíveis. :contentReference[oaicite:46]{index=46}"
+      },
+      {
+        text: "Prescrição de antibiótico oral de largo espectro por 3 meses como primeira escolha.",
+        correct: false,
+        explain: "Incorreto: antibióticos sistêmicos de largo espectro não são primeira escolha; o material prioriza medidas tópicas e antifúngicos/anti-inflamatórios conforme necessidade. :contentReference[oaicite:47]{index=47}"
+      }
+    ]
+  },
+  {
+    q: "28) Questão (Caso clínico 8): Mulher de 22 anos apresenta exantema pruriginoso iniciado com uma placa maior no tronco (medalhão), seguida por múltiplas lesões menores. Preocupada com transmissão sexual e HIV. Segundo o PDF, qual informação é mais adequada para tranquilizá-la e qual investigação é razoável?",
+    choices: [
+      {
+        text: "Explicar que pitiríase rósea é geralmente autolimitada e frequentemente relacionada a processo viral não sexual; investigação rotineira para HIV não é obrigatória a menos que haja fatores de risco ou sinais suspeitos.",
+        correct: true,
+        explain: "Correto: o PDF associa frequentemente PR a evento viral e indica manejo conservador; triagem para HIV não é rotina a menos que haja indicação clínica/epidemiológica. :contentReference[oaicite:48]{index=48}"
+      },
+      {
+        text: "Afirmar que é doença sexualmente transmissível e solicitar teste antiviral específico imediato.",
+        correct: false,
+        explain: "Incorreto: pitiríase rósea não é classicamente considerada DST; o PDF não a classifica como tal e não recomenda testes antivirais específicos rotineiramente. :contentReference[oaicite:49]{index=49}"
+      },
+      {
+        text: "Iniciar tratamento com antibiótico e interromper todas as atividades sexuais por 6 meses.",
+        correct: false,
+        explain: "Incorreto: não há indicação de antibioticoterapia rotineira nem de proibição sexual prolongada para PR segundo o material. :contentReference[oaicite:50]{index=50}"
+      },
+      {
+        text: "Encaminhar imediatamente para biópsia por suspeita de neoplasia cutânea transmissível.",
+        correct: false,
+        explain: "Incorreto: a apresentação clínica é típica de PR e não há indicação de biópsia imediata na ausência de sinais atípicos; o PDF recomenda avaliação clínica e conduta conservadora. :contentReference[oaicite:51]{index=51}"
+      }
+    ]
+  },
+  {
+    q: "29) Questão (Caso clínico 9): Paciente com quadro crônico de escamas oleosas no couro cabeludo que melhora intermitentemente com shampoos antifúngicos, mas com recorrência. Busca tratamento de manutenção. Qual esquema de manutenção o PDF sugere como razoável?",
+    choices: [
+      {
+        text: "Uso de shampoo antifúngico (ex.: cetoconazol 2% ou sulfeto de selênio) 2-3 vezes por semana como esquema de manutenção após controle das lesões.",
+        correct: true,
+        explain: "Correto: o PDF descreve manutenção com uso intermitente de shampoos antifúngicos 2-3x/semana após fase inicial de controle. :contentReference[oaicite:52]{index=52}"
+      },
+      {
+        text: "Aplicação diária de corticosteroide de alta potência no couro cabeludo para prevenção.",
+        correct: false,
+        explain: "Incorreto: uso diário e prolongado de corticóide de alta potência no couro cabeludo não é recomendado devido a efeitos adversos; manutenção preferida é com shampoos antifúngicos. :contentReference[oaicite:53]{index=53}"
+      },
+      {
+        text: "Nenhuma medida de manutenção é eficaz; recidiva é inevitável e não se recomenda tratamento contínuo.",
+        correct: false,
+        explain: "Incorreto: o PDF sugere manutenção intermitente com shampoos antifúngicos para reduzir recidivas; não afirma que nenhuma medida seja eficaz. :contentReference[oaicite:54]{index=54}"
+      },
+      {
+        text: "Fototerapia diária com UVB domiciliária como única estratégia de manutenção.",
+        correct: false,
+        explain: "Incorreto: fototerapia não é descrita como estratégia domiciliar diária de manutenção para DS; o material enfatiza shampoos e tratamentos tópicos. :contentReference[oaicite:55]{index=55}"
+      }
+    ]
+  },
+  {
+    q: "30) Questão (Caso clínico 10): Paciente refere lesões eritemato-escamosas com centro mais claro e colarete descamativo, início súbito e evolução em 6 semanas; está muito ansioso sobre aparência. Quais orientações sobre prognóstico e opções terapêuticas, segundo o PDF, são mais apropriadas?",
+    choices: [
+      {
+        text: "Explicar curso autolimitado (4-8 semanas na maioria), oferecer tratamento sintomático para prurido (anti-histamínicos) e, se necessário, corticóide tópico para áreas eczematizadas; orientar sobre expectância e retorno se persistir.",
+        correct: true,
+        explain: "Correto: o PDF descreve esse prognóstico e manejo para pitiríase rósea: explicação do curso autolimitado, tratamento sintomático e corticóide tópico quando houver eczematização. :contentReference[oaicite:56]{index=56}"
+      },
+      {
+        text: "Garantir remissão imediata com antibiótico oral combinado com antifúngico tópico por 3 meses.",
+        correct: false,
+        explain: "Incorreto: combinação de antibiótico oral e antifúngico tópico por longo período não é recomendada como padrão para PR; abordagem é mais conservadora/sintomática. :contentReference[oaicite:57]{index=57}"
+      },
+      {
+        text: "Encaminhá-lo para exame de imagem para excluir lesão profunda cutânea como causa primária.",
+        correct: false,
+        explain: "Incorreto: não há indicação rotineira de exames de imagem para pitiríase rósea típica; avaliação clínica e manejo conservador são baseados no PDF. :contentReference[oaicite:58]{index=58}"
+      },
+      {
+        text: "Prescrever isotretinoína oral para controle rápido da descamação.",
+        correct: false,
+        explain: "Incorreto: isotretinoína não é indicada para pitiríase rósea; o PDF não relata seu uso para esse fim. :contentReference[oaicite:59]{index=59}"
+      }
+    ]
+  }
+];
+
+
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+
+const quizEl=document.getElementById('quiz');
+let state={answered:0,correct:0};
+
+function render(){
+  quizEl.innerHTML='';
+  questions.forEach((item,idx)=>{
+    const choices=shuffle(item.choices.map((c,i)=>({...c,id:`q${idx}_c${i}`})));
+    const wrap=document.createElement('section');
+    wrap.className='card';wrap.dataset.qindex=idx;
+    wrap.innerHTML=`<div class="qhead"><div class="qnum">Questão ${idx+1}</div></div>
+    <div class="question">${item.q}</div>
+    <div class="options" id="opts-${idx}"></div>
+    <div class="explain" id="exp-${idx}"></div>`;
+    const optsEl=wrap.querySelector(`#opts-${idx}`);
+    choices.forEach(c=>{
+      const lab=document.createElement('label');lab.className='option';
+      lab.innerHTML=`<input type="radio" name="q${idx}" data-correct="${c.correct}" data-explain="${c.explain}"><div>${c.text}</div>`;
+      optsEl.appendChild(lab);
+      lab.querySelector('input').addEventListener('change',(e)=>handleAnswer(idx,e.target));
+    });
+    quizEl.appendChild(wrap);
+  });
+  updateStatus();
+}
+
+function handleAnswer(idx,inputEl){
+  const exp=document.getElementById(`exp-${idx}`);
+  const correct=inputEl.dataset.correct==='true';
+  const explain=inputEl.dataset.explain;
+  exp.style.display='block';
+  exp.innerHTML=(correct?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+explain;
+  exp.classList.toggle('ok',correct);
+  exp.classList.toggle('err',!correct);
+  updateProgress();
+}
+
+function updateProgress(){
+  let a=0,c=0;
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);let any=false,corr=false;
+    for(const r of radios){if(r.checked){any=true;if(r.dataset.correct==='true')corr=true;break;}}
+    if(any)a++;if(corr)c++;
+  });
+  state.answered=a;state.correct=c;updateStatus();
+}
+
+function updateStatus(){
+  document.getElementById('answeredCount').textContent=`Respondidas: ${state.answered} / ${questions.length}`;
+  document.getElementById('progressCorrect').textContent=`Corretas: ${state.correct}`;
+}
+
+document.getElementById('showAll').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    const exp=document.getElementById(`exp-${idx}`);let any=false;
+    for(const r of radios){
+      if(r.checked){any=true;const corr=r.dataset.correct==='true';
+        exp.style.display='block';
+        exp.innerHTML=(corr?'✅ <b>Correto.</b> ':'❌ <b>Incorreto.</b> ')+r.dataset.explain;
+        exp.classList.toggle('ok',corr);exp.classList.toggle('err',!corr);
+        break;}
+    }
+    if(!any){exp.style.display='block';exp.innerHTML='<em>Nenhuma alternativa selecionada.</em>';exp.classList.remove('ok','err');}
+  });
+  updateProgress();
+});
+
+document.getElementById('reset').addEventListener('click',()=>{
+  questions.forEach((_,idx)=>{
+    const radios=document.getElementsByName(`q${idx}`);
+    for(const r of radios)r.checked=false;
+    const exp=document.getElementById(`exp-${idx}`);
+    exp.style.display='none';exp.innerHTML='';exp.classList.remove('ok','err');
+  });
+  state={answered:0,correct:0};updateStatus();
+});
+
+render();
+</script>
+</body>
+</html>
